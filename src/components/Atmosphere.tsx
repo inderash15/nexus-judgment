@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import chamberBg from "@/assets/chamber-bg.jpg.asset.json";
+import chamberBg from "@/assets/chamber-bg.jpg";
 
 /** Ambient chamber backdrop with mist particles and vignette. */
 export function Atmosphere({ intensity = 1 }: { intensity?: number }) {
@@ -22,7 +22,7 @@ export function Atmosphere({ intensity = 1 }: { intensity?: number }) {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `url(${chamberBg.url})`,
+          backgroundImage: `url(${chamberBg})`,
           opacity: 0.55 * intensity,
           filter: "saturate(1.1) contrast(1.05)",
         }}

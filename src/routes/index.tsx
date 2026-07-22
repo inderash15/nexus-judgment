@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
-import guardianAsset from "@/assets/guardian-hero.png.asset.json";
+import guardianAsset from "@/assets/guardian-hero.png";
 import { Guardian } from "@/components/Guardian";
 import { Atmosphere } from "@/components/Atmosphere";
 import { CHAMBERS } from "@/lib/chambers";
+import { useGuardianVoice } from "@/hooks/useGuardianVoice";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,8 +24,8 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:image", content: guardianAsset.url },
-      { name: "twitter:image", content: guardianAsset.url },
+      { property: "og:image", content: guardianAsset },
+      { name: "twitter:image", content: guardianAsset },
     ],
   }),
   component: LastCandidate,
@@ -87,6 +88,8 @@ function LastCandidate() {
     chamberId: number;
   }>(null);
 
+  const { voiceEnabled, toggleVoice, isSpeaking, speak } = useGuardianVoice();
+
   useEffect(() => {
     setHydrated(true);
     const saved = loadState();
@@ -103,6 +106,17 @@ function LastCandidate() {
   return (
     <main className="relative min-h-screen w-full overflow-hidden text-emerald-50 font-sans antialiased">
       <Atmosphere />
+      
+      {/* Floating Sound Toggle */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={toggleVoice}
+          className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-black/40 px-3.5 py-2 font-mono text-xs uppercase tracking-wider text-emerald-300 backdrop-blur-md transition hover:border-emerald-400/50 hover:bg-emerald-500/10 shadow-[0_4px_20px_rgba(0,0,0,0.4)] cursor-pointer"
+        >
+          <span>{voiceEnabled ? "🔊 Voice: ON" : "🔇 Voice: OFF"}</span>
+        </button>
+      </div>
+
       <AnimatePresence mode="wait">
         {scene === "boot" && <BootScene key="boot" />}
         {scene === "intro" && (
@@ -113,6 +127,8 @@ function LastCandidate() {
             }
             hasSave={Boolean(state.name)}
             candidateName={state.name}
+            speak={speak}
+            isSpeaking={isSpeaking}
           />
         )}
         {scene === "register" && (
@@ -123,6 +139,8 @@ function LastCandidate() {
               setState(next);
               setScene("briefing");
             }}
+            speak={speak}
+            isSpeaking={isSpeaking}
           />
         )}
         {scene === "briefing" && (
@@ -130,6 +148,8 @@ function LastCandidate() {
             key="briefing"
             state={state}
             onEnter={() => setScene("chamber")}
+            speak={speak}
+            isSpeaking={isSpeaking}
           />
         )}
         {scene === "chamber" && (
@@ -156,6 +176,8 @@ function LastCandidate() {
               setVerdict({ correct, choice, chamberId: chamber.id });
               setScene("verdict");
             }}
+            speak={speak}
+            isSpeaking={isSpeaking}
           />
         )}
         {scene === "verdict" && verdict && (
@@ -169,6 +191,8 @@ function LastCandidate() {
               if (state.step >= 7) setScene("final");
               else setScene("briefing");
             }}
+            speak={speak}
+            isSpeaking={isSpeaking}
           />
         )}
         {scene === "final" && (
@@ -188,6 +212,8 @@ function LastCandidate() {
               setState(fresh);
               setScene("briefing");
             }}
+            speak={speak}
+            isSpeaking={isSpeaking}
           />
         )}
       </AnimatePresence>
@@ -301,11 +327,19 @@ function IntroScene({
   onBegin,
   hasSave,
   candidateName,
+  speak,
+  isSpeaking,
 }: {
   onBegin: () => void;
   hasSave: boolean;
   candidateName: string;
+  speak: (text: string) => void;
+  isSpeaking: boolean;
 }) {
+  useEffect(() => {
+    speak("Welcome, candidate. Seven chambers stand between you and the thirty who remain. Identify yourself, and let us begin.");
+  }, [speak]);
+
   return (
     <SceneWrap>
       <div className="grid w-full max-w-6xl grid-cols-1 items-center gap-8 md:grid-cols-2">
@@ -363,7 +397,7 @@ function IntroScene({
         >
           <div className="relative w-full max-w-md">
             <RuneRing />
-            <Guardian scale={1} />
+            <Guardian scale={1} speaking={isSpeaking} />
           </div>
         </motion.div>
       </div>
@@ -371,12 +405,23 @@ function IntroScene({
   );
 }
 
-function RegisterScene({ onComplete }: { onComplete: (name: string) => void }) {
+function RegisterScene({
+  onComplete,
+  speak,
+  isSpeaking,
+}: {
+  onComplete: (name: string) => void;
+  speak: (text: string) => void;
+  isSpeaking: boolean;
+}) {
   const [name, setName] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
+
   useEffect(() => {
+    speak("Identify yourself. Type the name you will be judged by. It will be etched into the seventh seal if you survive.");
     inputRef.current?.focus();
-  }, []);
+  }, [speak]);
+
   return (
     <SceneWrap>
       <div className="grid w-full max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-[1fr_360px]">
@@ -431,7 +476,7 @@ function RegisterScene({ onComplete }: { onComplete: (name: string) => void }) {
           className="mx-auto w-full max-w-xs"
         >
           <RuneRing small />
-          <Guardian scale={0.85} speaking />
+          <Guardian scale={0.85} speaking={isSpeaking} />
         </motion.div>
       </div>
     </SceneWrap>
@@ -441,11 +486,20 @@ function RegisterScene({ onComplete }: { onComplete: (name: string) => void }) {
 function BriefingScene({
   state,
   onEnter,
+  speak,
+  isSpeaking,
 }: {
   state: SaveState;
   onEnter: () => void;
+  speak: (text: string) => void;
+  isSpeaking: boolean;
 }) {
   const chamber = CHAMBERS[state.step];
+
+  useEffect(() => {
+    speak(`Chamber ${state.step + 1}. ${chamber.name}. The stone shifts, a new seal opens. Enter the chamber.`);
+  }, [speak, state.step, chamber.name]);
+
   return (
     <SceneWrap>
       <div className="grid w-full max-w-6xl grid-cols-1 items-center gap-10 md:grid-cols-[320px_1fr]">
@@ -456,7 +510,7 @@ function BriefingScene({
           className="mx-auto w-full max-w-xs"
         >
           <RuneRing small />
-          <Guardian scale={0.9} speaking />
+          <Guardian scale={0.9} speaking={isSpeaking} />
         </motion.div>
         <motion.div
           initial={{ x: 30, opacity: 0 }}
@@ -489,15 +543,29 @@ function BriefingScene({
 function ChamberScene({
   chamberIndex,
   onAnswer,
+  speak,
+  isSpeaking,
 }: {
   chamberIndex: number;
   onAnswer: (choice: number) => void;
+  speak: (text: string) => void;
+  isSpeaking: boolean;
 }) {
   const chamber = CHAMBERS[chamberIndex];
   const [hover, setHover] = useState<number | null>(null);
   const [locked, setLocked] = useState<number | null>(null);
   const [seconds, setSeconds] = useState(45);
   const [hintOpen, setHintOpen] = useState(false);
+
+  useEffect(() => {
+    speak(chamber.question);
+  }, [speak, chamber.question]);
+
+  useEffect(() => {
+    if (hintOpen) {
+      speak(chamber.hint);
+    }
+  }, [hintOpen, speak, chamber.hint]);
 
   useEffect(() => {
     if (locked !== null) return;
@@ -523,7 +591,7 @@ function ChamberScene({
           transition={{ duration: 0.8 }}
           className="mx-auto w-full max-w-[220px] md:max-w-none"
         >
-          <Guardian scale={0.75} speaking />
+          <Guardian scale={0.75} speaking={isSpeaking} />
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -556,21 +624,21 @@ function ChamberScene({
               return (
                 <li key={i}>
                   <button
-                    disabled={locked !== null}
-                    onMouseEnter={() => setHover(i)}
-                    onMouseLeave={() => setHover(null)}
-                    onClick={() => {
-                      if (locked !== null) return;
-                      setLocked(i);
-                      setTimeout(() => onAnswer(i), 650);
-                    }}
-                    className={`group relative flex w-full items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all ${
-                      isLocked
-                        ? "border-emerald-300 bg-emerald-500/20"
-                        : active
-                          ? "border-emerald-400/60 bg-emerald-500/10"
-                          : "border-emerald-500/20 bg-black/40 hover:border-emerald-400/60 hover:bg-emerald-500/10"
-                    }`}
+                     disabled={locked !== null}
+                     onMouseEnter={() => setHover(i)}
+                     onMouseLeave={() => setHover(null)}
+                     onClick={() => {
+                       if (locked !== null) return;
+                       setLocked(i);
+                       setTimeout(() => onAnswer(i), 650);
+                     }}
+                     className={`group relative flex w-full items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all ${
+                       isLocked
+                         ? "border-emerald-300 bg-emerald-500/20"
+                         : active
+                           ? "border-emerald-400/60 bg-emerald-500/10"
+                           : "border-emerald-500/20 bg-black/40 hover:border-emerald-400/60 hover:bg-emerald-500/10"
+                     }`}
                   >
                     <span
                       className={`flex h-9 w-9 items-center justify-center rounded-lg border font-mono text-sm ${
@@ -595,7 +663,7 @@ function ChamberScene({
           <div className="mt-6 flex items-center justify-between">
             <button
               onClick={() => setHintOpen((v) => !v)}
-              className="font-mono text-[10px] uppercase tracking-[0.3em] text-emerald-300/70 hover:text-emerald-200"
+              className="font-mono text-[10px] uppercase tracking-[0.3em] text-emerald-300/70 hover:text-emerald-200 cursor-pointer"
             >
               {hintOpen ? "▾ Guardian whispers" : "▸ Ask the Guardian"}
             </button>
@@ -626,14 +694,27 @@ function VerdictScene({
   chamberId,
   state,
   onContinue,
+  speak,
+  isSpeaking,
 }: {
   correct: boolean;
   chamberId: number;
   state: SaveState;
   onContinue: () => void;
+  speak: (text: string) => void;
+  isSpeaking: boolean;
 }) {
   const chamber = CHAMBERS.find((c) => c.id === chamberId)!;
   const done = state.step >= 7;
+
+  useEffect(() => {
+    if (correct) {
+      speak("You passed the trial. The seal opens.");
+    } else {
+      speak(`The chamber holds its silence. The path continues, but the ${chamber.name.toLowerCase()} will remain unfinished.`);
+    }
+  }, [speak, correct, chamber.name]);
+
   return (
     <SceneWrap>
       <div className="grid w-full max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-[320px_1fr]">
@@ -648,7 +729,7 @@ function VerdictScene({
               correct ? "bg-emerald-500/30" : "bg-red-500/25"
             }`}
           />
-          <Guardian scale={0.85} speaking />
+          <Guardian scale={0.85} speaking={isSpeaking} />
         </motion.div>
         <motion.div
           initial={{ opacity: 0, x: 30 }}
@@ -671,11 +752,8 @@ function VerdictScene({
               : `The Guardian does not turn away. The path continues, but the ${chamber.name.toLowerCase()} will remain unfinished.`}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
+            <ResultChip label="Passed" value={`${state.correct}/${state.attempted}`} />
             <ResultChip label="XP" value={state.xp} />
-            <ResultChip
-              label="Passed"
-              value={`${state.correct}/${state.attempted}`}
-            />
             <ResultChip label="Streak" value={state.streak} />
           </div>
           <div className="mt-8">
@@ -692,14 +770,27 @@ function VerdictScene({
 function FinalScene({
   state,
   onRestart,
+  speak,
+  isSpeaking,
 }: {
   state: SaveState;
   onRestart: () => void;
+  speak: (text: string) => void;
+  isSpeaking: boolean;
 }) {
   const passed = state.correct >= 5; // among the thirty
   const rank = passed
     ? Math.max(1, 31 - Math.min(30, state.correct * 5 + Math.floor(state.xp / 60)))
     : null;
+
+  useEffect(() => {
+    if (passed) {
+      speak(`You are one of the Thirty, ${state.name}. Your name is etched into the seventh seal at rank ${rank}. Return when the next signal comes.`);
+    } else {
+      speak(`You cleared ${state.correct} of seven trials. The Guardian holds your name in shadow. The chambers will reopen when you are ready.`);
+    }
+  }, [speak, passed, state.name, state.correct, rank]);
+
   return (
     <SceneWrap>
       <div className="grid w-full max-w-6xl grid-cols-1 items-center gap-10 md:grid-cols-2">
@@ -710,7 +801,7 @@ function FinalScene({
           className="mx-auto w-full max-w-md"
         >
           <RuneRing />
-          <Guardian scale={1} />
+          <Guardian scale={1} speaking={isSpeaking} />
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
