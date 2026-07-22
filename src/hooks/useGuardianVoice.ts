@@ -1,15 +1,16 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 
 export function useGuardianVoice() {
-  const [voiceEnabled, setVoiceEnabled] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("guardian-voice") === "true";
-    }
-    return false;
-  });
-
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("guardian-voice") === "true";
+      setVoiceEnabled(saved);
+    }
+  }, []);
 
   const toggleVoice = useCallback(() => {
     setVoiceEnabled((prev) => {

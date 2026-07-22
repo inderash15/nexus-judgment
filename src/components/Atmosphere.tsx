@@ -1,10 +1,22 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import chamberBg from "@/assets/chamber-bg.jpg";
+
+type Particle = {
+  id: number;
+  left: number;
+  top: number;
+  size: number;
+  delay: number;
+  duration: number;
+  opacity: number;
+};
 
 /** Ambient chamber backdrop with mist particles and vignette. */
 export function Atmosphere({ intensity = 1 }: { intensity?: number }) {
-  const particles = useMemo(
-    () =>
+  const [particles, setParticles] = useState<Particle[]>([]);
+
+  useEffect(() => {
+    setParticles(
       Array.from({ length: 34 }).map((_, i) => ({
         id: i,
         left: Math.random() * 100,
@@ -13,9 +25,9 @@ export function Atmosphere({ intensity = 1 }: { intensity?: number }) {
         delay: Math.random() * 8,
         duration: 8 + Math.random() * 10,
         opacity: 0.15 + Math.random() * 0.35,
-      })),
-    []
-  );
+      }))
+    );
+  }, []);
 
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-black">

@@ -2,6 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import guardianAsset from "@/assets/guardian-hero.png";
+import guardianApocalypse from "@/assets/guardian-apocalypse.png";
+import candidatesBattlefield from "@/assets/candidates-battlefield.png";
+import introVideo from "@/assets/Cosmic_guardian_with_green_energy_202607222222.mp4";
 import { Guardian } from "@/components/Guardian";
 import { Atmosphere } from "@/components/Atmosphere";
 import { CHAMBERS } from "@/lib/chambers";
@@ -33,6 +36,7 @@ export const Route = createFileRoute("/")({
 
 type Scene =
   | "boot"
+  | "cinematic"
   | "intro"
   | "register"
   | "briefing"
@@ -94,9 +98,6 @@ function LastCandidate() {
     setHydrated(true);
     const saved = loadState();
     if (saved) setState(saved);
-    // brief boot pulse before intro
-    const t = setTimeout(() => setScene("intro"), 900);
-    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -118,7 +119,22 @@ function LastCandidate() {
       </div>
 
       <AnimatePresence mode="wait">
-        {scene === "boot" && <BootScene key="boot" />}
+        {scene === "boot" && (
+          <BootScene
+            key="boot"
+            onComplete={() => setScene("cinematic")}
+            speak={speak}
+            voiceEnabled={voiceEnabled}
+            toggleVoice={toggleVoice}
+          />
+        )}
+        {scene === "cinematic" && (
+          <CinematicScene
+            key="cinematic"
+            onComplete={() => setScene("intro")}
+            speak={speak}
+          />
+        )}
         {scene === "intro" && (
           <IntroScene
             key="intro"
@@ -309,17 +325,250 @@ function SceneWrap({ children }: { children: React.ReactNode }) {
   );
 }
 
-function BootScene() {
+function BootScene({
+  onComplete,
+  speak,
+  voiceEnabled,
+  toggleVoice,
+}: {
+  onComplete: () => void;
+  speak: (text: string) => void;
+  voiceEnabled: boolean;
+  toggleVoice: () => void;
+}) {
+  const [stage, setStage] = useState<"click-to-start" | "loading" | "ready">("click-to-start");
+  const [logs, setLogs] = useState<string[]>([]);
+  const [progress, setProgress] = useState(0);
+
+  const startBoot = () => {
+    setStage("loading");
+    
+    // Automatically unmute/enable the devil narrator voice if it is currently muted
+    if (!voiceEnabled) {
+      toggleVoice();
+    }
+
+    // Small delay to allow speech engine initialization, then speak
+    setTimeout(() => {
+      speak("Establishing link with Sector 0 7. Decrypting seals. Standing by for selection.");
+    }, 100);
+    
+    const logTimeline = [
+      { delay: 300, text: "> CONNECTING TO SECTOR 07... CONNECTED" },
+      { delay: 800, text: "> SECURING ORBITAL DATA UPLINK... OK" },
+      { delay: 1400, text: "> BYPASSING MATRIX CIPHERS... UNLOCKED" },
+      { delay: 2000, text: "> RESONATING CHAMBER HORIZONS... STABLE" },
+      { delay: 2700, text: "> INTRODUCING GUARDIAN MEMORY BANK... ONLINE" },
+      { delay: 3400, text: "> INIT SECTOR 07 TRIAL SEED... SEED SECURE" },
+      { delay: 4000, text: "> INITIALIZATION COMPLETED. LAUNCHING CHANNELS..." },
+    ];
+
+    logTimeline.forEach((item) => {
+      setTimeout(() => {
+        setLogs((prev) => [...prev, item.text]);
+      }, item.delay);
+    });
+
+    const interval = setInterval(() => {
+      setProgress((p) => {
+        if (p >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return p + 2;
+      });
+    }, 80);
+
+    setTimeout(() => {
+      setStage("ready");
+      setTimeout(() => {
+        onComplete();
+      }, 800);
+    }, 4800);
+  };
+
   return (
     <SceneWrap>
-      <div className="text-center font-mono text-xs uppercase tracking-[0.5em] text-emerald-400/70">
-        <div className="mb-4 inline-flex h-8 w-8 items-center justify-center">
-          <span className="absolute h-8 w-8 animate-ping rounded-full bg-emerald-500/40" />
-          <span className="h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.9)]" />
-        </div>
-        <div>establishing signal…</div>
-      </div>
+      {stage === "click-to-start" ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center max-w-md mx-auto"
+        >
+          {/* Cyberpunk holographic circle */}
+          <div className="relative mx-auto mb-8 h-24 w-24 flex items-center justify-center">
+            <motion.div
+              className="absolute inset-0 rounded-full border border-dashed border-emerald-500/30"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.div
+              className="absolute inset-2 rounded-full border border-emerald-400/25"
+              animate={{ rotate: -360 }}
+              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            />
+            <div className="h-4 w-4 rounded-full bg-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.9)] animate-pulse" />
+          </div>
+
+          <h2 className="mb-2 font-serif text-3xl sm:text-4xl tracking-widest text-emerald-100">
+            THE LAST CANDIDATE
+          </h2>
+          <p className="mb-8 font-mono text-[10px] sm:text-xs text-emerald-400/70 tracking-[0.4em] uppercase">
+            Sector 07 // Selection Terminal
+          </p>
+          <button
+            onClick={startBoot}
+            className="group relative overflow-hidden rounded-xl border border-emerald-400/60 bg-gradient-to-b from-emerald-500/20 to-emerald-700/10 px-8 py-4 font-mono text-sm uppercase tracking-[0.3em] text-emerald-100 shadow-[0_0_30px_rgba(52,211,153,0.3)] hover:shadow-[0_0_50px_rgba(52,211,153,0.6)] hover:from-emerald-400/30 hover:to-emerald-600/20 transition cursor-pointer"
+          >
+            <span className="absolute inset-0 -z-0 bg-gradient-to-r from-transparent via-emerald-300/15 to-transparent opacity-0 transition group-hover:opacity-100" />
+            Initialize Terminal
+          </button>
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.05, filter: "brightness(2)" }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-lg rounded-2xl border border-emerald-500/20 bg-black/60 p-6 font-mono text-xs backdrop-blur-md shadow-[0_0_60px_rgba(16,185,129,0.15)] text-left"
+        >
+          <div className="flex items-center justify-between border-b border-emerald-500/20 pb-3 mb-4">
+            <span className="text-emerald-400/80 uppercase tracking-widest text-[10px] sm:text-xs">System Boot Sequence</span>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 animate-ping rounded-full bg-emerald-500" />
+              <span className="text-[10px] text-emerald-300">ONLINE</span>
+            </div>
+          </div>
+
+          <div className="h-44 overflow-y-auto space-y-2 text-emerald-300/80 text-[11px] sm:text-xs">
+            {logs.map((log, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {log}
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mt-6 border-t border-emerald-500/10 pt-4">
+            <div className="flex justify-between text-[10px] text-emerald-400/70 mb-1.5">
+              <span>DECRYPTING DATA CORE</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="h-1.5 w-full bg-emerald-950/70 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+                animate={{ width: `${progress}%` }}
+                transition={{ ease: "linear" }}
+              />
+            </div>
+          </div>
+        </motion.div>
+      )}
     </SceneWrap>
+  );
+}
+
+function CinematicScene({
+  onComplete,
+  speak,
+}: {
+  onComplete: () => void;
+  speak: (text: string) => void;
+}) {
+  const [subtitle, setSubtitle] = useState("");
+  const speakRef = useRef(speak);
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => {
+    speakRef.current = speak;
+    onCompleteRef.current = onComplete;
+  });
+
+  useEffect(() => {
+    const timelines = [
+      {
+        delay: 500,
+        text: "Ten thousand candidates stood before the gates.",
+        sub: "“Ten thousand candidates stood before the gates...”",
+      },
+      {
+        delay: 4500,
+        text: "Now only a few remain, facing the final trial.",
+        sub: "“...now only a few remain, facing the final trial.”",
+      },
+      {
+        delay: 8800,
+        text: "Enter the chambers. Face the Guardian. Only thirty will survive.",
+        sub: "“Enter the chambers. Face the Guardian. Only thirty will survive.”",
+      },
+    ];
+
+    const timeouts = timelines.flatMap((item) => [
+      setTimeout(() => {
+        speakRef.current(item.text);
+      }, item.delay),
+      setTimeout(() => {
+        setSubtitle(item.sub);
+      }, item.delay),
+    ]);
+
+    // Fallback automatic complete after 14 seconds in case video ended event doesn't trigger
+    const fallbackTimeout = setTimeout(() => {
+      onCompleteRef.current();
+    }, 14000);
+
+    return () => {
+      timeouts.forEach(clearTimeout);
+      clearTimeout(fallbackTimeout);
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black overflow-hidden select-none">
+      {/* Cinematic Widescreen Video Player */}
+      <video
+        src={introVideo}
+        autoPlay
+        muted
+        playsInline
+        onEnded={() => onCompleteRef.current()}
+        className="w-full h-full object-cover"
+      />
+      
+      {/* Cinematic Vignette Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black pointer-events-none opacity-85" />
+      <div className="absolute inset-0 bg-radial-gradient(circle_at_center,transparent,rgba(0,0,0,0.65)) pointer-events-none" />
+
+      {/* Subtitles Overlay */}
+      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 max-w-2xl w-full text-center px-4 pointer-events-none z-10">
+        <AnimatePresence mode="wait">
+          {subtitle && (
+            <motion.p
+              key={subtitle}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.5 }}
+              className="font-serif text-lg sm:text-2xl leading-relaxed text-emerald-50 italic drop-shadow-[0_4px_12px_rgba(0,0,0,0.95)]"
+            >
+              {subtitle}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Skip Button */}
+      <button
+        onClick={onComplete}
+        className="absolute top-4 right-4 z-50 flex items-center gap-1.5 rounded-xl border border-emerald-500/25 bg-black/40 px-3.5 py-2 font-mono text-[10px] uppercase tracking-wider text-emerald-300 backdrop-blur-md transition hover:border-emerald-400/50 hover:bg-emerald-500/10 cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+      >
+        Skip Intro
+      </button>
+    </div>
   );
 }
 
@@ -336,8 +585,13 @@ function IntroScene({
   speak: (text: string) => void;
   isSpeaking: boolean;
 }) {
+  const hasSpoken = useRef(false);
+
   useEffect(() => {
-    speak("Welcome, candidate. Seven chambers stand between you and the thirty who remain. Identify yourself, and let us begin.");
+    if (!hasSpoken.current) {
+      speak("Welcome, candidate. Seven chambers stand between you and the thirty who remain. Identify yourself, and let us begin.");
+      hasSpoken.current = true;
+    }
   }, [speak]);
 
   return (
@@ -416,9 +670,13 @@ function RegisterScene({
 }) {
   const [name, setName] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const hasSpoken = useRef(false);
 
   useEffect(() => {
-    speak("Identify yourself. Type the name you will be judged by. It will be etched into the seventh seal if you survive.");
+    if (!hasSpoken.current) {
+      speak("Identify yourself. Type the name you will be judged by. It will be etched into the seventh seal if you survive.");
+      hasSpoken.current = true;
+    }
     inputRef.current?.focus();
   }, [speak]);
 
@@ -496,8 +754,13 @@ function BriefingScene({
 }) {
   const chamber = CHAMBERS[state.step];
 
+  const hasSpoken = useRef(false);
+
   useEffect(() => {
-    speak(`Chamber ${state.step + 1}. ${chamber.name}. The stone shifts, a new seal opens. Enter the chamber.`);
+    if (!hasSpoken.current) {
+      speak(`Chamber ${state.step + 1}. ${chamber.name}. The stone shifts, a new seal opens. Enter the chamber.`);
+      hasSpoken.current = true;
+    }
   }, [speak, state.step, chamber.name]);
 
   return (
@@ -556,9 +819,13 @@ function ChamberScene({
   const [locked, setLocked] = useState<number | null>(null);
   const [seconds, setSeconds] = useState(45);
   const [hintOpen, setHintOpen] = useState(false);
+  const hasSpoken = useRef(false);
 
   useEffect(() => {
-    speak(chamber.question);
+    if (!hasSpoken.current) {
+      speak(chamber.question);
+      hasSpoken.current = true;
+    }
   }, [speak, chamber.question]);
 
   useEffect(() => {
@@ -707,11 +974,16 @@ function VerdictScene({
   const chamber = CHAMBERS.find((c) => c.id === chamberId)!;
   const done = state.step >= 7;
 
+  const hasSpoken = useRef(false);
+
   useEffect(() => {
-    if (correct) {
-      speak("You passed the trial. The seal opens.");
-    } else {
-      speak(`The chamber holds its silence. The path continues, but the ${chamber.name.toLowerCase()} will remain unfinished.`);
+    if (!hasSpoken.current) {
+      if (correct) {
+        speak("You passed the trial. The seal opens.");
+      } else {
+        speak(`The chamber holds its silence. The path continues, but the ${chamber.name.toLowerCase()} will remain unfinished.`);
+      }
+      hasSpoken.current = true;
     }
   }, [speak, correct, chamber.name]);
 
@@ -782,12 +1054,16 @@ function FinalScene({
   const rank = passed
     ? Math.max(1, 31 - Math.min(30, state.correct * 5 + Math.floor(state.xp / 60)))
     : null;
+  const hasSpoken = useRef(false);
 
   useEffect(() => {
-    if (passed) {
-      speak(`You are one of the Thirty, ${state.name}. Your name is etched into the seventh seal at rank ${rank}. Return when the next signal comes.`);
-    } else {
-      speak(`You cleared ${state.correct} of seven trials. The Guardian holds your name in shadow. The chambers will reopen when you are ready.`);
+    if (!hasSpoken.current) {
+      if (passed) {
+        speak(`You are one of the Thirty, ${state.name}. Your name is etched into the seventh seal at rank ${rank}. Return when the next signal comes.`);
+      } else {
+        speak(`You cleared ${state.correct} of seven trials. The Guardian holds your name in shadow. The chambers will reopen when you are ready.`);
+      }
+      hasSpoken.current = true;
     }
   }, [speak, passed, state.name, state.correct, rank]);
 
