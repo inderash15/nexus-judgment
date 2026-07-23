@@ -7,26 +7,31 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
+import { AlertTriangle } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
+    <div className="flex min-h-screen items-center justify-center bg-[#090D16] px-4 font-sans text-[#F3F4F6]">
+      <div className="max-w-md text-center space-y-6 bg-slate-900/50 p-8 rounded-2xl border border-slate-800 backdrop-blur-md">
+        <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto border border-amber-500/20 font-bold text-sm">
+          404
+        </div>
+        <div>
+          <h1 className="text-xl font-extrabold tracking-tight text-white">Resource Node Not Located</h1>
+          <p className="mt-2 text-xs text-slate-400 leading-relaxed">
+            The requested database path or client route does not exist. The administrator node has been notified of this query.
+          </p>
+        </div>
+        <div>
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-all hover:bg-indigo-700 shadow-md shadow-indigo-600/10"
           >
-            Go home
+            Return to Terminal
           </Link>
         </div>
       </div>
@@ -37,34 +42,46 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const errorId = useMemo(() => "ERR-NJ-" + Math.random().toString(36).substring(3, 9).toUpperCase(), []);
+
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
+    reportLovableError(error, { boundary: "tanstack_root_error_component", errorId });
+  }, [error, errorId]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+    <div className="flex min-h-screen items-center justify-center bg-[#090D16] px-4 font-sans text-[#F3F4F6]">
+      <div className="max-w-md text-center space-y-6 bg-slate-900/50 p-8 rounded-2xl border border-slate-800 backdrop-blur-md">
+        <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto border border-rose-500/20">
+          <AlertTriangle className="w-5 h-5" />
+        </div>
+        <div>
+          <h1 className="text-xl font-extrabold tracking-tight text-white">
+            System Operational Anomaly Detected
+          </h1>
+          <p className="mt-2 text-xs text-slate-450 leading-relaxed">
+            An unexpected error occurred while processing system modules. The system telemetry has logged this event, and automatic recovery protocols are standing by.
+          </p>
+          <div className="mt-4 inline-block px-3 py-1 rounded bg-slate-800/80 border border-slate-700 text-[10px] font-mono text-slate-400 font-bold">
+            TRACKING ID: {errorId}
+          </div>
+        </div>
+        <div className="flex flex-wrap justify-center gap-3">
           <button
             onClick={() => {
+              // Clear cached memory states on retry
+              localStorage.removeItem("guardian-voice");
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-all hover:bg-indigo-700 shadow-md shadow-indigo-600/10"
           >
-            Try again
+            Re-verify Node
           </button>
           <a
             href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-800 px-5 py-2.5 text-xs font-bold text-slate-300 transition-all hover:bg-slate-700"
           >
-            Go home
+            Return to Dashboard
           </a>
         </div>
       </div>

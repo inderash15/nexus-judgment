@@ -12,4 +12,12 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    assetsInclude: ["**/*.fbx", "**/*.mp4"],
+    resolve: {
+      alias: {
+        "punycode/": "punycode",
+      },
+    },
+  },
 });
