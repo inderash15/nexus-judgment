@@ -48,14 +48,8 @@ export const CHAMBERS: Chamber[] = [
     name: "Chamber of Code",
     title: "The Fourth Trial",
     sigil: "⌘",
-    question:
-      "Which of these will run in O(log n) time for a sorted array of length n?",
-    options: [
-      "Bubble sort",
-      "Binary search",
-      "Linear scan",
-      "Depth-first traversal",
-    ],
+    question: "Which of these will run in O(log n) time for a sorted array of length n?",
+    options: ["Bubble sort", "Binary search", "Linear scan", "Depth-first traversal"],
     answer: 1,
     hint: "Halving the search space each step.",
   },
@@ -66,12 +60,7 @@ export const CHAMBERS: Chamber[] = [
     sigil: "◉",
     question:
       "In machine sight, which technique lets a model attend to any position in a sequence in a single step?",
-    options: [
-      "Recurrent gating",
-      "Convolutional stride",
-      "Self-attention",
-      "Pooling",
-    ],
+    options: ["Recurrent gating", "Convolutional stride", "Self-attention", "Pooling"],
     answer: 2,
     hint: "It powers the modern transformer.",
   },

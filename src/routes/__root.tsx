@@ -11,6 +11,8 @@ import { useEffect, useMemo, type ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 
 import appCss from "../styles.css?url";
+import { ThemeProvider } from "../components/ThemeProvider";
+import { RotatePrompt } from "../components/RotatePrompt";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -21,9 +23,12 @@ function NotFoundComponent() {
           404
         </div>
         <div>
-          <h1 className="text-xl font-extrabold tracking-tight text-white">Resource Node Not Located</h1>
+          <h1 className="text-xl font-extrabold tracking-tight text-white">
+            Resource Node Not Located
+          </h1>
           <p className="mt-2 text-xs text-slate-400 leading-relaxed">
-            The requested database path or client route does not exist. The administrator node has been notified of this query.
+            The requested database path or client route does not exist. The administrator node has
+            been notified of this query.
           </p>
         </div>
         <div>
@@ -42,7 +47,10 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  const errorId = useMemo(() => "ERR-NJ-" + Math.random().toString(36).substring(3, 9).toUpperCase(), []);
+  const errorId = useMemo(
+    () => "ERR-NJ-" + Math.random().toString(36).substring(3, 9).toUpperCase(),
+    [],
+  );
 
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component", errorId });
@@ -59,7 +67,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             System Operational Anomaly Detected
           </h1>
           <p className="mt-2 text-xs text-slate-450 leading-relaxed">
-            An unexpected error occurred while processing system modules. The system telemetry has logged this event, and automatic recovery protocols are standing by.
+            An unexpected error occurred while processing system modules. The system telemetry has
+            logged this event, and automatic recovery protocols are standing by.
           </p>
           <div className="mt-4 inline-block px-3 py-1 rounded bg-slate-800/80 border border-slate-700 text-[10px] font-mono text-slate-400 font-bold">
             TRACKING ID: {errorId}
@@ -94,14 +103,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Nexus Judgment — Guardian of Shadows" },
+      {
+        name: "description",
+        content: "A gamified word puzzle assessment tool themed as a Shadow Realm trial.",
+      },
+      { name: "author", content: "NexusPro" },
+      { property: "og:title", content: "Nexus Judgment — Guardian of Shadows" },
+      {
+        property: "og:description",
+        content:
+          "Solve the hidden words. Escape the Shadow Realm. One attempt. Zero margin for error.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -126,7 +141,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -143,8 +158,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <ThemeProvider>
+        <RotatePrompt />
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

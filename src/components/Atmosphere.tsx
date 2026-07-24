@@ -34,12 +34,12 @@ export function Atmosphere({
         delay: Math.random() * 8,
         duration: 9 + Math.random() * 11,
         opacity: 0.12 + Math.random() * 0.3,
-      }))
+      })),
     );
   }, []);
 
   return (
-    <div 
+    <div
       className="pointer-events-none fixed inset-0 overflow-hidden bg-black"
       style={{ zIndex: -10 }}
     >
@@ -49,7 +49,7 @@ export function Atmosphere({
         style={{
           backgroundImage: `url(${chamberBg})`,
           opacity: 0.35 * intensity,
-          zIndex: -30
+          zIndex: -30,
         }}
       />
 
@@ -77,24 +77,23 @@ export function Atmosphere({
         className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
         style={{
           opacity: (speaking ? 0.75 : 0.6) * intensity,
-          filter: speaking ? "saturate(1.2) contrast(1.15) brightness(1.05)" : "saturate(1.05) contrast(1.05)",
+          filter: speaking
+            ? "saturate(1.2) contrast(1.15) brightness(1.05)"
+            : "saturate(1.05) contrast(1.05)",
           transition: "opacity 1.5s ease, filter 1.5s ease",
-          zIndex: -30
+          zIndex: -30,
         }}
       >
         <source src={bgVideo} type="video/mp4" />
       </video>
 
       {/* LAYER 2: Dark cinematic overlay (45% opacity) */}
-      <div 
-        className="absolute inset-0 bg-black/45 pointer-events-none"
-        style={{ zIndex: -25 }}
-      />
+      <div className="absolute inset-0 bg-black/45 pointer-events-none" style={{ zIndex: -25 }} />
       <div
         className="absolute inset-0"
         style={{
           background: "radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.85) 100%)",
-          zIndex: -25
+          zIndex: -25,
         }}
       />
 
@@ -106,16 +105,17 @@ export function Atmosphere({
             ? "radial-gradient(ellipse at 50% 40%, rgba(16,185,129,0.35), transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.85), transparent 75%)"
             : "radial-gradient(ellipse at 50% 40%, rgba(6,78,59,0.25), transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.85), transparent 75%)",
           transition: "background 1.5s ease",
-          zIndex: -20
+          zIndex: -20,
         }}
       />
 
       {/* LAYER 3: Fog / Smoke Overlay */}
-      <div 
+      <div
         className="absolute inset-0 mix-blend-screen opacity-35"
         style={{
-          background: "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.8) 100%)",
-          zIndex: -20
+          background:
+            "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.8) 100%)",
+          zIndex: -20,
         }}
       />
 
@@ -133,8 +133,9 @@ export function Atmosphere({
             boxShadow: speaking ? "0 0 10px rgba(52,211,153,0.75)" : "none",
             animationDelay: `${p.delay}s`,
             animationDuration: `${speaking ? p.duration * 0.8 : p.duration}s`,
-            transition: "width 1.2s ease, height 1.2s ease, opacity 1.2s ease, box-shadow 1.2s ease",
-            zIndex: -10
+            transition:
+              "width 1.2s ease, height 1.2s ease, opacity 1.2s ease, box-shadow 1.2s ease",
+            zIndex: -10,
           }}
         />
       ))}
@@ -143,8 +144,9 @@ export function Atmosphere({
       <div
         className="absolute inset-0 opacity-[0.04] mix-blend-overlay"
         style={{
-          backgroundImage: "repeating-linear-gradient(0deg, rgba(255,255,255,0.6) 0px, rgba(255,255,255,0.6) 1px, transparent 1px, transparent 3px)",
-          zIndex: -10
+          backgroundImage:
+            "repeating-linear-gradient(0deg, rgba(255,255,255,0.6) 0px, rgba(255,255,255,0.6) 1px, transparent 1px, transparent 3px)",
+          zIndex: -10,
         }}
       />
     </div>

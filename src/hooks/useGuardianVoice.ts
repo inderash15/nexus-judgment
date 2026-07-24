@@ -26,7 +26,7 @@ class AmbientSoundscape {
 
     try {
       this.ctx = new AudioContextClass();
-      
+
       // Load Noise AudioWorklet inline to bypass file loading limits
       if (!this.workletLoaded) {
         const workletCode = `
@@ -142,7 +142,7 @@ export function useGuardianVoice() {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  
+
   // Track active speech chains to cancel old callbacks
   const activeChainIdRef = useRef<number>(0);
   const ambienceRef = useRef<AmbientSoundscape | null>(null);
@@ -221,7 +221,7 @@ export function useGuardianVoice() {
 
       // Split text on sentence endings, commas and ellipses keeping the delimiters
       const tokens = cleanText.split(/(\.\.\.|[.,!?])/g);
-      
+
       setIsSpeaking(true);
       ambienceRef.current?.duck(true); // Duck background ambient bass
 
@@ -261,7 +261,7 @@ export function useGuardianVoice() {
 
             const voices = window.speechSynthesis.getVoices();
             const englishVoices = voices.filter((v) => v.lang.startsWith("en"));
-            
+
             // Prefer: Microsoft David, Google US English Male, Microsoft Mark, generic male
             const chosenVoice =
               englishVoices.find(
@@ -269,7 +269,7 @@ export function useGuardianVoice() {
                   v.name.toLowerCase().includes("david") ||
                   v.name.toLowerCase().includes("google us english male") ||
                   v.name.toLowerCase().includes("mark") ||
-                  v.name.toLowerCase().includes("male")
+                  v.name.toLowerCase().includes("male"),
               ) || englishVoices[0];
 
             if (chosenVoice) {
@@ -284,16 +284,16 @@ export function useGuardianVoice() {
             // Apply emotional voice profiles
             switch (emotion) {
               case "warning":
-                pitch = 0.40;
-                rate = 0.70;
+                pitch = 0.4;
+                rate = 0.7;
                 break;
               case "wrong":
                 pitch = 0.38;
                 rate = 0.65;
                 break;
               case "success":
-                pitch = 0.50;
-                rate = 0.80;
+                pitch = 0.5;
+                rate = 0.8;
                 break;
               case "final":
                 pitch = 0.45;
@@ -324,7 +324,7 @@ export function useGuardianVoice() {
         ambienceRef.current?.duck(false);
       }
     },
-    [voiceEnabled]
+    [voiceEnabled],
   );
 
   const stop = useCallback(() => {

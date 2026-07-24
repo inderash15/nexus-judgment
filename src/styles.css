@@ -147,14 +147,23 @@
   }
 }
 
-@font-face { font-family: "placeholder"; src: local("Inter"); }
+@font-face {
+  font-family: "placeholder";
+  src: local("Inter");
+}
 
 @keyframes float {
-  0%, 100% { transform: translate(0, 0); opacity: var(--o, 0.4); }
-  50% { transform: translate(-8px, -22px); opacity: 0.7; }
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: var(--o, 0.4);
+  }
+  50% {
+    transform: translate(-8px, -22px);
+    opacity: 0.7;
+  }
 }
 
 @utility animate-float {
   animation: float 10s ease-in-out infinite;
 }
-
