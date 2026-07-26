@@ -6,10 +6,25 @@ export function RotatePrompt() {
 
   useEffect(() => {
     const check = () => {
-      setShow(false);
+      // Check if the device is likely a mobile phone in portrait mode
+      const isPortrait = window.innerHeight > window.innerWidth;
+      const isMobile = window.innerWidth < 768 || window.innerHeight < 768;
+      
+      if (isPortrait && isMobile) {
+        setShow(true);
+      } else {
+        setShow(false);
+      }
     };
 
     check();
+    window.addEventListener("resize", check);
+    window.addEventListener("orientationchange", check);
+
+    return () => {
+      window.removeEventListener("resize", check);
+      window.removeEventListener("orientationchange", check);
+    };
   }, []);
 
   return (

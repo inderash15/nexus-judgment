@@ -2,8 +2,10 @@ import { DBStudent, DBQuestion } from "@/lib/db";
 
 export type Scene =
   | "boot"
+  | "mission-dossier"
   | "cinematic"
   | "intro"
+  | "meet-the-agents"
   | "register"
   | "briefing"
   | "chamber"

@@ -8,8 +8,10 @@ import { registerOrResumeStudent, submitGuess, adminGetDashboardData } from "@/l
 import { DBStudent, DBQuestion } from "@/lib/db";
 import {
   BootScene,
+  MissionDossierScene,
   CinematicScene,
   IntroScene,
+  MeetAgentsScene,
   RegisterScene,
   BriefingScene,
   ChamberScene,
@@ -268,16 +270,18 @@ function LastCandidate() {
         )}
       </AnimatePresence>
 
-      <TopHud
-        student={student}
-        scene={scene}
-        onOpenLeaderboard={() => setShowLeaderboard(true)}
-        onOpenProfile={() => setShowProfile(true)}
-        voiceEnabled={voiceEnabled}
-        onToggleVoice={toggleVoice}
-      />
+      {!["boot", "mission-dossier", "cinematic", "intro", "meet-the-agents"].includes(scene) && (
+        <TopHud
+          student={student}
+          scene={scene}
+          onOpenLeaderboard={() => setShowLeaderboard(true)}
+          onOpenProfile={() => setShowProfile(true)}
+          voiceEnabled={voiceEnabled}
+          onToggleVoice={toggleVoice}
+        />
+      )}
 
-      {!["boot", "cinematic"].includes(scene) && (
+      {!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) && (
         <div className="fixed right-0 bottom-0 w-[35%] sm:w-[30%] md:w-[45%] h-[30vh] sm:h-[40vh] md:h-[75vh] pointer-events-none z-0 flex items-end justify-center select-none opacity-25 sm:opacity-40 md:opacity-100 transition-opacity duration-700">
           <Guardian
             scale={0.3}
@@ -304,7 +308,7 @@ function LastCandidate() {
       )}
 
       <div
-        className={`relative z-20 w-full min-h-[100dvh] flex items-center py-8 md:py-0 origin-top md:origin-center ${!["boot", "cinematic"].includes(scene)
+        className={`relative z-20 w-full min-h-[100dvh] flex items-center py-8 md:py-0 origin-top md:origin-center ${!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene)
           ? "w-full sm:w-[65%] md:w-[45%] lg:w-[40%] justify-start pl-4 sm:pl-8 md:pl-12 lg:pl-16"
           : "justify-center px-4"
           }`}
@@ -313,10 +317,18 @@ function LastCandidate() {
           {scene === "boot" && (
             <BootScene
               key="boot"
-              onComplete={() => setScene("cinematic")}
+              onComplete={() => setScene("mission-dossier")}
               speak={speak}
               voiceEnabled={voiceEnabled}
               toggleVoice={toggleVoice}
+            />
+          )}
+          {scene === "mission-dossier" && (
+            <MissionDossierScene
+              key="mission-dossier"
+              onComplete={() => setScene("cinematic")}
+              speak={speak}
+              isSpeaking={isSpeaking}
             />
           )}
           {scene === "cinematic" && (
@@ -325,9 +337,17 @@ function LastCandidate() {
           {scene === "intro" && (
             <IntroScene
               key="intro"
-              onBegin={() => setScene(student ? "briefing" : "register")}
+              onBegin={() => setScene(student ? "briefing" : "meet-the-agents")}
               hasSave={Boolean(student)}
               candidateName={student?.name || ""}
+              speak={speak}
+              isSpeaking={isSpeaking}
+            />
+          )}
+          {scene === "meet-the-agents" && (
+            <MeetAgentsScene
+              key="meet-the-agents"
+              onComplete={() => setScene("register")}
               speak={speak}
               isSpeaking={isSpeaking}
             />
