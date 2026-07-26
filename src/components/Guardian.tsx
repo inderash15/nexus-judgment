@@ -150,7 +150,7 @@ export function Guardian({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-[580px] md:h-[760px] flex items-center justify-center select-none overflow-visible ${className}`}
+      className={`relative w-full h-[350px] sm:h-[480px] md:h-[580px] lg:h-[760px] flex items-center justify-center select-none overflow-visible ${className}`}
     >
       {/* Background glow effects with reverse parallax depth */}
       {glow && (
@@ -275,7 +275,7 @@ export function Guardian({
               src={activeImage}
               alt="The Guardian"
               draggable={false}
-              className={`relative mx-auto max-h-[520px] md:max-h-[690px] object-contain transition-all duration-500 ${
+              className={`relative mx-auto max-h-[300px] sm:max-h-[420px] md:max-h-[520px] lg:max-h-[690px] object-contain transition-all duration-500 ${
                 isApocalypse
                   ? "drop-shadow-[0_0_80px_rgba(239,68,68,0.7)] filter saturate-[1.15] brightness-[1.08] contrast-[1.05]"
                   : "drop-shadow-[0_0_80px_rgba(16,185,129,0.55)] filter saturate-[1.1] brightness-[1.05]"

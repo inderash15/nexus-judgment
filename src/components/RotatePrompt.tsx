@@ -6,21 +6,10 @@ export function RotatePrompt() {
 
   useEffect(() => {
     const check = () => {
-      const isPhone = window.innerWidth < 640;
-      const isPortrait = window.matchMedia("(orientation: portrait)").matches;
-      setShow(isPhone && isPortrait);
+      setShow(false);
     };
 
     check();
-
-    window.addEventListener("resize", check);
-    const mql = window.matchMedia("(orientation: portrait)");
-    mql.addEventListener("change", check);
-
-    return () => {
-      window.removeEventListener("resize", check);
-      mql.removeEventListener("change", check);
-    };
   }, []);
 
   return (

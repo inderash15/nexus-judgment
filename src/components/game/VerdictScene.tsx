@@ -31,12 +31,12 @@ export function VerdictScene({
       <motion.div
         initial={{ opacity: 0, x: 30 }}
         animate={{ opacity: 1, x: 0 }}
-        className="w-full max-w-md space-y-4 text-left"
+        className="w-full max-w-md space-y-3 sm:space-y-4 text-left"
       >
         <div className="font-mono text-[10px] uppercase tracking-[0.5em] text-emerald-400">
           Seal Solved
         </div>
-        <h2 className="font-serif text-3xl leading-tight text-emerald-100 sm:text-5xl">
+        <h2 className="font-serif text-2xl sm:text-3xl md:text-5xl leading-tight text-emerald-100">
           You solved the code.
         </h2>
         <p className="text-emerald-100/70 leading-relaxed">
@@ -44,18 +44,18 @@ export function VerdictScene({
           Sector 07 chambers.
         </p>
 
-        <div className="flex gap-4 pt-2">
-          <div className="bg-black/60 border border-emerald-500/20 rounded-xl px-4 py-2 font-mono text-center">
-            <div className="text-[9px] uppercase tracking-wider text-emerald-400/60">
+        <div className="flex gap-3 sm:gap-4 pt-2">
+          <div className="bg-black/60 border border-emerald-500/20 rounded-xl px-3 sm:px-4 py-2 font-mono text-center flex-1">
+            <div className="text-[8px] sm:text-[9px] uppercase tracking-wider text-emerald-400/60">
               Current XP
             </div>
-            <div className="text-lg font-bold text-emerald-100">{student.score} XP</div>
+            <div className="text-base sm:text-lg font-bold text-emerald-100">{student.score} XP</div>
           </div>
-          <div className="bg-black/60 border border-emerald-500/20 rounded-xl px-4 py-2 font-mono text-center">
-            <div className="text-[9px] uppercase tracking-wider text-emerald-400/60">
+          <div className="bg-black/60 border border-emerald-500/20 rounded-xl px-3 sm:px-4 py-2 font-mono text-center flex-1">
+            <div className="text-[8px] sm:text-[9px] uppercase tracking-wider text-emerald-400/60">
               Level Finished
             </div>
-            <div className="text-lg font-bold text-emerald-100">{student.levelsCompleted} / 7</div>
+            <div className="text-base sm:text-lg font-bold text-emerald-100">{student.levelsCompleted} / 7</div>
           </div>
         </div>
 

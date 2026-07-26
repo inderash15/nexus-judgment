@@ -28,8 +28,8 @@ export function QuestionsTab({
 }: QuestionsTabProps) {
   return (
     <div className="space-y-6 flex-1 animate-in fade-in duration-300">
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-80">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
+        <div className="relative w-full sm:w-80">
           <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
           <input
             type="text"
@@ -40,7 +40,7 @@ export function QuestionsTab({
           />
         </div>
 
-        <div className="flex gap-2.5 w-full md:w-auto">
+        <div className="flex flex-wrap gap-2 sm:gap-2.5 w-full sm:w-auto">
           <select
             value={questionCatFilter}
             onChange={(e) => setQuestionCatFilter(e.target.value)}
@@ -70,7 +70,7 @@ export function QuestionsTab({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         {filteredQuestions.map((q) => (
           <div
             key={q.id}

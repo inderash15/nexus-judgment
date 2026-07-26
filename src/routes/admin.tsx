@@ -346,8 +346,8 @@ function AdminDashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-[#E2F0ED] via-[#E6E6FA] to-[#FFE4E1] p-6 font-sans flex items-center justify-center">
-        <div className="w-full max-w-md bg-white/30 backdrop-blur-2xl border border-white/50 shadow-2xl rounded-3xl p-8 space-y-6 text-slate-805">
+      <div className="min-h-screen w-full bg-gradient-to-br from-[#E2F0ED] via-[#E6E6FA] to-[#FFE4E1] p-4 sm:p-6 font-sans flex items-center justify-center">
+        <div className="w-full max-w-md bg-white/30 backdrop-blur-2xl border border-white/50 shadow-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 space-y-5 sm:space-y-6 text-slate-805">
           <div className="w-12 h-12 rounded-full bg-slate-950 text-white flex items-center justify-center mx-auto shadow-lg shadow-black/10 border border-white/20">
             <Lock className="w-5 h-5" />
           </div>
@@ -404,8 +404,8 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E2F0ED] via-[#E6E6FA] to-[#FFE4E1] p-6 md:p-10 font-sans flex items-center justify-center">
-      <div className="w-full max-w-7xl min-h-[85vh] bg-white/35 backdrop-blur-2xl border border-white/60 shadow-2xl rounded-[32px] overflow-hidden flex flex-col md:flex-row">
+    <div className="min-h-screen bg-gradient-to-br from-[#E2F0ED] via-[#E6E6FA] to-[#FFE4E1] p-3 sm:p-4 md:p-6 lg:p-10 font-sans flex items-center justify-center">
+      <div className="w-full max-w-7xl min-h-[85vh] bg-white/35 backdrop-blur-2xl border border-white/60 shadow-2xl rounded-2xl sm:rounded-[32px] overflow-hidden flex flex-col md:flex-row">
         {/* Mobile overlay backdrop */}
         {sidebarOpen && (
           <div
@@ -480,9 +480,9 @@ function AdminDashboard() {
           </div>
         </aside>
 
-        <main className="flex-1 p-6 md:p-8 flex flex-col justify-between overflow-x-hidden">
-          <header className="flex justify-between items-center mb-8">
-            <div className="flex items-center gap-3">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 flex flex-col justify-between overflow-x-hidden">
+          <header className="flex justify-between items-center mb-6 sm:mb-8">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="md:hidden p-2 rounded-xl bg-white/70 border border-slate-200 hover:bg-white text-slate-600 shadow-sm transition-all"
@@ -493,7 +493,7 @@ function AdminDashboard() {
                 <p className="text-[11px] font-extrabold text-teal-800 tracking-wider">
                   Welcome back, Admin 👋
                 </p>
-                <h2 className="text-2xl font-extrabold text-slate-800 capitalize leading-tight">
+                <h2 className="text-lg sm:text-2xl font-extrabold text-slate-800 capitalize leading-tight">
                   {activeTab}
                 </h2>
               </div>

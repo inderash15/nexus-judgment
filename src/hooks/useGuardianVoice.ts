@@ -146,6 +146,8 @@ export function useGuardianVoice() {
   // Track active speech chains to cancel old callbacks
   const activeChainIdRef = useRef<number>(0);
   const ambienceRef = useRef<AmbientSoundscape | null>(null);
+  // Ref to always read latest voiceEnabled inside async callbacks
+  const voiceEnabledRef = useRef(false);
 
   // Initialize ambience instance
   if (!ambienceRef.current && typeof window !== "undefined") {
@@ -156,6 +158,7 @@ export function useGuardianVoice() {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("guardian-voice") === "true";
       setVoiceEnabled(saved);
+      voiceEnabledRef.current = saved;
     }
   }, []);
 
@@ -189,6 +192,7 @@ export function useGuardianVoice() {
   const toggleVoice = useCallback(() => {
     setVoiceEnabled((prev) => {
       const next = !prev;
+      voiceEnabledRef.current = next;
       localStorage.setItem("guardian-voice", String(next));
       if (!next && typeof window !== "undefined" && "speechSynthesis" in window) {
         activeChainIdRef.current += 1; // cancel current chain
@@ -210,7 +214,8 @@ export function useGuardianVoice() {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
 
-      if (!voiceEnabled) return;
+      // Use ref to always get latest voiceEnabled state (avoids stale closure)
+      if (!voiceEnabledRef.current) return;
 
       // Clean special characters
       const cleanText = text
@@ -324,7 +329,7 @@ export function useGuardianVoice() {
         ambienceRef.current?.duck(false);
       }
     },
-    [voiceEnabled],
+    [],
   );
 
   const stop = useCallback(() => {

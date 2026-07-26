@@ -40,11 +40,11 @@ export function GameOverScene({
       {/* Background backing glow for the info panel to make it pop */}
       <div className="absolute inset-0 pointer-events-none -z-10 bg-[radial-gradient(circle_at_20%_40%,rgba(239,68,68,0.12),transparent_50%)]" />
 
-      <div className="w-full max-w-lg bg-[#0a0b0e]/90 backdrop-blur-[24px] border border-red-500/40 p-8 rounded-[24px] space-y-7 text-left shadow-[0_30px_80px_rgba(239,68,68,0.25)] shadow-[inset_0_0_30px_rgba(239,68,68,0.08)] animate-in fade-in duration-500">
+      <div className="w-full max-w-lg bg-[#0a0b0e]/90 backdrop-blur-[24px] border border-red-500/40 p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[24px] space-y-5 sm:space-y-7 text-left shadow-[0_30px_80px_rgba(239,68,68,0.25)] shadow-[inset_0_0_30px_rgba(239,68,68,0.08)] animate-in fade-in duration-500">
         <div className="font-mono text-xs text-red-400 font-black uppercase tracking-[0.4em] drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]">
           disqualified
         </div>
-        <h2 className="font-serif text-4xl sm:text-5xl text-red-500 font-black uppercase tracking-wider drop-shadow-[0_0_15px_rgba(239,68,68,0.85)] animate-pulse">
+        <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl text-red-500 font-black uppercase tracking-wider drop-shadow-[0_0_15px_rgba(239,68,68,0.85)] animate-pulse">
           YOU HAVE BEEN ELIMINATED
         </h2>
         <p className="text-zinc-100 text-sm leading-relaxed font-bold">
@@ -53,7 +53,7 @@ export function GameOverScene({
         </p>
 
         {/* Premium Glass Panel Log */}
-        <div className="bg-[#121319]/80 backdrop-blur-md border border-red-500/35 rounded-2xl p-5 font-mono text-left w-full space-y-3.5 shadow-[inset_0_0_20px_rgba(239,68,68,0.1)]">
+        <div className="bg-[#121319]/80 backdrop-blur-md border border-red-500/35 rounded-xl sm:rounded-2xl p-4 sm:p-5 font-mono text-left w-full space-y-3 sm:space-y-3.5 shadow-[inset_0_0_20px_rgba(239,68,68,0.1)]">
           <div className="text-xs text-red-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5 border-b border-red-900/30 pb-2">
             <AlertOctagon className="w-4 h-4 text-red-400 animate-pulse" />
             <span>Elimination Diagnostic Log</span>
@@ -106,7 +106,7 @@ export function GameOverScene({
 
         <InlineLeaderboard currentEmail={student.email} />
 
-        <div className="flex gap-4 pt-2 w-full">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 w-full">
           <button
             onClick={onTryAgain}
             className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white rounded-xl text-xs font-mono uppercase tracking-[0.2em] font-extrabold shadow-[0_0_15px_rgba(16,185,129,0.35)] transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"

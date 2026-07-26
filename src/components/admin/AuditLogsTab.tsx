@@ -8,8 +8,9 @@ export function AuditLogsTab({ securityLogs }: AuditLogsTabProps) {
   return (
     <div className="space-y-6 flex-1 animate-in fade-in duration-300">
       <div className="bg-white/80 border border-white/50 shadow-sm rounded-2xl overflow-hidden">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
             <tr className="text-slate-400 font-bold border-b border-slate-100 bg-slate-50/20">
               <th className="p-4">Timestamp</th>
               <th className="p-4">Action</th>
@@ -44,6 +45,7 @@ export function AuditLogsTab({ securityLogs }: AuditLogsTabProps) {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

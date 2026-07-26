@@ -39,10 +39,10 @@ export function RegisterScene({
         <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.5em] text-emerald-400/80">
           Acknowledge Identity
         </div>
-        <h2 className="font-serif text-3xl leading-tight text-emerald-50 sm:text-4xl">
+        <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl leading-tight text-emerald-50">
           Input Credentials.
         </h2>
-        <p className="mt-3 text-sm text-emerald-100/60">
+        <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-emerald-100/60">
           Your name, official email, and department will bind this single attempt to the global
           ledger. Retakes are strictly locked.
         </p>

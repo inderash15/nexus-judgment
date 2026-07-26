@@ -32,11 +32,11 @@ export function FinalScene({
 
   return (
     <SceneWrap>
-      <div className="w-full max-w-lg bg-black/75 border border-emerald-950/40 backdrop-blur-md p-6 sm:p-8 rounded-3xl space-y-6 text-left shadow-[0_20px_50px_rgba(16,185,129,0.15)] animate-in fade-in duration-500">
+      <div className="w-full max-w-lg bg-black/75 border border-emerald-950/40 backdrop-blur-md p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl space-y-4 sm:space-y-6 text-left shadow-[0_20px_50px_rgba(16,185,129,0.15)] animate-in fade-in duration-500">
         <div className="font-mono text-xs text-emerald-400 font-extrabold uppercase tracking-[0.4em] drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]">
           Trial Complete
         </div>
-        <h2 className="font-serif text-4xl sm:text-5xl text-emerald-100 font-bold uppercase drop-shadow-[0_0_12px_rgba(52,211,153,0.5)]">
+        <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl text-emerald-100 font-bold uppercase drop-shadow-[0_0_12px_rgba(52,211,153,0.5)]">
           Judgment Rendered
         </h2>
         <p className="text-zinc-300 text-sm leading-relaxed">
@@ -44,7 +44,7 @@ export function FinalScene({
           Retesting or resetting questions is disabled.
         </p>
 
-        <div className="grid grid-cols-3 gap-3 w-full pt-2 font-mono">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 w-full pt-2 font-mono">
           <div className="bg-black/70 border border-emerald-500/25 rounded-xl p-3">
             <div className="text-[9px] uppercase tracking-wider text-emerald-400/60">
               Total Score
@@ -69,7 +69,7 @@ export function FinalScene({
 
         <InlineLeaderboard currentEmail={student.email} />
 
-        <div className="flex gap-4 pt-4 w-full">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 w-full">
           <button
             onClick={onRestart}
             className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white rounded-xl text-xs font-mono uppercase tracking-[0.2em] font-extrabold shadow-[0_0_15px_rgba(16,185,129,0.35)] transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"

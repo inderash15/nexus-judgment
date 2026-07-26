@@ -7,7 +7,7 @@ type LiveRoomTabProps = {
 export function LiveRoomTab({ students }: LiveRoomTabProps) {
   return (
     <div className="space-y-6 flex-1 animate-in fade-in duration-300">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {students.filter((s) => s.status === "Active").length === 0 ? (
           <div className="col-span-full py-16 text-center text-slate-400 border border-dashed border-slate-350 rounded-2xl">
             No active student trial sessions currently running.

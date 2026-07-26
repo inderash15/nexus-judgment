@@ -38,8 +38,8 @@ export function CandidatesTab({
 }: CandidatesTabProps) {
   return (
     <div className="space-y-6 flex-1 animate-in fade-in duration-300">
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-80">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
+        <div className="relative w-full sm:w-80">
           <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
           <input
             type="text"
@@ -53,7 +53,7 @@ export function CandidatesTab({
           />
         </div>
 
-        <div className="flex gap-2.5 w-full md:w-auto">
+        <div className="flex gap-2 sm:gap-2.5 w-full sm:w-auto">
           <select
             value={studentDeptFilter}
             onChange={(e) => {

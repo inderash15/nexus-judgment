@@ -17,7 +17,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#090D16] px-4 font-sans text-[#F3F4F6]">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-[#090D16] px-4 font-sans text-[#F3F4F6]">
       <div className="max-w-md text-center space-y-6 bg-slate-900/50 p-8 rounded-2xl border border-slate-800 backdrop-blur-md">
         <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto border border-amber-500/20 font-bold text-sm">
           404
@@ -57,7 +57,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error, errorId]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#090D16] px-4 font-sans text-[#F3F4F6]">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-[#090D16] px-4 font-sans text-[#F3F4F6]">
       <div className="max-w-md text-center space-y-6 bg-slate-900/50 p-8 rounded-2xl border border-slate-800 backdrop-blur-md">
         <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto border border-rose-500/20">
           <AlertTriangle className="w-5 h-5" />

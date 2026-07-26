@@ -21,6 +21,7 @@ import {
   ProfileModal,
 } from "@/components/game";
 import type { Scene } from "@/components/game";
+import bgImage from "@/assets/background.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -196,13 +197,27 @@ function LastCandidate() {
 
   return (
     <main
-      className={`relative min-h-screen w-full overflow-hidden text-emerald-50 font-sans antialiased transition-all duration-1000 ${
-        deathTriggered && deathPhase >= 1 ? "animate-shake bg-red-950/20" : ""
-      } ${student && student.wrongAnswersCount === 2 ? "bg-black/90 brightness-75" : ""} ${
-        student && student.wrongAnswersCount >= 3 ? "bg-black brightness-50" : "bg-zinc-950"
-      }`}
+      className={`relative min-h-[100dvh] w-full overflow-y-auto overflow-x-hidden text-emerald-50 font-sans antialiased transition-all duration-1000 ${deathTriggered && deathPhase >= 1 ? "animate-shake bg-red-950/20" : ""
+        } ${student && student.wrongAnswersCount === 2 ? "bg-black/90 brightness-75" : ""} ${student && student.wrongAnswersCount >= 3 ? "bg-black brightness-50" : "bg-zinc-950"
+        }`}
     >
+
+
       <Atmosphere speaking={isSpeaking} />
+
+      <AnimatePresence>
+        {scene === "boot" && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+            className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none"
+            style={{ backgroundImage: `url(${bgImage})` }}
+          >
+            <div className="absolute inset-0 bg-black/60" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {deathTriggered && (
@@ -216,12 +231,12 @@ function LastCandidate() {
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="space-y-4"
+                className="space-y-4 px-4"
               >
-                <div className="text-red-500 font-extrabold text-7xl tracking-widest animate-pulse">
+                <div className="text-red-500 font-extrabold text-2xl sm:text-5xl md:text-7xl tracking-widest animate-pulse text-center">
                   ACCESS TERMINATED
                 </div>
-                <div className="h-1 bg-red-600 w-64 mx-auto animate-width" />
+                <div className="h-1 bg-red-600 w-48 sm:w-64 mx-auto animate-width" />
               </motion.div>
             )}
 
@@ -229,19 +244,19 @@ function LastCandidate() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
+                className="space-y-4 sm:space-y-6 px-4"
               >
-                <h1 className="text-red-500 font-serif text-4xl sm:text-6xl tracking-tight leading-none uppercase">
+                <h1 className="text-red-500 font-serif text-2xl sm:text-4xl md:text-6xl tracking-tight leading-none uppercase text-center">
                   YOU HAVE BEEN ELIMINATED
                 </h1>
-                <p className="text-red-400/70 font-mono text-sm tracking-[0.2em] uppercase">
+                <p className="text-red-400/70 font-mono text-[10px] sm:text-sm tracking-[0.2em] uppercase text-center">
                   FROM THE SHADOW REALM
                 </p>
                 {deathPhase >= 3 && (
                   <motion.div
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="text-red-600 font-black text-8xl tracking-widest mt-8 font-mono animate-ping"
+                    className="text-red-600 font-black text-4xl sm:text-6xl md:text-8xl tracking-widest mt-4 sm:mt-8 font-mono animate-ping text-center"
                     style={{ animationDuration: "2s" }}
                   >
                     DISQUALIFIED
@@ -263,9 +278,9 @@ function LastCandidate() {
       />
 
       {!["boot", "cinematic"].includes(scene) && (
-        <div className="fixed right-[1%] bottom-0 w-[95%] md:w-[58%] h-[60vh] md:h-[90vh] pointer-events-none z-0 md:z-10 flex items-end justify-center select-none opacity-20 md:opacity-100 transition-opacity duration-700">
+        <div className="fixed right-0 bottom-0 w-[35%] sm:w-[30%] md:w-[45%] h-[30vh] sm:h-[40vh] md:h-[75vh] pointer-events-none z-0 flex items-end justify-center select-none opacity-25 sm:opacity-40 md:opacity-100 transition-opacity duration-700">
           <Guardian
-            scale={1.05}
+            scale={0.3}
             speaking={isSpeaking}
             state={
               scene === "gameover"
@@ -289,11 +304,10 @@ function LastCandidate() {
       )}
 
       <div
-        className={`relative z-20 w-full min-h-screen flex items-center ${
-          !["boot", "cinematic"].includes(scene)
-            ? "md:w-[42%] lg:w-[38%] justify-start md:pl-12 lg:pl-16 px-6"
-            : "justify-center px-4"
-        }`}
+        className={`relative z-20 w-full min-h-[100dvh] flex items-center py-8 md:py-0 origin-top md:origin-center ${!["boot", "cinematic"].includes(scene)
+          ? "w-full sm:w-[65%] md:w-[45%] lg:w-[40%] justify-start pl-4 sm:pl-8 md:pl-12 lg:pl-16"
+          : "justify-center px-4"
+          }`}
       >
         <AnimatePresence mode="wait">
           {scene === "boot" && (
@@ -306,7 +320,7 @@ function LastCandidate() {
             />
           )}
           {scene === "cinematic" && (
-            <CinematicScene key="cinematic" onComplete={() => setScene("intro")} speak={speak} />
+            <CinematicScene key="cinematic" onComplete={() => setScene("intro")} speak={speak} stop={stop} />
           )}
           {scene === "intro" && (
             <IntroScene

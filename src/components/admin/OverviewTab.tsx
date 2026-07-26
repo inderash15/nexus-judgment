@@ -11,7 +11,7 @@ type OverviewTabProps = {
 export function OverviewTab({ metrics, data, setActiveTab, questionsCount }: OverviewTabProps) {
   return (
     <div className="space-y-6 flex-1 animate-in fade-in duration-300">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         {/* Left Column Layout */}
         <div className="lg:col-span-7 space-y-6">
           {/* Card 1: Next scheduled session (Active Monitor Preview) */}
@@ -133,7 +133,7 @@ export function OverviewTab({ metrics, data, setActiveTab, questionsCount }: Ove
           </div>
 
           {/* Card 2: Grid of 4 Small Cards */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {[
               {
                 label: "Intake Total",

@@ -33,12 +33,12 @@ export function BriefingScene({
       <motion.div
         initial={{ x: 30, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
-        className="w-full max-w-md space-y-4 text-left"
+        className="w-full max-w-md space-y-3 sm:space-y-4 text-left"
       >
         <div className="font-mono text-[10px] uppercase tracking-[0.5em] text-emerald-400/80">
           Level {String(student.currentLevel).padStart(2, "0")} / 07
         </div>
-        <h2 className="font-serif text-3xl leading-tight text-emerald-50 sm:text-5xl">
+        <h2 className="font-serif text-2xl sm:text-3xl md:text-5xl leading-tight text-emerald-50">
           Entering the Chamber of Code
         </h2>
         <p className="text-emerald-100/70 leading-relaxed">

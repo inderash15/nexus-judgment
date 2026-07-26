@@ -1,6 +1,7 @@
 import { Lock, Unlock } from "lucide-react";
 import { DBStudent } from "@/lib/db";
 import { DataState } from "./types";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type StudentDrawerProps = {
   selectedStudent: DBStudent;
@@ -17,7 +18,7 @@ export function StudentDrawer({
 }: StudentDrawerProps) {
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md h-screen bg-[#FCFDFD]/95 backdrop-blur-xl border-l border-slate-200/80 p-6 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-350 text-slate-800">
+      <div className="w-full max-w-md h-[100dvh] overflow-y-auto bg-[#FCFDFD]/95 backdrop-blur-xl border-l border-slate-200/80 p-6 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-350 text-slate-800">
         <div className="space-y-6">
           <div className="flex justify-between items-center border-b border-slate-100 pb-4">
             <h3 className="font-extrabold text-sm text-slate-400 uppercase tracking-wider">
@@ -67,24 +68,26 @@ export function StudentDrawer({
               <h4 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">
                 Candidate Action History
               </h4>
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                {data.securityLogs
-                  .filter((log) => log.email === selectedStudent.email)
-                  .map((log) => (
-                    <div
-                      key={log.id}
-                      className="p-3 border border-slate-100 bg-white/60 rounded-xl text-xs leading-relaxed font-semibold"
-                    >
-                      <div className="flex justify-between items-center text-[9px] text-slate-400 mb-1">
-                        <span>{log.action}</span>
-                        <span className="font-mono">
-                          {new Date(log.timestamp).toLocaleTimeString()}
-                        </span>
+              <ScrollArea className="h-56 pr-3">
+                <div className="space-y-2">
+                  {data.securityLogs
+                    .filter((log) => log.email === selectedStudent.email)
+                    .map((log) => (
+                      <div
+                        key={log.id}
+                        className="p-3 border border-slate-100 bg-white/60 rounded-xl text-xs leading-relaxed font-semibold"
+                      >
+                        <div className="flex justify-between items-center text-[9px] text-slate-400 mb-1">
+                          <span>{log.action}</span>
+                          <span className="font-mono">
+                            {new Date(log.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <p className="text-slate-600 font-semibold">{log.details}</p>
                       </div>
-                      <p className="text-slate-600 font-semibold">{log.details}</p>
-                    </div>
-                  ))}
-              </div>
+                    ))}
+                </div>
+              </ScrollArea>
             </div>
           </div>
         </div>

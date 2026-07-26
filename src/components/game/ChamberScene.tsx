@@ -119,30 +119,30 @@ export function ChamberScene({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-lg rounded-3xl border border-emerald-500/20 bg-gradient-to-b from-black/80 to-zinc-950 p-6 sm:p-8 shadow-[0_30px_100px_rgba(0,0,0,0.8)] backdrop-blur-xl space-y-6 text-left"
+        className="w-full max-w-lg rounded-2xl sm:rounded-3xl border border-emerald-500/20 bg-gradient-to-b from-black/80 to-zinc-950 p-4 sm:p-6 md:p-8 shadow-[0_30px_100px_rgba(0,0,0,0.8)] backdrop-blur-xl space-y-4 sm:space-y-6 text-left"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-emerald-500/10 pb-4">
+        <div className="flex items-center justify-between border-b border-emerald-500/10 pb-3 sm:pb-4">
           <div>
-            <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-emerald-400/80">
+            <span className="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.2em] text-emerald-400/80">
               Category
             </span>
-            <h4 className="text-sm font-extrabold text-emerald-200 tracking-wide">
+            <h4 className="text-xs sm:text-sm font-extrabold text-emerald-200 tracking-wide">
               {question.category}
             </h4>
           </div>
-          <div className="flex items-center gap-2 font-mono text-xs">
-            <Clock className="h-4.5 w-4.5 text-emerald-400" />
+          <div className="flex items-center gap-1.5 sm:gap-2 font-mono text-xs">
+            <Clock className="h-4 w-4 text-emerald-400" />
             <span className="font-bold text-emerald-100">{seconds}s</span>
           </div>
         </div>
 
         {/* Blanks */}
-        <div className="flex justify-center flex-wrap gap-2 py-4">
+        <div className="flex justify-center flex-wrap gap-1.5 sm:gap-2 py-2 sm:py-4">
           {displayWord.map((c, i) => (
             <span
               key={i}
-              className={`font-mono text-3xl sm:text-5xl font-black w-8 sm:w-12 text-center border-b-2 transition ${
+              className={`font-mono text-xl sm:text-3xl md:text-5xl font-black w-6 sm:w-8 md:w-12 text-center border-b-2 transition ${
                 c === "_"
                   ? "border-emerald-500/40 text-transparent"
                   : "border-emerald-400 text-emerald-100"
@@ -154,7 +154,7 @@ export function ChamberScene({
         </div>
 
         {/* Virtual Keyboard */}
-        <div className="grid grid-cols-7 sm:grid-cols-10 gap-1.5 sm:gap-2 justify-center max-w-xl mx-auto pt-2">
+        <div className="grid grid-cols-9 sm:grid-cols-10 gap-1 sm:gap-1.5 md:gap-2 justify-center max-w-xl mx-auto pt-2">
           {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => {
             const guessed = student.currentGuesses.includes(letter);
             const correct = question.word.includes(letter);
@@ -163,7 +163,7 @@ export function ChamberScene({
                 key={letter}
                 disabled={guessed}
                 onClick={() => handleGuess(letter)}
-                className={`min-h-[44px] h-9 sm:h-11 rounded-lg font-mono text-xs sm:text-sm font-bold border transition cursor-pointer select-none ${
+                className={`min-h-[38px] sm:min-h-[44px] h-8 sm:h-9 md:h-11 rounded-lg font-mono text-[10px] sm:text-xs md:text-sm font-bold border transition cursor-pointer select-none ${
                   guessed
                     ? correct
                       ? "bg-emerald-600/30 border-emerald-500/40 text-emerald-300"
@@ -178,7 +178,7 @@ export function ChamberScene({
         </div>
 
         {/* Hint Trigger */}
-        <div className="pt-4 flex items-center justify-between border-t border-emerald-500/10">
+        <div className="pt-3 sm:pt-4 flex items-center justify-between border-t border-emerald-500/10 gap-2">
           <button
             onClick={() => setHintOpen(!hintOpen)}
             className="font-mono text-[9px] uppercase tracking-[0.2em] text-emerald-300/80 hover:text-emerald-200 cursor-pointer flex items-center gap-1"
@@ -186,7 +186,7 @@ export function ChamberScene({
             <HelpCircle className="h-3.5 w-3.5" />
             {hintOpen ? "Hide Whisper" : "Request Guardian Clue"}
           </button>
-          <span className="font-mono text-[9px] text-emerald-500/50 uppercase">
+          <span className="font-mono text-[9px] text-emerald-500/50 uppercase hidden sm:inline">
             keyboard inputs accepted
           </span>
         </div>

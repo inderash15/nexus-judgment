@@ -167,3 +167,10 @@
 @utility animate-float {
   animation: float 10s ease-in-out infinite;
 }
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}
