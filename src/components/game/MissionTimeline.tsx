@@ -24,8 +24,6 @@ export function MissionTimeline({ schedule }: { schedule: TimelineDay[] }) {
             {day.day}
           </h4>
           <div className="relative pl-8 sm:pl-10">
-            <div className="absolute left-2 sm:left-3 top-0 bottom-0 w-px bg-gradient-to-b from-emerald-400/60 via-emerald-500/30 to-transparent" />
-
             {day.events.map((ev, ei) => (
               <motion.div
                 key={ei}

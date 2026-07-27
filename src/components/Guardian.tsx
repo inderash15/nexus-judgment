@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, useAnimation } from "framer-motion";
 import guardianAsset from "@/assets/guardian-hero.png";
-import guardianApocalypse from "@/assets/guardian-apocalypse.png";
 
 type Props = {
   scale?: number;
@@ -127,7 +126,7 @@ export function Guardian({
 
   // State mappings
   const isApocalypse = ["angry", "punishment", "death", "rejected"].includes(state.toLowerCase());
-  const activeImage = isApocalypse ? guardianApocalypse : guardianAsset;
+  const activeImage = guardianAsset;
   const themeColor = isApocalypse ? "rgba(239,68,68,0.5)" : "rgba(16,185,129,0.5)";
   const eyeColor = isApocalypse
     ? "bg-red-400 shadow-[0_0_15px_rgba(239,68,68,1)]"

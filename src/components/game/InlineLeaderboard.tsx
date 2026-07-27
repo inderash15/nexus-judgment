@@ -57,7 +57,7 @@ export function InlineLeaderboard({ currentEmail }: { currentEmail: string }) {
 
               return (
                 <div
-                  key={s.email}
+                  key={`${s.email}-${idx}`}
                   className={`px-3 py-2.5 border rounded-xl flex items-center justify-between transition-all hover:scale-[1.01] hover:border-emerald-500/35 hover:bg-black/50 ${rankStyles}`}
                 >
                   <div className="flex items-center gap-3">
