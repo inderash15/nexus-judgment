@@ -69,19 +69,29 @@ export function ChamberScene({
     return () => clearInterval(checkTimer);
   }, [lastActivity, inactiveAlert20, inactiveAlert40, speak]);
 
+  // Use a ref to store latest state without constantly rebinding the listener
+  const stateRef = useRef({ guesses: student.currentGuesses, onGuessLetter });
+  useEffect(() => {
+    stateRef.current = { guesses: student.currentGuesses, onGuessLetter };
+  }, [student.currentGuesses, onGuessLetter]);
+
   // Physical keyboard support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      
       const char = e.key.toUpperCase();
       if (/^[A-Z]$/.test(char)) {
-        if (!student.currentGuesses.includes(char)) {
-          handleGuess(char);
+        const { guesses, onGuessLetter: currentOnGuess } = stateRef.current;
+        if (!guesses.includes(char)) {
+          resetInactivity();
+          currentOnGuess(char);
         }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [student.currentGuesses, onGuessLetter, lastActivity]);
+  }, []);
 
   // Timer countdown
   useEffect(() => {

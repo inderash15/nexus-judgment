@@ -29,11 +29,9 @@ export function CinematicScene({
   stop: () => void;
 }) {
   const [subtitle, setSubtitle] = useState("");
-  const [videoIndex, setVideoIndex] = useState(0);
   const speakRef = useRef(speak);
   const onCompleteRef = useRef(onComplete);
   const stoppedRef = useRef(false);
-  const triggeredLinesRef = useRef<Set<number>>(new Set());
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -41,7 +39,6 @@ export function CinematicScene({
     onCompleteRef.current = onComplete;
   });
 
-  // Cleanup: stop all speech when leaving this scene
   useEffect(() => {
     return () => {
       stoppedRef.current = true;
@@ -49,9 +46,7 @@ export function CinematicScene({
     };
   }, [stop]);
 
-  // Sequential voice narration: fires lines one after another
   const runNarration = useCallback(async () => {
-    // Small initial delay for speech synthesis engine warm-up
     await new Promise((r) => setTimeout(r, 400));
     if (stoppedRef.current) return;
 
@@ -59,11 +54,8 @@ export function CinematicScene({
       if (stoppedRef.current) return;
 
       const line = VOICE_LINES[i];
-
-      // Show subtitle first (subtitles lead the voice slightly)
       setSubtitle(line.sub);
 
-      // Wait for the video to reach the right timestamp (poll every 100ms)
       const waitForTimestamp = async () => {
         while (!stoppedRef.current) {
           const vid = videoRef.current;
@@ -74,25 +66,21 @@ export function CinematicScene({
       await waitForTimestamp();
       if (stoppedRef.current) return;
 
-      // Speak the line (this is async - waits for speech to finish)
       await new Promise<void>((resolve) => {
         if (stoppedRef.current) {
           resolve();
           return;
         }
         speakRef.current(line.text);
-        // Resolve after an estimated duration based on word count
         const wordCount = line.text.split(" ").length;
         const estimatedMs = Math.max(3000, wordCount * 400);
         setTimeout(resolve, estimatedMs);
       });
       if (stoppedRef.current) return;
 
-      // Brief pause between lines
       await new Promise((r) => setTimeout(r, 600));
     }
 
-    // All lines delivered - clear subtitle and proceed
     if (!stoppedRef.current) {
       setSubtitle("");
       setTimeout(() => {
@@ -102,41 +90,24 @@ export function CinematicScene({
   }, []);
 
   useEffect(() => {
-    if (videoIndex === 1) {
-      runNarration();
-    }
-  }, [videoIndex, runNarration]);
+    runNarration();
+  }, [runNarration]);
 
   const handleVideoEnd = () => {
-    if (videoIndex === 0) {
-      setVideoIndex(1);
-    } else {
-      onCompleteRef.current();
-    }
+    onCompleteRef.current();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-emerald-950 overflow-hidden select-none">
-      <AnimatePresence mode="wait">
-        <motion.video
-          key={videoIndex}
-          ref={videoRef}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1 }}
-          src={
-            videoIndex === 0
-              ? "/videos/final 2222 workshop.mp4"
-              : "/videos/Cosmic_guardian_with_green_energy_202607222222.mp4"
-          }
-          autoPlay
-          muted={videoIndex !== 0}
-          playsInline
-          onEnded={handleVideoEnd}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      </AnimatePresence>
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        onEnded={handleVideoEnd}
+        className="absolute inset-0 w-full h-full object-cover"
+      >
+        <source src="/videos/Doctor_Doom_introduces_futuristi…_202607271217.mp4" type="video/mp4" />
+      </video>
 
       <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-transparent to-emerald-950 pointer-events-none opacity-85" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent,rgba(2,44,34,0.65))] pointer-events-none" />

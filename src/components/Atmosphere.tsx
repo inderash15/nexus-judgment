@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import chamberBg from "@/assets/chamber-bg.jpg";
+import bgVideo from "@/assets/Ancient_Gothic_shadow_temple_loop_202607231856_1_apo8_prob4.mp4";
 
 type Particle = {
   id: number;
@@ -11,7 +12,7 @@ type Particle = {
   opacity: number;
 };
 
-const bgVideo = "/videos/Ancient_Gothic_shadow_temple_loop_202607231856.mp4";
+
 
 /** Ambient chamber backdrop with a looping MP4 video, mist particles and vignette. */
 export function Atmosphere({
@@ -26,14 +27,14 @@ export function Atmosphere({
 
   useEffect(() => {
     setParticles(
-      Array.from({ length: 24 }).map((_, i) => ({
+      Array.from({ length: 120 }).map((_, i) => ({
         id: i,
         left: Math.random() * 100,
         top: Math.random() * 100,
-        size: 2 + Math.random() * 4,
+        size: 1 + Math.random() * 3.5,
         delay: Math.random() * 8,
-        duration: 9 + Math.random() * 11,
-        opacity: 0.12 + Math.random() * 0.3,
+        duration: 10 + Math.random() * 15,
+        opacity: 0.15 + Math.random() * 0.45,
       })),
     );
   }, []);
@@ -41,7 +42,6 @@ export function Atmosphere({
   return (
     <div
       className="pointer-events-none fixed inset-0 overflow-hidden bg-black"
-      style={{ zIndex: -10 }}
     >
       {/* LAYER 1: Fullscreen Video & Fallback Static Image */}
       <div
@@ -49,7 +49,6 @@ export function Atmosphere({
         style={{
           backgroundImage: `url(${chamberBg})`,
           opacity: 0.35 * intensity,
-          zIndex: -30,
         }}
       />
 
@@ -62,6 +61,7 @@ export function Atmosphere({
         preload="auto"
         onLoadedData={() => {
           if (videoRef.current) {
+            videoRef.current.playbackRate = 1.0;
             console.log("Video Loaded:", {
               readyState: videoRef.current.readyState,
               currentTime: videoRef.current.currentTime,
@@ -71,6 +71,7 @@ export function Atmosphere({
               videoHeight: videoRef.current.videoHeight,
               currentSrc: videoRef.current.currentSrc,
               error: videoRef.current.error,
+              playbackRate: videoRef.current.playbackRate,
             });
           }
         }}
@@ -81,19 +82,27 @@ export function Atmosphere({
             ? "saturate(1.2) contrast(1.15) brightness(1.05)"
             : "saturate(1.05) contrast(1.05)",
           transition: "opacity 1.5s ease, filter 1.5s ease",
-          zIndex: -30,
         }}
       >
         <source src={bgVideo} type="video/mp4" />
       </video>
 
+      {/* LAYER 1.5: Tech Grid Pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.05] pointer-events-none"
+        style={{
+          backgroundImage: `linear-gradient(rgba(52, 211, 153, 0.2) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(52, 211, 153, 0.2) 1px, transparent 1px)`,
+          backgroundSize: '30px 30px',
+        }}
+      />
+
       {/* LAYER 2: Dark cinematic overlay (45% opacity) */}
-      <div className="absolute inset-0 bg-black/45 pointer-events-none" style={{ zIndex: -25 }} />
+      <div className="absolute inset-0 bg-black/45 pointer-events-none" />
       <div
         className="absolute inset-0"
         style={{
           background: "radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.85) 100%)",
-          zIndex: -25,
         }}
       />
 
@@ -105,7 +114,6 @@ export function Atmosphere({
             ? "radial-gradient(ellipse at 50% 40%, rgba(16,185,129,0.35), transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.85), transparent 75%)"
             : "radial-gradient(ellipse at 50% 40%, rgba(6,78,59,0.25), transparent 60%), radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.85), transparent 75%)",
           transition: "background 1.5s ease",
-          zIndex: -20,
         }}
       />
 
@@ -115,7 +123,6 @@ export function Atmosphere({
         style={{
           background:
             "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.8) 100%)",
-          zIndex: -20,
         }}
       />
 
@@ -135,7 +142,6 @@ export function Atmosphere({
             animationDuration: `${speaking ? p.duration * 0.8 : p.duration}s`,
             transition:
               "width 1.2s ease, height 1.2s ease, opacity 1.2s ease, box-shadow 1.2s ease",
-            zIndex: -10,
           }}
         />
       ))}
@@ -146,7 +152,6 @@ export function Atmosphere({
         style={{
           backgroundImage:
             "repeating-linear-gradient(0deg, rgba(255,255,255,0.6) 0px, rgba(255,255,255,0.6) 1px, transparent 1px, transparent 3px)",
-          zIndex: -10,
         }}
       />
     </div>
