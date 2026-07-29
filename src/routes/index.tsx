@@ -308,7 +308,7 @@ function LastCandidate() {
       )}
 
       <div
-        className={`relative z-20 w-full min-h-[100dvh] flex items-center py-8 md:py-0 origin-top md:origin-center ${
+        className={`relative z-20 w-full min-h-[100dvh] flex items-start sm:items-center py-6 sm:py-8 md:py-0 origin-top md:origin-center ${
           !["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene)
             ? "w-full sm:w-[65%] md:w-[45%] lg:w-[40%] justify-start pl-4 sm:pl-8 md:pl-12 lg:pl-16"
             : "justify-center px-4"

@@ -42,20 +42,19 @@ export function RegisterScene({
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8 }}
-        className="w-full max-w-md text-left"
+        className="w-full max-w-md text-left backdrop-blur-md bg-black/40 border border-emerald-500/20 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(16,185,129,0.15)] p-4 sm:p-6 md:p-8"
       >
-        <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.5em] text-emerald-400/80">
+        <div className="mb-2 sm:mb-3 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.3em] sm:tracking-[0.5em] text-emerald-400/80">
           Acknowledge Identity
         </div>
-        <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl leading-tight text-emerald-50">
+        <h2 className="font-serif text-xl sm:text-2xl md:text-3xl leading-tight text-emerald-50">
           Input Credentials.
         </h2>
-        <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-emerald-100/60">
-Your name, official email, department, and year will bind this single attempt to the
-            global ledger. Retakes are strictly locked.
+        <p className="mt-1.5 sm:mt-3 text-xs text-emerald-100/60 leading-relaxed">
+          Your name, official email, department, and year will bind this single attempt to the global ledger. Retakes are strictly locked.
         </p>
         <form
-          className="mt-6 space-y-4 w-full"
+          className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 w-full"
           onSubmit={(e) => {
             e.preventDefault();
             if (
@@ -75,7 +74,7 @@ Your name, official email, department, and year will bind this single attempt to
               maxLength={40}
               required
               placeholder="Full Name"
-              className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-3 min-h-[44px] font-sans text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]"
+              className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-2.5 min-h-[40px] sm:min-h-[44px] font-sans text-sm sm:text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]"
             />
           </div>
           <div>
@@ -86,7 +85,7 @@ Your name, official email, department, and year will bind this single attempt to
               maxLength={50}
               required
               placeholder="Official Email Address"
-              className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-3 min-h-[44px] font-sans text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]"
+              className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-2.5 min-h-[40px] sm:min-h-[44px] font-sans text-sm sm:text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]"
             />
           </div>
           <div>
@@ -96,12 +95,12 @@ Your name, official email, department, and year will bind this single attempt to
               maxLength={60}
               required
               placeholder="Department Name"
-              className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-3 min-h-[44px] font-sans text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]"
+              className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-2.5 min-h-[40px] sm:min-h-[44px] font-sans text-sm sm:text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]"
             />
           </div>
           <div>
             <Select value={year} onValueChange={setYear} required>
-              <SelectTrigger className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-3 min-h-[44px] font-sans text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]">
+              <SelectTrigger className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-2.5 min-h-[40px] sm:min-h-[44px] font-sans text-sm sm:text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]">
                 <SelectValue placeholder="Year" />
               </SelectTrigger>
               <SelectContent>
@@ -112,7 +111,7 @@ Your name, official email, department, and year will bind this single attempt to
               </SelectContent>
             </Select>
           </div>
-          <div className="pt-2 flex items-center gap-4">
+          <div className="pt-1 sm:pt-2 flex items-center gap-4">
             <ActionButton
               disabled={name.trim().length < 2 || !email.includes("@") || dept.trim().length < 2 || year.trim().length < 1}
             >
