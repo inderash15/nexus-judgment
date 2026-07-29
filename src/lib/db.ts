@@ -328,5 +328,15 @@ export async function getDB(): Promise<Db> {
     await questionsColl.insertMany(DEFAULT_QUESTIONS);
   }
 
+  // Create indexes for performance optimization under high concurrent load
+  const studentsColl = dbInstance.collection("students");
+  try {
+    await studentsColl.createIndex({ email: 1 }, { unique: true });
+    await questionsColl.createIndex({ id: 1 }, { unique: true });
+    console.log("[DB] Performance indexes verified successfully.");
+  } catch (e) {
+    console.warn("[DB] Index creation skipped or failed:", e);
+  }
+
   return dbInstance;
 }

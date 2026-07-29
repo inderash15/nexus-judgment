@@ -64,6 +64,30 @@ export function RotatePrompt() {
 
           <p className="text-lg font-semibold tracking-wide text-white">Rotate your device</p>
           <p className="mt-2 text-sm text-slate-400">Landscape mode for the best experience</p>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const docEl = document.documentElement;
+                if (docEl.requestFullscreen) {
+                  await docEl.requestFullscreen();
+                } else if ((docEl as any).webkitRequestFullscreen) {
+                  await (docEl as any).webkitRequestFullscreen();
+                }
+                
+                if (window.screen.orientation && window.screen.orientation.lock) {
+                  await window.screen.orientation.lock("landscape");
+                } else if ((window.screen as any).lockOrientation) {
+                  await (window.screen as any).lockOrientation("landscape");
+                }
+              } catch (err) {
+                console.warn("Fullscreen/orientation lock failed:", err);
+              }
+            }}
+            className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-6 py-3 font-mono text-xs font-bold text-emerald-400 shadow-lg shadow-emerald-950/20 backdrop-blur transition-all hover:bg-emerald-500 hover:text-white active:scale-95 cursor-pointer"
+          >
+            Force Landscape Fullscreen
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
