@@ -175,9 +175,6 @@ export function useGuardianVoice() {
       window.removeEventListener("keydown", startOnGesture);
     };
 
-    // Attempt start immediately in case interaction already occurred
-    ambienceRef.current?.start();
-
     // Listen for first interaction to bootstrap the context safely
     window.addEventListener("click", startOnGesture);
     window.addEventListener("keydown", startOnGesture);

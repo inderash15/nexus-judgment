@@ -87,14 +87,6 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
       const student = await studentsColl.findOne({ email });
 
       if (student) {
-        if (name) {
-          console.warn("[SERVER_FN:registerOrResumeStudent] Blocked duplicate registration for:", email);
-          return {
-            student: null,
-            questions: [],
-            error: "This email has already registered and used its single attempt.",
-          };
-        }
         console.log(
           "[SERVER_FN:registerOrResumeStudent] Student found. Resuming session at level:",
           student.currentLevel,
