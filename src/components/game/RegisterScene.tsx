@@ -94,18 +94,18 @@ export function RegisterScene({
                 <SelectValue placeholder="Department" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="csda I A section">csda I A section</SelectItem>
-                <SelectItem value="csda I B section">csda I B section</SelectItem>
-                <SelectItem value="csda II">csda II</SelectItem>
-                <SelectItem value="csda III">csda III</SelectItem>
-                <SelectItem value="aids I A section">aids I A section</SelectItem>
-                <SelectItem value="aids I B section">aids I B section</SelectItem>
-                <SelectItem value="aids II A section">aids II A section</SelectItem>
-                <SelectItem value="aids II B section">aids II B section</SelectItem>
-                <SelectItem value="aids III">aids III</SelectItem>
-                <SelectItem value="aiml I">aiml I</SelectItem>
-                <SelectItem value="aiml II">aiml II</SelectItem>
-                <SelectItem value="aiml III">aiml III</SelectItem>
+                <SelectItem value="csda I A section">CSDA I A </SelectItem>
+                <SelectItem value="csda I B section">CSDA I B </SelectItem>
+                <SelectItem value="csda II">CSDA II</SelectItem>
+                <SelectItem value="csda III">CSDA III</SelectItem>
+                <SelectItem value="aids I A section">AIDS I A </SelectItem>
+                <SelectItem value="aids I B section">AIDS I B </SelectItem>
+                <SelectItem value="aids II A section">AIDS II A </SelectItem>
+                <SelectItem value="aids II B section">AIDS II B </SelectItem>
+                <SelectItem value="aids III">AIDS III</SelectItem>
+                <SelectItem value="aiml I">AIML I</SelectItem>
+                <SelectItem value="aiml II">AIML II</SelectItem>
+                <SelectItem value="aiml III">AIML III</SelectItem>
               </SelectContent>
             </Select>
           </div>
