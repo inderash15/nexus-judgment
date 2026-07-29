@@ -89,14 +89,25 @@ export function RegisterScene({
             />
           </div>
           <div>
-            <input
-              value={dept}
-              onChange={(e) => setDept(e.target.value)}
-              maxLength={60}
-              required
-              placeholder="Department Name"
-              className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-2.5 min-h-[40px] sm:min-h-[44px] font-sans text-sm sm:text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]"
-            />
+            <Select value={dept} onValueChange={setDept} required>
+              <SelectTrigger className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-2.5 min-h-[40px] sm:min-h-[44px] font-sans text-sm sm:text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]">
+                <SelectValue placeholder="Department" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="csda I A section">csda I A section</SelectItem>
+                <SelectItem value="csda I B section">csda I B section</SelectItem>
+                <SelectItem value="csda II">csda II</SelectItem>
+                <SelectItem value="csda III">csda III</SelectItem>
+                <SelectItem value="aids I A section">aids I A section</SelectItem>
+                <SelectItem value="aids I B section">aids I B section</SelectItem>
+                <SelectItem value="aids II A section">aids II A section</SelectItem>
+                <SelectItem value="aids II B section">aids II B section</SelectItem>
+                <SelectItem value="aids III">aids III</SelectItem>
+                <SelectItem value="aiml I">aiml I</SelectItem>
+                <SelectItem value="aiml II">aiml II</SelectItem>
+                <SelectItem value="aiml III">aiml III</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Select value={year} onValueChange={setYear} required>
