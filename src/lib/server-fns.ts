@@ -20,6 +20,53 @@ function serializeDoc<T>(doc: T): T {
 // 0. Admin Authentication
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "csda@10";
 
+// Verify admin session token in DB
+export async function verifyAdminSession(): Promise<boolean> {
+  const { getCookie, deleteCookie } = await import("@tanstack/react-start/server");
+  const token = getCookie("admin_session");
+  if (!token) return false;
+
+  try {
+    const db = await getDB();
+    const session = await db.collection("adminSessions").findOne({ token });
+    if (!session) return false;
+
+    // Check expiration
+    const expiresAt = new Date(session.expiresAt);
+    if (expiresAt.getTime() < Date.now()) {
+      // Clean up expired session
+      await db.collection("adminSessions").deleteOne({ token });
+      deleteCookie("admin_session");
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    console.error("[verifyAdminSession] Error:", e);
+    return false;
+  }
+}
+
+export const adminCheckSession = createServerFn({ method: "GET" }).handler(async () => {
+  const isValid = await verifyAdminSession();
+  return { success: isValid };
+});
+
+export const adminLogout = createServerFn({ method: "POST" }).handler(async () => {
+  const { getCookie, deleteCookie } = await import("@tanstack/react-start/server");
+  const token = getCookie("admin_session");
+  if (token) {
+    try {
+      const db = await getDB();
+      await db.collection("adminSessions").deleteOne({ token });
+    } catch (e) {
+      console.error("[adminLogout] DB Error:", e);
+    }
+    deleteCookie("admin_session");
+  }
+  return { success: true };
+});
+
 export const adminAuthenticate = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
   try {
     const data = ctx?.data;
@@ -52,7 +99,30 @@ export const adminAuthenticate = createServerFn({ method: "POST" }).handler(asyn
       details: "Admin authenticated successfully",
     });
 
-    return { success: true, token: "admin-authenticated-" + Date.now() };
+    // Generate secure session token
+    const token = crypto.randomUUID();
+    // Expiration: 24 hours, or 7 days if rememberMe is requested
+    const maxAge = data.rememberMe ? 60 * 60 * 24 * 7 : 60 * 60 * 24; // in seconds
+    const expiresAt = new Date(Date.now() + maxAge * 1000);
+
+    // Save session in MongoDB
+    await db.collection("adminSessions").insertOne({
+      token,
+      createdAt: new Date().toISOString(),
+      expiresAt: expiresAt.toISOString(),
+    });
+
+    // Set secure HTTP-only cookie
+    const { setCookie } = await import("@tanstack/react-start/server");
+    setCookie("admin_session", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge,
+    });
+
+    return { success: true };
   } catch (error: any) {
     console.error("[SERVER_FN:adminAuthenticate] Error:", error.message);
     return { success: false, error: "Authentication failed" };
@@ -390,6 +460,14 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
 // 3. Admin Get Dashboard
 export const adminGetDashboardData = createServerFn({ method: "GET" }).handler(async () => {
   try {
+    if (!(await verifyAdminSession())) {
+      return {
+        students: [],
+        questions: [],
+        securityLogs: [],
+        error: "Unauthorized",
+      };
+    }
     const db = await getDB();
     const students = await db.collection<DBStudent>("students").find().toArray();
     const questions = await db.collection<DBQuestion>("questions").find().toArray();
@@ -414,6 +492,9 @@ export const adminGetDashboardData = createServerFn({ method: "GET" }).handler(a
 // 4. Admin CRUD Question
 export const adminUpdateQuestion = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
   try {
+    if (!(await verifyAdminSession())) {
+      return { success: false, questions: [], error: "Unauthorized" };
+    }
     const data = ctx?.data;
     if (!data) return { success: false, questions: [], error: "Missing data payload" };
     const db = await getDB();
@@ -461,6 +542,9 @@ export const adminUpdateQuestion = createServerFn({ method: "POST" }).handler(as
 export const adminBulkUploadQuestions = createServerFn({ method: "POST" }).handler(
   async (ctx: any) => {
     try {
+      if (!(await verifyAdminSession())) {
+        return { success: false, questions: [], error: "Unauthorized" };
+      }
       const data = ctx?.data;
       if (!data || !Array.isArray(data))
         return { success: false, questions: [], error: "Invalid data payload" };
@@ -496,6 +580,9 @@ export const adminBulkUploadQuestions = createServerFn({ method: "POST" }).handl
 export const adminUpdateStudentLock = createServerFn({ method: "POST" }).handler(
   async (ctx: any) => {
     try {
+      if (!(await verifyAdminSession())) {
+        return { success: false, students: [], error: "Unauthorized" };
+      }
       const data = ctx?.data;
       if (!data) return { success: false, students: [], error: "Missing data payload" };
       const db = await getDB();

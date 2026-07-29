@@ -19,6 +19,8 @@ import {
   adminBulkUploadQuestions,
   adminUpdateStudentLock,
   adminAuthenticate,
+  adminCheckSession,
+  adminLogout,
 } from "../lib/server-fns";
 import { DBStudent, DBQuestion, SecurityLog } from "../lib/db";
 import {
@@ -80,6 +82,7 @@ function AdminDashboard() {
   const [adminPasswordInput, setAdminPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const refreshData = async () => {
     setLoading(true);
@@ -94,7 +97,21 @@ function AdminDashboard() {
   };
 
   useEffect(() => {
-    refreshData();
+    const checkSession = async () => {
+      try {
+        const res = await adminCheckSession();
+        if (res.success) {
+          setIsAuthenticated(true);
+          refreshData();
+        } else {
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error("Session verification failed", e);
+        setLoading(false);
+      }
+    };
+    checkSession();
   }, []);
 
   const renderStatusBadge = (status: DBStudent["status"]) => {
@@ -363,10 +380,13 @@ function AdminDashboard() {
             onSubmit={async (e) => {
               e.preventDefault();
               try {
-                const res = await adminAuthenticate({ data: { password: adminPasswordInput } });
+                const res = await adminAuthenticate({
+                  data: { password: adminPasswordInput, rememberMe },
+                });
                 if (res.success) {
                   setIsAuthenticated(true);
                   setAuthError("");
+                  refreshData();
                 } else {
                   setAuthError(res.error || "Credential mismatch. Access denied.");
                 }
@@ -385,6 +405,17 @@ function AdminDashboard() {
                 onChange={(e) => setAdminPasswordInput(e.target.value)}
                 className="w-full px-4 py-2.5 bg-white/70 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 text-center font-mono tracking-widest placeholder:font-sans placeholder:tracking-normal placeholder:text-slate-400"
               />
+            </div>
+            <div className="flex items-center px-1">
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-500 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 w-3.5 h-3.5"
+                />
+                Remember me (7 days)
+              </label>
             </div>
             {authError && (
               <p className="text-[10px] text-rose-500 font-bold text-center uppercase tracking-wider">
@@ -475,8 +506,22 @@ function AdminDashboard() {
             </nav>
           </div>
 
-          <div className="text-[10px] font-bold text-slate-400/80 px-2 tracking-wider">
-            SYSTEM ENGINE v1.2
+          <div className="space-y-4">
+            <button
+              onClick={async () => {
+                if (confirm("Disconnect and lock terminal node?")) {
+                  await adminLogout();
+                  setIsAuthenticated(false);
+                }
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-extrabold tracking-wide text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-all cursor-pointer"
+            >
+              <Lock className="w-4 h-4" />
+              <span>Lock Terminal</span>
+            </button>
+            <div className="text-[10px] font-bold text-slate-400/80 px-2 tracking-wider">
+              SYSTEM ENGINE v1.2
+            </div>
           </div>
         </aside>
 

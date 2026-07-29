@@ -8,6 +8,13 @@ import type { GuardianEmotion } from "@/hooks/useGuardianVoice";
 
 const RESOURCE_PERSONS: ResourcePerson[] = [
   {
+    name: "Jeeththenthar LA",
+    designation: "Full Stack Developer & Product Development Engineer",
+    company: "Kovan Labs, Coimbatore",
+    specialization: "Full Stack Development & Product Engineering",
+    photoUrl: "",
+  },
+  {
     name: "Dr. Arun Kumar",
     designation: "AI Research Lead",
     company: "TechVision Labs",
