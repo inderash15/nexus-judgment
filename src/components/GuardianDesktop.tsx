@@ -2,20 +2,21 @@ import { useEffect, useState, useRef } from "react";
 import { motion, useAnimation } from "framer-motion";
 import guardianAsset from "@/assets/guardian-hero.png";
 
-type Props = {
+export interface GuardianProps {
   scale?: number;
   glow?: boolean;
   className?: string;
   speaking?: boolean;
   state?: string;
-};
+}
 
 export function GuardianDesktop({
+  scale = 1,
   glow = true,
   className = "",
   speaking = false,
   state = "idle",
-}: Props) {
+}: GuardianProps) {
   const [mounted, setMounted] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isBlinking, setIsBlinking] = useState(false);
@@ -72,12 +73,14 @@ export function GuardianDesktop({
   }, [clickAnim]);
 
   useEffect(() => {
-    const handleKeyDown = () => {
-      setIsTyping(true);
-      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
-      typingTimerRef.current = setTimeout(() => {
-        setIsTyping(false);
-      }, 1200);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (["Input", "TextArea"].includes((e.target as HTMLElement).tagName)) {
+        setIsTyping(true);
+        if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+        typingTimerRef.current = setTimeout(() => {
+          setIsTyping(false);
+        }, 1200);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -111,7 +114,7 @@ export function GuardianDesktop({
 
   if (!mounted) {
     return (
-      <div className="h-full flex items-center justify-center text-emerald-400 font-mono text-xs animate-pulse">
+      <div className="h-96 flex items-center justify-center text-emerald-400 font-mono text-xs animate-pulse">
         Establishing Link...
       </div>
     );
@@ -124,12 +127,12 @@ export function GuardianDesktop({
     : "bg-emerald-300 shadow-[0_0_10px_rgba(52,211,153,1)]";
 
   const particles = [
-    { left: "8%", delay: 0, duration: 9 },
-    { left: "22%", delay: 2.5, duration: 7 },
-    { left: "38%", delay: 1.2, duration: 10 },
-    { left: "55%", delay: 3.8, duration: 8 },
-    { left: "72%", delay: 0.6, duration: 11 },
-    { left: "88%", delay: 2.9, duration: 9 },
+    { left: "8%", delay: 0, duration: 9, scale: 0.8 },
+    { left: "22%", delay: 2.5, duration: 7, scale: 1.2 },
+    { left: "38%", delay: 1.2, duration: 10, scale: 0.6 },
+    { left: "55%", delay: 3.8, duration: 8, scale: 1.0 },
+    { left: "72%", delay: 0.6, duration: 11, scale: 0.7 },
+    { left: "88%", delay: 2.9, duration: 9, scale: 1.1 },
   ];
 
   const typingLookX = isTyping ? -38 : 0;
@@ -138,7 +141,7 @@ export function GuardianDesktop({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full flex items-end justify-center select-none overflow-visible ${className}`}
+      className={`relative w-full h-[350px] sm:h-[480px] md:h-[580px] lg:h-[760px] flex items-center justify-center select-none overflow-visible ${className}`}
     >
       {glow && (
         <motion.div
@@ -150,9 +153,15 @@ export function GuardianDesktop({
           transition={{ type: "tween", ease: "easeOut", duration: 0.35 }}
         >
           <div
-            className="absolute inset-[-80px] blur-[100px] opacity-85 transition-colors duration-1000"
+            className="absolute inset-[-80px] blur-[100px] opacity-80 transition-colors duration-1000"
             style={{
-              background: `radial-gradient(circle at 50% 50%, ${isApocalypse ? "rgba(239,68,68,0.85)" : "rgba(16,185,129,0.85)"}, transparent 65%)`,
+              background: `radial-gradient(circle at 50% 50%, ${isApocalypse ? "rgba(239,68,68,0.8)" : "rgba(16,185,129,0.8)"}, transparent 65%)`,
+            }}
+          />
+          <div
+            className="absolute left-1/2 top-1/2 h-[150%] w-[110%] -translate-x-1/2 -translate-y-1/2 blur-[80px] opacity-60 transition-colors duration-1000"
+            style={{
+              background: `radial-gradient(circle, ${isApocalypse ? "rgba(185,28,28,0.7)" : "rgba(4,120,87,0.7)"}, transparent 60%)`,
             }}
           />
         </motion.div>
@@ -167,6 +176,10 @@ export function GuardianDesktop({
         transition={{ type: "tween", ease: "easeOut", duration: 0.35 }}
       >
         <div className="absolute top-[10%] left-[-10%] w-[120%] h-[80%] bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.1),transparent_50%)] blur-[40px] animate-pulse" />
+        <div
+          className="absolute bottom-[5%] right-[-10%] w-[120%] h-[80%] bg-[radial-gradient(ellipse_at_bottom_left,rgba(6,78,59,0.15),transparent_50%)] blur-[40px] animate-pulse"
+          style={{ animationDuration: "8s" }}
+        />
       </motion.div>
 
       <div className="absolute inset-0 -z-10 pointer-events-none">
@@ -194,7 +207,7 @@ export function GuardianDesktop({
 
       <motion.div
         animate={clickAnim}
-        className="relative mx-auto h-[95%] w-full flex items-end justify-center overflow-visible"
+        className="relative mx-auto h-[95%] flex items-end justify-center overflow-visible"
         style={{ transformOrigin: "bottom center" }}
       >
         <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-48 h-5 bg-black/80 rounded-full blur-[8px] -z-10 pointer-events-none" />
@@ -228,7 +241,7 @@ export function GuardianDesktop({
             stiffness: isTyping ? 80 : 120,
             damping: isTyping ? 12 : 14,
           }}
-          className="relative max-h-full flex items-end justify-center w-full"
+          className="relative max-h-full flex items-end justify-center"
         >
           <motion.div
             animate={{
@@ -239,13 +252,13 @@ export function GuardianDesktop({
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="relative max-h-full w-full flex items-end justify-center"
+            className="relative max-h-full"
           >
             <img
               src={activeImage}
               alt="The Guardian"
               draggable={false}
-              className={`relative mx-auto h-full object-contain transition-all duration-500 ${
+              className={`relative mx-auto max-h-[300px] sm:max-h-[420px] md:max-h-[520px] lg:max-h-[690px] object-contain transition-all duration-500 ${
                 isApocalypse
                   ? "drop-shadow-[0_0_80px_rgba(239,68,68,0.7)] filter saturate-[1.15] brightness-[1.08] contrast-[1.05]"
                   : "drop-shadow-[0_0_80px_rgba(16,185,129,0.55)] filter saturate-[1.1] brightness-[1.05]"

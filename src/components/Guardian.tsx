@@ -28,33 +28,28 @@ export function Guardian(props: Props) {
 
   if (!mounted) {
     return (
-      <div className="h-full flex items-center justify-center text-emerald-400 font-mono text-xs animate-pulse">
+      <div className="h-96 flex items-center justify-center text-emerald-400 font-mono text-xs animate-pulse">
         Establishing Link...
       </div>
     );
   }
 
-  // Dynamic responsive height classes matching sizes criteria:
-  // Mobile: 220px, Small Mobile: 260px, Landscape: 300px, Tablet (md): 420px, Desktop (lg): 620px, Large Desktop (xl): 760px
-  const sizeClasses = `
+  if (isDesktop) {
+    return <GuardianDesktop {...props} />;
+  }
+
+  // Mobile custom size constraints
+  const mobileSizeClasses = `
     w-full
     h-[220px] 
     xs:h-[260px] 
     landscape:h-[300px] 
-    sm:h-[350px] 
-    md:h-[420px] 
-    lg:h-[620px] 
-    xl:h-[760px] 
     flex items-center justify-center select-none overflow-visible
   `.replace(/\s+/g, " ").trim();
 
   return (
-    <div className={`${sizeClasses} ${props.className || ""}`}>
-      {isDesktop ? (
-        <GuardianDesktop {...props} />
-      ) : (
-        <GuardianMobile {...props} />
-      )}
+    <div className={`${mobileSizeClasses} ${props.className || ""}`}>
+      <GuardianMobile {...props} />
     </div>
   );
 }
