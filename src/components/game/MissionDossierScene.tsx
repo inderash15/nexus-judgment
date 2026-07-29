@@ -166,24 +166,32 @@ export function MissionDossierScene({
               transition={{ duration: 0.6 }}
               className="w-full rounded-2xl border border-emerald-500/20 bg-black/60 backdrop-blur-md shadow-[0_0_60px_rgba(16,185,129,0.15)] overflow-hidden"
             >
-              {/* DESKTOP VIEW (hidden on mobile) */}
               <div
                 ref={scrollRef}
-                className="hidden md:block max-h-[80vh] overflow-y-auto overscroll-contain px-8 py-8 space-y-8"
+                className="max-h-[80vh] overflow-y-auto overscroll-contain px-5 sm:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8"
               >
                 {/* Header */}
-                <div className="text-center relative">
-                  <span className="inline-block rounded-full border border-red-500/50 bg-red-500/10 px-3 py-0.5 font-mono text-[10px] text-red-400 tracking-[0.3em] uppercase mb-3">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center relative"
+                >
+                  <motion.span
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                    className="inline-block rounded-full border border-red-500/50 bg-red-500/10 px-3 py-0.5 font-mono text-[9px] sm:text-[10px] text-red-400 tracking-[0.3em] uppercase mb-3"
+                  >
                     CLASSIFIED
-                  </span>
-                  <h1 className="font-serif text-3xl md:text-4xl text-emerald-50 tracking-tight">
+                  </motion.span>
+                  <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl text-emerald-50 tracking-tight">
                     MISSION DOSSIER
                   </h1>
-                  <p className="font-mono text-xs text-emerald-400/60 tracking-[0.4em] uppercase mt-2">
+                  <p className="font-mono text-[10px] sm:text-xs text-emerald-400/60 tracking-[0.4em] uppercase mt-2">
                     Operation: Guardian's Judgment
                   </p>
                   <div className="mt-4 h-px w-full bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
-                </div>
+                </motion.div>
 
                 {/* Card 1 — Operation Name */}
                 {revealedCards.includes(0) && (
@@ -315,139 +323,6 @@ export function MissionDossierScene({
                     </p>
                   </motion.div>
                 )}
-              </div>
-
-              {/* MOBILE COMPACT VIEW (zero-scroll, zero-zoom layout) */}
-              <div className="md:hidden flex flex-col p-4 space-y-4 max-h-[85vh] overflow-hidden">
-                {/* Header */}
-                <div className="text-center">
-                  <span className="inline-block rounded-full border border-red-500/50 bg-red-500/10 px-2 py-0.5 font-mono text-[8px] text-red-400 tracking-[0.2em] uppercase mb-1">
-                    CLASSIFIED
-                  </span>
-                  <h1 className="font-serif text-lg text-emerald-50 tracking-tight">
-                    MISSION DOSSIER
-                  </h1>
-                </div>
-
-                {/* Custom Tab Selector */}
-                <div className="flex border-b border-emerald-500/20 pb-1.5 justify-between gap-1 overflow-x-auto whitespace-nowrap scrollbar-none">
-                  {[
-                    { id: "info", label: "Info" },
-                    { id: "speaker", label: "Speaker" },
-                    { id: "objectives", label: "Objectives" },
-                    { id: "schedule", label: "Schedule" },
-                  ].map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => setActiveTab(t.id as any)}
-                      className={`px-3 py-1.5 rounded-lg font-mono text-[10px] tracking-wider uppercase transition-all ${
-                        activeTab === t.id
-                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                          : "text-emerald-500/50 hover:text-emerald-300"
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Tab Content Wrapper */}
-                <div className="flex-1 overflow-y-auto max-h-[35dvh] pr-1 space-y-3">
-                  {activeTab === "info" && (
-                    <div className="grid grid-cols-1 gap-2.5">
-                      <div className="rounded-lg border border-emerald-500/15 bg-emerald-950/10 p-3">
-                        <p className="font-mono text-[9px] text-emerald-400/50 uppercase tracking-wider">Operation Name</p>
-                        <p className="font-serif text-sm text-emerald-200 font-bold">GEN AI WORKSHOP</p>
-                        <p className="font-mono text-[8px] text-emerald-400/40">2-Day Immersive Intelligence Program</p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="rounded-lg border border-emerald-500/15 bg-emerald-950/10 p-3">
-                          <p className="font-mono text-[9px] text-emerald-400/50 uppercase tracking-wider">Duration</p>
-                          <p className="font-serif text-sm text-emerald-200 font-bold">2 Days</p>
-                        </div>
-                        <div className="rounded-lg border border-emerald-500/15 bg-emerald-950/10 p-3">
-                          <p className="font-mono text-[9px] text-emerald-400/50 uppercase tracking-wider">Venue</p>
-                          <p className="font-serif text-sm text-emerald-200 font-bold truncate">Sector 07 Hall</p>
-                        </div>
-                      </div>
-                      <div className="rounded-lg border border-emerald-500/15 bg-emerald-950/10 p-3">
-                        <p className="font-mono text-[9px] text-emerald-400/50 uppercase tracking-wider">Date</p>
-                        <p className="font-serif text-sm text-emerald-200 font-bold">{dateStr}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === "speaker" && (
-                    <div className="space-y-2">
-                      {RESOURCE_PERSONS.map((p, i) => (
-                        <div key={i} className="rounded-lg border border-emerald-500/15 bg-emerald-950/10 p-3 flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full border border-emerald-400/30 bg-emerald-900/20 flex items-center justify-center font-serif text-emerald-300">
-                            {p.name.charAt(0)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-serif text-xs text-emerald-50 truncate">{p.name}</h4>
-                            <p className="font-mono text-[9px] text-emerald-300/70 truncate">{p.designation}</p>
-                            <p className="font-mono text-[8px] text-emerald-400/40 truncate">{p.company}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {activeTab === "objectives" && (
-                    <div className="space-y-3">
-                      <div className="rounded-lg border border-emerald-500/15 bg-emerald-950/10 p-3">
-                        <p className="font-mono text-[9px] text-emerald-400/50 uppercase tracking-wider mb-1.5">Objectives</p>
-                        <ul className="space-y-1.5">
-                          {OBJECTIVES.map((obj, i) => (
-                            <li key={i} className="flex items-center gap-1.5 text-[10px] text-emerald-100/80">
-                              <span className="text-emerald-400 text-[8px]">&#10003;</span>
-                              {obj}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="rounded-lg border border-emerald-500/15 bg-emerald-950/10 p-3">
-                        <p className="font-mono text-[9px] text-emerald-400/50 uppercase tracking-wider mb-2">Rewards</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {REWARDS.map((r, i) => (
-                            <div key={i} className="flex items-center gap-2 rounded border border-emerald-500/10 bg-emerald-500/5 p-1.5">
-                              <span className="text-base">{r.icon}</span>
-                              <span className="font-mono text-[9px] text-emerald-300 truncate">{r.label}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === "schedule" && (
-                    <div className="space-y-3">
-                      {SCHEDULE.map((s, idx) => (
-                        <div key={idx} className="rounded-lg border border-emerald-500/15 bg-emerald-950/10 p-3">
-                          <p className="font-mono text-[9px] text-emerald-400 uppercase tracking-wider font-bold mb-2">{s.day}</p>
-                          <div className="space-y-2">
-                            {s.events.map((e, i) => (
-                              <div key={i} className="flex items-start gap-2 text-[10px]">
-                                <span className="font-mono text-emerald-400 shrink-0">{e.time}</span>
-                                <span className="text-emerald-100/80">{e.label}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Mobile Permanent CTA */}
-                <div className="text-center pt-1 border-t border-emerald-500/15">
-                  <div className="inline-block rounded-xl shadow-[0_0_15px_rgba(52,211,153,0.3)]">
-                    <ActionButton onClick={onComplete}>
-                      ACCEPT MISSION
-                    </ActionButton>
-                  </div>
-                </div>
               </div>
             </motion.div>
           )}
