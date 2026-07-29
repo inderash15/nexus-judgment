@@ -23,7 +23,7 @@ import {
   ProfileModal,
 } from "@/components/game";
 import type { Scene } from "@/components/game";
-import bgImage from "@/assets/background.png";
+import bgImage from "@/assets/Background.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -93,9 +93,9 @@ function LastCandidate() {
     }
   };
 
-  const handleRegister = async (name: string, email: string, department: string) => {
+  const handleRegister = async (name: string, email: string, department: string, year: string) => {
     try {
-      const res = await registerOrResumeStudent({ data: { name, email, department } });
+      const res = await registerOrResumeStudent({ data: { name, email, department, year } });
       if (res.error) {
         alert("Registration failed: " + res.error);
         return;
@@ -199,12 +199,12 @@ function LastCandidate() {
 
   return (
     <main
-      className={`relative min-h-[100dvh] w-full overflow-y-auto overflow-x-hidden text-emerald-50 font-sans antialiased transition-all duration-1000 ${deathTriggered && deathPhase >= 1 ? "animate-shake bg-red-950/20" : ""
-        } ${student && student.wrongAnswersCount === 2 ? "bg-black/90 brightness-75" : ""} ${student && student.wrongAnswersCount >= 3 ? "bg-black brightness-50" : "bg-zinc-950"
-        }`}
+      className={`relative min-h-[100dvh] w-full overflow-y-auto overflow-x-hidden text-emerald-50 font-sans antialiased transition-all duration-1000 ${
+        deathTriggered && deathPhase >= 1 ? "animate-shake bg-red-950/20" : ""
+      } ${student && student.wrongAnswersCount === 2 ? "bg-black/90 brightness-75" : ""} ${
+        student && student.wrongAnswersCount >= 3 ? "bg-black brightness-50" : "bg-zinc-950"
+      }`}
     >
-
-
       <Atmosphere speaking={isSpeaking} />
 
       <AnimatePresence>
@@ -308,10 +308,11 @@ function LastCandidate() {
       )}
 
       <div
-        className={`relative z-20 w-full min-h-[100dvh] flex items-center py-8 md:py-0 origin-top md:origin-center ${!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene)
-          ? "w-full sm:w-[65%] md:w-[45%] lg:w-[40%] justify-start pl-4 sm:pl-8 md:pl-12 lg:pl-16"
-          : "justify-center px-4"
-          }`}
+        className={`relative z-20 w-full min-h-[100dvh] flex items-center py-8 md:py-0 origin-top md:origin-center ${
+          !["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene)
+            ? "w-full sm:w-[65%] md:w-[45%] lg:w-[40%] justify-start pl-4 sm:pl-8 md:pl-12 lg:pl-16"
+            : "justify-center px-4"
+        }`}
       >
         <AnimatePresence mode="wait">
           {scene === "boot" && (
@@ -332,7 +333,12 @@ function LastCandidate() {
             />
           )}
           {scene === "cinematic" && (
-            <CinematicScene key="cinematic" onComplete={() => setScene("intro")} speak={speak} stop={stop} />
+            <CinematicScene
+              key="cinematic"
+              onComplete={() => setScene("intro")}
+              speak={speak}
+              stop={stop}
+            />
           )}
           {scene === "intro" && (
             <IntroScene

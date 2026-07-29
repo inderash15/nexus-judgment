@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SceneWrap } from "./SceneWrap";
 import { ActionButton } from "./ActionButton";

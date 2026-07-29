@@ -106,7 +106,7 @@ export function CinematicScene({
         onEnded={handleVideoEnd}
         className="absolute inset-0 w-full h-full object-cover"
       >
-        <source src="/videos/Doctor_Doom_introduces_futuristi…_202607271217.mp4" type="video/mp4" />
+        <source src="/videos/final.mp4" type="video/mp4" />
       </video>
 
       <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-transparent to-emerald-950 pointer-events-none opacity-85" />

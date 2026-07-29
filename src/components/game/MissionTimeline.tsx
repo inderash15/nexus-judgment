@@ -36,9 +36,7 @@ export function MissionTimeline({ schedule }: { schedule: TimelineDay[] }) {
                 <p className="font-mono text-[9px] sm:text-[10px] text-emerald-400/60 tracking-widest uppercase">
                   {ev.time}
                 </p>
-                <p className="text-xs sm:text-sm text-emerald-100/80 mt-0.5">
-                  {ev.label}
-                </p>
+                <p className="text-xs sm:text-sm text-emerald-100/80 mt-0.5">{ev.label}</p>
               </motion.div>
             ))}
           </div>

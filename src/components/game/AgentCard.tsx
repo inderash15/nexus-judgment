@@ -134,9 +134,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
         transition={{ delay: 0.9, duration: 0.6 }}
         className="mt-4 sm:mt-5 relative px-4 py-3 rounded-lg border-l-2 border-emerald-400/30 bg-emerald-500/5"
       >
-        <p className="text-xs sm:text-sm italic text-emerald-200/60">
-          "{agent.quote}"
-        </p>
+        <p className="text-xs sm:text-sm italic text-emerald-200/60">"{agent.quote}"</p>
       </motion.blockquote>
     </motion.div>
   );

@@ -9,13 +9,7 @@ export interface ResourcePerson {
   photoUrl: string;
 }
 
-export function ResourcePersonCard({
-  person,
-  index,
-}: {
-  person: ResourcePerson;
-  index: number;
-}) {
+export function ResourcePersonCard({ person, index }: { person: ResourcePerson; index: number }) {
   const [expanded, setExpanded] = useState(false);
 
   return (

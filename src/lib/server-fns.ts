@@ -81,6 +81,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
       const email = data.email.toLowerCase().trim();
       const name = (data.name || "").trim();
       const department = (data.department || "").trim();
+      const year = (data.year || "").trim();
 
       console.log("[SERVER_FN:registerOrResumeStudent] Querying student collection for:", email);
       const student = await studentsColl.findOne({ email });
@@ -174,6 +175,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
         email,
         name,
         department,
+        year,
         score: 0,
         levelsCompleted: 0,
         status: "Active",

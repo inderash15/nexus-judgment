@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SceneWrap } from "./SceneWrap";
 import { DBStudent, DBQuestion } from "@/lib/db";
@@ -79,7 +79,7 @@ export function ChamberScene({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      
+
       const char = e.key.toUpperCase();
       if (/^[A-Z]$/.test(char)) {
         const { guesses, onGuessLetter: currentOnGuess } = stateRef.current;

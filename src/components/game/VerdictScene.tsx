@@ -49,13 +49,17 @@ export function VerdictScene({
             <div className="text-[8px] sm:text-[9px] uppercase tracking-wider text-emerald-400/60">
               Current XP
             </div>
-            <div className="text-base sm:text-lg font-bold text-emerald-100">{student.score} XP</div>
+            <div className="text-base sm:text-lg font-bold text-emerald-100">
+              {student.score} XP
+            </div>
           </div>
           <div className="bg-black/60 border border-emerald-500/20 rounded-xl px-3 sm:px-4 py-2 font-mono text-center flex-1">
             <div className="text-[8px] sm:text-[9px] uppercase tracking-wider text-emerald-400/60">
               Level Finished
             </div>
-            <div className="text-base sm:text-lg font-bold text-emerald-100">{student.levelsCompleted} / 7</div>
+            <div className="text-base sm:text-lg font-bold text-emerald-100">
+              {student.levelsCompleted} / 7
+            </div>
           </div>
         </div>
 

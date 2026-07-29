@@ -12,8 +12,6 @@ type Particle = {
   opacity: number;
 };
 
-
-
 /** Ambient chamber backdrop with a looping MP4 video, mist particles and vignette. */
 export function Atmosphere({
   intensity = 1,
@@ -40,9 +38,7 @@ export function Atmosphere({
   }, []);
 
   return (
-    <div
-      className="pointer-events-none fixed inset-0 overflow-hidden bg-black"
-    >
+    <div className="pointer-events-none fixed inset-0 overflow-hidden bg-black">
       {/* LAYER 1: Fullscreen Video & Fallback Static Image */}
       <div
         className="absolute inset-0 bg-cover bg-center"
@@ -93,7 +89,7 @@ export function Atmosphere({
         style={{
           backgroundImage: `linear-gradient(rgba(52, 211, 153, 0.2) 1px, transparent 1px),
           linear-gradient(90deg, rgba(52, 211, 153, 0.2) 1px, transparent 1px)`,
-          backgroundSize: '30px 30px',
+          backgroundSize: "30px 30px",
         }}
       />
 

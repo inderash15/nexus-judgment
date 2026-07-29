@@ -204,133 +204,130 @@ export function useGuardianVoice() {
     });
   }, []);
 
-  const speak = useCallback(
-    async (text: string, emotion: GuardianEmotion = "normal") => {
-      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  const speak = useCallback(async (text: string, emotion: GuardianEmotion = "normal") => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
-      // Cancel current speaking instances and increment chain ID
-      activeChainIdRef.current += 1;
-      const currentChainId = activeChainIdRef.current;
-      window.speechSynthesis.cancel();
+    // Cancel current speaking instances and increment chain ID
+    activeChainIdRef.current += 1;
+    const currentChainId = activeChainIdRef.current;
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+
+    // Use ref to always get latest voiceEnabled state (avoids stale closure)
+    if (!voiceEnabledRef.current) return;
+
+    // Clean special characters
+    const cleanText = text
+      .replace(/[“’”"]/g, "")
+      .replace(/◈|◊|△|⌘|◉|☾|✦/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    // Split text on sentence endings, commas and ellipses keeping the delimiters
+    const tokens = cleanText.split(/(\.\.\.|[.,!?])/g);
+
+    setIsSpeaking(true);
+    ambienceRef.current?.duck(true); // Duck background ambient bass
+
+    // Process tokens sequentially to add randomized human pauses
+    for (let i = 0; i < tokens.length; i++) {
+      if (currentChainId !== activeChainIdRef.current) return;
+
+      const token = tokens[i].trim();
+      if (!token) continue;
+
+      if (token === "...") {
+        // Deep mysterious pause (1500ms to 2500ms)
+        const delay = 1500 + Math.random() * 1000;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else if (token === ".") {
+        // Standard sentence pause (650ms to 1200ms)
+        const delay = 650 + Math.random() * 550;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else if (token === "?" || token === "!") {
+        // Questions or proclamations pause (1000ms to 1500ms)
+        const delay = 1000 + Math.random() * 500;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else if (token === ",") {
+        // Short comma breath pause (250ms to 450ms)
+        const delay = 250 + Math.random() * 200;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else {
+        // Speak the current text segment
+        await new Promise<void>((resolve) => {
+          if (currentChainId !== activeChainIdRef.current) {
+            resolve();
+            return;
+          }
+
+          const utterance = new SpeechSynthesisUtterance(token);
+          utteranceRef.current = utterance;
+
+          const voices = window.speechSynthesis.getVoices();
+          const englishVoices = voices.filter((v) => v.lang.startsWith("en"));
+
+          // Prefer: Microsoft David, Google US English Male, Microsoft Mark, generic male
+          const chosenVoice =
+            englishVoices.find(
+              (v) =>
+                v.name.toLowerCase().includes("david") ||
+                v.name.toLowerCase().includes("google us english male") ||
+                v.name.toLowerCase().includes("mark") ||
+                v.name.toLowerCase().includes("male"),
+            ) || englishVoices[0];
+
+          if (chosenVoice) {
+            utterance.voice = chosenVoice;
+          }
+
+          // Base setting variables
+          let pitch = 0.45;
+          let rate = 0.75;
+          const volume = 1.0;
+
+          // Apply emotional voice profiles
+          switch (emotion) {
+            case "warning":
+              pitch = 0.4;
+              rate = 0.7;
+              break;
+            case "wrong":
+              pitch = 0.38;
+              rate = 0.65;
+              break;
+            case "success":
+              pitch = 0.5;
+              rate = 0.8;
+              break;
+            case "final":
+              pitch = 0.45;
+              rate = 0.72;
+              break;
+            case "normal":
+            default:
+              pitch = 0.45;
+              rate = 0.75;
+              break;
+          }
+
+          utterance.pitch = pitch;
+          utterance.rate = rate;
+          utterance.volume = volume;
+
+          utterance.onend = () => resolve();
+          utterance.onerror = () => resolve();
+
+          window.speechSynthesis.speak(utterance);
+        });
+      }
+    }
+
+    // Restore ambience and clear vocal state if completed naturally
+    if (currentChainId === activeChainIdRef.current) {
       setIsSpeaking(false);
-
-      // Use ref to always get latest voiceEnabled state (avoids stale closure)
-      if (!voiceEnabledRef.current) return;
-
-      // Clean special characters
-      const cleanText = text
-        .replace(/[“’”"]/g, "")
-        .replace(/◈|◊|△|⌘|◉|☾|✦/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
-
-      // Split text on sentence endings, commas and ellipses keeping the delimiters
-      const tokens = cleanText.split(/(\.\.\.|[.,!?])/g);
-
-      setIsSpeaking(true);
-      ambienceRef.current?.duck(true); // Duck background ambient bass
-
-      // Process tokens sequentially to add randomized human pauses
-      for (let i = 0; i < tokens.length; i++) {
-        if (currentChainId !== activeChainIdRef.current) return;
-
-        const token = tokens[i].trim();
-        if (!token) continue;
-
-        if (token === "...") {
-          // Deep mysterious pause (1500ms to 2500ms)
-          const delay = 1500 + Math.random() * 1000;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        } else if (token === ".") {
-          // Standard sentence pause (650ms to 1200ms)
-          const delay = 650 + Math.random() * 550;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        } else if (token === "?" || token === "!") {
-          // Questions or proclamations pause (1000ms to 1500ms)
-          const delay = 1000 + Math.random() * 500;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        } else if (token === ",") {
-          // Short comma breath pause (250ms to 450ms)
-          const delay = 250 + Math.random() * 200;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        } else {
-          // Speak the current text segment
-          await new Promise<void>((resolve) => {
-            if (currentChainId !== activeChainIdRef.current) {
-              resolve();
-              return;
-            }
-
-            const utterance = new SpeechSynthesisUtterance(token);
-            utteranceRef.current = utterance;
-
-            const voices = window.speechSynthesis.getVoices();
-            const englishVoices = voices.filter((v) => v.lang.startsWith("en"));
-
-            // Prefer: Microsoft David, Google US English Male, Microsoft Mark, generic male
-            const chosenVoice =
-              englishVoices.find(
-                (v) =>
-                  v.name.toLowerCase().includes("david") ||
-                  v.name.toLowerCase().includes("google us english male") ||
-                  v.name.toLowerCase().includes("mark") ||
-                  v.name.toLowerCase().includes("male"),
-              ) || englishVoices[0];
-
-            if (chosenVoice) {
-              utterance.voice = chosenVoice;
-            }
-
-            // Base setting variables
-            let pitch = 0.45;
-            let rate = 0.75;
-            const volume = 1.0;
-
-            // Apply emotional voice profiles
-            switch (emotion) {
-              case "warning":
-                pitch = 0.4;
-                rate = 0.7;
-                break;
-              case "wrong":
-                pitch = 0.38;
-                rate = 0.65;
-                break;
-              case "success":
-                pitch = 0.5;
-                rate = 0.8;
-                break;
-              case "final":
-                pitch = 0.45;
-                rate = 0.72;
-                break;
-              case "normal":
-              default:
-                pitch = 0.45;
-                rate = 0.75;
-                break;
-            }
-
-            utterance.pitch = pitch;
-            utterance.rate = rate;
-            utterance.volume = volume;
-
-            utterance.onend = () => resolve();
-            utterance.onerror = () => resolve();
-
-            window.speechSynthesis.speak(utterance);
-          });
-        }
-      }
-
-      // Restore ambience and clear vocal state if completed naturally
-      if (currentChainId === activeChainIdRef.current) {
-        setIsSpeaking(false);
-        ambienceRef.current?.duck(false);
-      }
-    },
-    [],
-  );
+      ambienceRef.current?.duck(false);
+    }
+  }, []);
 
   const stop = useCallback(() => {
     activeChainIdRef.current += 1;

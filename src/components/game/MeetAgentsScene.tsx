@@ -235,9 +235,7 @@ export function MeetAgentsScene({
                     }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <ActionButton onClick={onComplete}>
-                      JOIN THE MISSION
-                    </ActionButton>
+                    <ActionButton onClick={onComplete}>JOIN THE MISSION</ActionButton>
                   </motion.div>
                 ) : (
                   <button

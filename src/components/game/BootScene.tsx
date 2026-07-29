@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SceneWrap } from "./SceneWrap";
 import loadingVideo from "@/assets/0724 (1).mp4";
 import fullLogo from "@/assets/full logo.png";
-import bgImage from "@/assets/background.png";
+import bgImage from "@/assets/Background.png";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function BootScene({
@@ -68,6 +68,17 @@ export function BootScene({
 
   return (
     <SceneWrap>
+      {stage === "click-to-start" && (
+        <motion.img
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.6 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1 }}
+          src={bgImage}
+          alt="Background"
+          className="fixed inset-0 w-full h-full object-cover z-0 pointer-events-none"
+        />
+      )}
       <AnimatePresence>
         {(stage === "loading" || stage === "ready") && (
           <motion.video

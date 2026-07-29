@@ -1,12 +1,6 @@
 import { motion } from "framer-motion";
 
-export function SkillBadge({
-  skill,
-  index,
-}: {
-  skill: string;
-  index: number;
-}) {
+export function SkillBadge({ skill, index }: { skill: string; index: number }) {
   return (
     <motion.span
       initial={{ opacity: 0, scale: 0.6 }}

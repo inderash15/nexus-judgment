@@ -1,7 +1,10 @@
+"use client";
+
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import { DBStudent } from "@/lib/db";
 import { Scene } from "./types";
-import { Trophy, User, Heart, Volume2, VolumeX } from "lucide-react";
+import { Trophy, User, Heart, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
 import logo from "@/assets/images.png";
 
 export function TopHud({
@@ -19,6 +22,28 @@ export function TopHud({
   voiceEnabled: boolean;
   onToggleVoice: () => void;
 }) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
   if (scene === "boot" || scene === "intro" || scene === "register" || scene === "cinematic")
     return null;
 
@@ -85,6 +110,13 @@ export function TopHud({
 
           {/* Navigation Controls */}
           <div className="flex items-center gap-1 sm:gap-1.5 border-l border-emerald-500/20 pl-2 sm:pl-3">
+            <button
+              onClick={toggleFullScreen}
+              className="p-1.5 hover:bg-emerald-500/10 rounded-lg text-emerald-300 transition"
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            >
+              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            </button>
             <button
               onClick={onOpenLeaderboard}
               className="p-1.5 hover:bg-emerald-500/10 rounded-lg text-emerald-300 transition"

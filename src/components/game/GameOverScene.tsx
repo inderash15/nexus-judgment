@@ -154,8 +154,8 @@ export function GameOverScene({
                   <div className="h-px w-full bg-gradient-to-r from-transparent via-red-500/40 to-transparent my-3" />
 
                   <p className="text-zinc-100 text-xs sm:text-sm leading-relaxed font-bold px-2">
-                    Your account has been locked. The Guardian has deemed you unworthy of proceeding.
-                    No second chances or resets are permitted.
+                    Your account has been locked. The Guardian has deemed you unworthy of
+                    proceeding. No second chances or resets are permitted.
                   </p>
                 </motion.div>
               </div>
@@ -196,7 +196,8 @@ export function GameOverScene({
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4 text-red-400 shrink-0" />
                   <span>
-                    XP Earned: <strong className="text-red-300 font-black">{student.score} XP</strong>
+                    XP Earned:{" "}
+                    <strong className="text-red-300 font-black">{student.score} XP</strong>
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
