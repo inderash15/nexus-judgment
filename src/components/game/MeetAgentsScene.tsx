@@ -168,7 +168,7 @@ export function MeetAgentsScene({
 
               {/* Agent card area */}
               <div
-                className="relative min-h-[480px] sm:min-h-[520px]"
+                className="relative min-h-[350px] xs:min-h-[400px] sm:min-h-[500px] flex items-center justify-center"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
               >

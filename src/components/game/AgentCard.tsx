@@ -42,7 +42,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
         />
 
         {/* Portrait container */}
-        <div className="relative h-28 w-28 sm:h-36 sm:w-36 md:h-40 md:w-40 rounded-full border-2 border-emerald-400/50 bg-gradient-to-b from-emerald-900/60 to-black/60 flex items-center justify-center shadow-[0_0_40px_rgba(52,211,153,0.3)] overflow-hidden">
+        <div className="relative h-20 w-20 xs:h-28 xs:w-28 sm:h-32 sm:w-32 md:h-36 md:w-36 rounded-full border-2 border-emerald-400/50 bg-gradient-to-b from-emerald-900/60 to-black/60 flex items-center justify-center shadow-[0_0_40px_rgba(52,211,153,0.3)] overflow-hidden">
           {/* Scanline overlay */}
           <div
             className="absolute inset-0 opacity-10 pointer-events-none"
@@ -57,7 +57,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
             transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
             className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent pointer-events-none"
           />
-          <span className="text-3xl sm:text-4xl md:text-5xl font-serif text-emerald-300/80 select-none">
+          <span className="text-xl xs:text-3xl sm:text-4xl font-serif text-emerald-300/80 select-none">
             {agent.initials}
           </span>
         </div>
@@ -100,7 +100,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
-        className="font-mono text-[9px] sm:text-[10px] text-emerald-400/50 tracking-[0.2em] uppercase mt-0.5"
+        className="font-mono text-[8px] xs:text-[9px] sm:text-[10px] text-emerald-400/50 tracking-[0.1em] sm:tracking-[0.2em] uppercase mt-0.5 max-w-xs sm:max-w-md mx-auto whitespace-normal break-words leading-relaxed"
       >
         {agent.department}
       </motion.p>
