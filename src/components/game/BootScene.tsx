@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SceneWrap } from "./SceneWrap";
 import loadingVideo from "@/assets/0724 (1).mp4";
 import fullLogo from "@/assets/full logo.png";
-import bgImage from "@/assets/Background.png";
+import bgImage from "@/assets/background.png";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function BootScene({

@@ -23,7 +23,7 @@ import {
   ProfileModal,
 } from "@/components/game";
 import type { Scene } from "@/components/game";
-import bgImage from "@/assets/Background.png";
+import bgImage from "@/assets/background.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
