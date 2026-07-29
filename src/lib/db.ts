@@ -59,6 +59,13 @@ export type SecurityLog = {
   details: string;
 };
 
+export type SystemConfig = {
+  id: string; // "global"
+  sessionTimeout: number; // in seconds
+  maxWrongAttempts: number;
+  mode: "normal" | "workshop" | "maintenance";
+};
+
 const DEFAULT_QUESTIONS: DBQuestion[] = [
   {
     id: 1,
@@ -305,21 +312,32 @@ const DEFAULT_QUESTIONS: DBQuestion[] = [
 const MONGODB_URI = process.env.MONGODB_URI;
 const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || "nexus_judgment";
 
-let client: MongoClient | null = null;
-let dbInstance: Db | null = null;
+// For serverless container reuse
+interface GlobalMongo {
+  _mongoClient?: MongoClient;
+  _mongoDbInstance?: Db;
+}
+const globalWithMongo = globalThis as unknown as GlobalMongo;
 
 export async function getDB(): Promise<Db> {
-  if (dbInstance) return dbInstance;
+  if (globalWithMongo._mongoDbInstance) return globalWithMongo._mongoDbInstance;
   if (!MONGODB_URI) {
     throw new Error(
       "MONGODB_URI environment variable is not set. Please configure it in your deployment settings.",
     );
   }
-  if (!client) {
-    client = new MongoClient(MONGODB_URI);
-    await client.connect();
+  if (!globalWithMongo._mongoClient) {
+    globalWithMongo._mongoClient = new MongoClient(MONGODB_URI, {
+      maxPoolSize: 100,
+      minPoolSize: 10,
+      maxIdleTimeMS: 30000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 30000,
+    });
+    await globalWithMongo._mongoClient.connect();
   }
-  dbInstance = client.db(MONGODB_DB_NAME);
+  const dbInstance = globalWithMongo._mongoClient.db(MONGODB_DB_NAME);
+  globalWithMongo._mongoDbInstance = dbInstance;
 
   // Seed default questions if empty
   const questionsColl = dbInstance.collection("questions");
@@ -328,11 +346,35 @@ export async function getDB(): Promise<Db> {
     await questionsColl.insertMany(DEFAULT_QUESTIONS);
   }
 
+  // Seed default configuration if empty
+  const configColl = dbInstance.collection("systemConfig");
+  const configCount = await configColl.countDocuments();
+  if (configCount === 0) {
+    await configColl.insertOne({
+      id: "global",
+      sessionTimeout: 45,
+      maxWrongAttempts: 4,
+      mode: "workshop",
+    });
+  }
+
   // Create indexes for performance optimization under high concurrent load
-  const studentsColl = dbInstance.collection("students");
   try {
+    const studentsColl = dbInstance.collection("students");
+    const securityLogsColl = dbInstance.collection("securityLogs");
+    const adminSessionsColl = dbInstance.collection("adminSessions");
+    const studentSessionsColl = dbInstance.collection("studentSessions");
+
     await studentsColl.createIndex({ email: 1 }, { unique: true });
+    await studentsColl.createIndex({ score: -1, completionTime: 1 });
     await questionsColl.createIndex({ id: 1 }, { unique: true });
+    await securityLogsColl.createIndex({ email: 1, createdAt: -1 });
+    await adminSessionsColl.createIndex({ token: 1 });
+    await adminSessionsColl.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    await studentSessionsColl.createIndex({ token: 1 });
+    await studentSessionsColl.createIndex({ email: 1 });
+    await studentSessionsColl.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
     console.log("[DB] Performance indexes verified successfully.");
   } catch (e) {
     console.warn("[DB] Index creation skipped or failed:", e);

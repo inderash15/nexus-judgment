@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { adminGetDashboardData } from "@/lib/server-fns";
+import { getLeaderboardData } from "@/lib/server-fns";
 import { DBStudent } from "@/lib/db";
 import { Trophy } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,9 +8,11 @@ export function InlineLeaderboard({ currentEmail }: { currentEmail: string }) {
   const [leaderboard, setLeaderboard] = useState<DBStudent[]>([]);
 
   useEffect(() => {
-    adminGetDashboardData()
+    getLeaderboardData({ data: { page: 1, limit: 10 } })
       .then((res) => {
-        setLeaderboard(res.students.sort((a, b) => b.score - a.score || a.timeTaken - b.timeTaken));
+        if (res.success && res.students) {
+          setLeaderboard(res.students);
+        }
       })
       .catch(console.error);
   }, []);

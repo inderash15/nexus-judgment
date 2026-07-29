@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { toast } from "sonner";
 import {
   adminGetDashboardData,
   adminUpdateQuestion,
@@ -21,6 +22,8 @@ import {
   adminAuthenticate,
   adminCheckSession,
   adminLogout,
+  getSystemConfigData,
+  adminUpdateSystemConfig,
 } from "../lib/server-fns";
 import { DBStudent, DBQuestion, SecurityLog } from "../lib/db";
 import {
@@ -76,8 +79,9 @@ function AdminDashboard() {
   const [difficultyForm, setDifficultyForm] = useState<"easy" | "medium" | "hard">("medium");
   const [activeForm, setActiveForm] = useState(true);
   const [bulkJsonText, setBulkJsonText] = useState("");
-  const [sessionTimeout, setSessionTimeout] = useState(300);
-  const [maxWrongAttempts, setMaxWrongAttempts] = useState(7);
+  const [sessionTimeout, setSessionTimeout] = useState(45);
+  const [maxWrongAttempts, setMaxWrongAttempts] = useState(4);
+  const [systemMode, setSystemMode] = useState<"normal" | "workshop" | "maintenance">("workshop");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
@@ -89,10 +93,34 @@ function AdminDashboard() {
     try {
       const res = await adminGetDashboardData();
       setData(res);
+
+      const config = await getSystemConfigData();
+      setSessionTimeout(config.sessionTimeout);
+      setMaxWrongAttempts(config.maxWrongAttempts);
+      setSystemMode(config.mode);
     } catch (e) {
       console.error("Failed to load admin dashboard data", e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      const res = await adminUpdateSystemConfig({
+        data: {
+          sessionTimeout,
+          maxWrongAttempts,
+          mode: systemMode,
+        }
+      });
+      if (res.success) {
+        toast.success("Global rules committed successfully.");
+      } else {
+        toast.error("Failed to commit global rules: " + res.error);
+      }
+    } catch (e: any) {
+      toast.error("Failed to commit settings: " + e.message);
     }
   };
 
@@ -610,6 +638,9 @@ function AdminDashboard() {
               setSessionTimeout={setSessionTimeout}
               maxWrongAttempts={maxWrongAttempts}
               setMaxWrongAttempts={setMaxWrongAttempts}
+              mode={systemMode}
+              setMode={setSystemMode}
+              onSave={handleSaveSettings}
             />
           )}
         </main>

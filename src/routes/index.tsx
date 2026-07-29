@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Guardian } from "@/components/Guardian";
 import { Atmosphere } from "@/components/Atmosphere";
 import { useGuardianVoice } from "@/hooks/useGuardianVoice";
-import { registerOrResumeStudent, submitGuess, adminGetDashboardData } from "@/lib/server-fns";
+import { registerOrResumeStudent, submitGuess, getLeaderboardData } from "@/lib/server-fns";
 import { DBStudent, DBQuestion } from "@/lib/db";
 import {
   BootScene,
@@ -41,8 +41,32 @@ export const Route = createFileRoute("/")({
 
 const LOCAL_EMAIL_KEY = "last-candidate:email:v4";
 
+function useDeviceType() {
+  const [deviceType, setDeviceType] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const handleResize = () => {
+      const w = window.innerWidth;
+      if (w < 768) {
+        setDeviceType("mobile");
+      } else if (w >= 768 && w < 1200) {
+        setDeviceType("tablet");
+      } else {
+        setDeviceType("desktop");
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return { deviceType, mounted };
+}
+
 function LastCandidate() {
-  const [hydrated, setHydrated] = useState(false);
+  const { deviceType, mounted } = useDeviceType();
   const [scene, setScene] = useState<Scene>("boot");
   const [student, setStudent] = useState<DBStudent | null>(null);
   const [assignedQuestions, setAssignedQuestions] = useState<DBQuestion[]>([]);
@@ -54,11 +78,11 @@ function LastCandidate() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState<DBStudent[]>([]);
+  const [submittingGuess, setSubmittingGuess] = useState(false);
 
   const { voiceEnabled, toggleVoice, isSpeaking, speak, stop } = useGuardianVoice();
 
   useEffect(() => {
-    setHydrated(true);
     const email = localStorage.getItem(LOCAL_EMAIL_KEY);
     if (email) {
       resumeSession(email);
@@ -67,7 +91,7 @@ function LastCandidate() {
 
   const resumeSession = async (email: string) => {
     try {
-      const res = await registerOrResumeStudent({ data: { name: "", email, department: "" } });
+      const res = await registerOrResumeStudent({ data: { email, action: "resume" } });
       if (res.error) {
         console.warn("Session resume bypassed:", res.error);
         localStorage.removeItem(LOCAL_EMAIL_KEY);
@@ -93,37 +117,28 @@ function LastCandidate() {
     }
   };
 
-  const handleRegister = async (name: string, email: string, department: string, year: string) => {
-    try {
-      const res = await registerOrResumeStudent({ data: { name, email, department, year } });
-      if (res.error) {
-        alert("Registration failed: " + res.error);
-        return;
-      }
-      if (res.student) {
-        setStudent(res.student);
-        setAssignedQuestions(res.questions);
-        localStorage.setItem(LOCAL_EMAIL_KEY, res.student.email);
+  const handleAuthSuccess = (student: DBStudent, questions: DBQuestion[]) => {
+    setStudent(student);
+    setAssignedQuestions(questions);
+    localStorage.setItem(LOCAL_EMAIL_KEY, student.email);
 
-        if (res.student.locked) {
-          if (res.student.status === "Eliminated" || res.student.status === "Disqualified") {
-            setScene("gameover");
-          } else {
-            setScene("final");
-          }
-        } else {
-          setScene("briefing");
-        }
+    if (student.locked) {
+      if (student.status === "Eliminated" || student.status === "Disqualified") {
+        setScene("gameover");
+      } else {
+        setScene("final");
       }
-    } catch (err) {
-      alert("Registration failed: " + err);
+    } else {
+      setScene("briefing");
     }
   };
 
   const loadLeaderboard = async () => {
     try {
-      const res = await adminGetDashboardData();
-      setLeaderboardData(res.students);
+      const res = await getLeaderboardData({ data: { page: 1, limit: 50 } });
+      if (res.success && res.students) {
+        setLeaderboardData(res.students);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -141,7 +156,8 @@ function LastCandidate() {
   }, [student, assignedQuestions]);
 
   const handleGuessLetter = async (char: string) => {
-    if (!student) return;
+    if (!student || submittingGuess) return;
+    setSubmittingGuess(true);
     try {
       const res = await submitGuess({ data: { email: student.email, guess: char } });
       const prevWrong = student.wrongAnswersCount;
@@ -149,6 +165,11 @@ function LastCandidate() {
 
       setStudent(res.student);
       setAssignedQuestions(res.questions);
+
+      if (res.error) {
+        alert(res.error);
+        return;
+      }
 
       const isIncorrect = res.student.wrongAnswersCount > prevWrong;
 
@@ -174,6 +195,8 @@ function LastCandidate() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setSubmittingGuess(false);
     }
   };
 
@@ -197,6 +220,156 @@ function LastCandidate() {
     }, 5000);
   };
 
+  const guardianState = useMemo(() => {
+    if (scene === "gameover") return "death";
+    if (scene === "final") return "selected";
+    if (scene === "verdict") return "success";
+    if (scene === "briefing") return "idle";
+    if (scene === "chamber") {
+      if (student && student.wrongAnswersCount >= 3) return "angry";
+      if (student && student.wrongAnswersCount >= 1) return "warning";
+      return "floating";
+    }
+    return "idle";
+  }, [scene, student]);
+
+  // Loading indicator for mounting
+  if (!mounted) {
+    return (
+      <div className="min-h-screen w-full bg-zinc-950 flex items-center justify-center font-mono text-xs text-emerald-400 animate-pulse">
+        Laying Gateway Protocol...
+      </div>
+    );
+  }
+
+  // Active scenes rendered dynamically
+  const activeSceneContent = (
+    <AnimatePresence mode="wait">
+      {scene === "boot" && (
+        <BootScene
+          key="boot"
+          onComplete={() => setScene("mission-dossier")}
+          speak={speak}
+          voiceEnabled={voiceEnabled}
+          toggleVoice={toggleVoice}
+        />
+      )}
+      {scene === "mission-dossier" && (
+        <MissionDossierScene
+          key="mission-dossier"
+          onComplete={() => setScene("cinematic")}
+          speak={speak}
+          isSpeaking={isSpeaking}
+        />
+      )}
+      {scene === "cinematic" && (
+        <CinematicScene
+          key="cinematic"
+          onComplete={() => setScene("intro")}
+          speak={speak}
+          stop={stop}
+        />
+      )}
+      {scene === "intro" && (
+        <IntroScene
+          key="intro"
+          onBegin={() => setScene(student ? "briefing" : "meet-the-agents")}
+          hasSave={Boolean(student)}
+          candidateName={student?.name || ""}
+          speak={speak}
+          isSpeaking={isSpeaking}
+        />
+      )}
+      {scene === "meet-the-agents" && (
+        <MeetAgentsScene
+          key="meet-the-agents"
+          onComplete={() => setScene("register")}
+          speak={speak}
+          isSpeaking={isSpeaking}
+        />
+      )}
+      {scene === "register" && (
+        <RegisterScene
+          key="register"
+          onComplete={handleAuthSuccess}
+          speak={speak}
+          isSpeaking={isSpeaking}
+        />
+      )}
+      {scene === "briefing" && student && (
+        <BriefingScene
+          key="briefing"
+          student={student}
+          onEnter={() => setScene("chamber")}
+          speak={speak}
+          isSpeaking={isSpeaking}
+        />
+      )}
+      {scene === "chamber" && student && currentQuestion && (
+        <ChamberScene
+          key={`chamber-${student.currentLevel}`}
+          student={student}
+          question={currentQuestion}
+          onGuessLetter={handleGuessLetter}
+          speak={speak}
+          isSpeaking={isSpeaking}
+          submitting={submittingGuess}
+        />
+      )}
+      {scene === "verdict" && student && (
+        <VerdictScene
+          key={`verdict-${student.levelsCompleted}`}
+          student={student}
+          onContinue={() => {
+            if (student.locked) {
+              setScene("final");
+            } else {
+              setScene("briefing");
+            }
+          }}
+          speak={speak}
+          isSpeaking={isSpeaking}
+        />
+      )}
+      {scene === "final" && student && (
+        <FinalScene
+          key="final"
+          student={student}
+          speak={speak}
+          isSpeaking={isSpeaking}
+          onRestart={() => {
+            localStorage.removeItem("student_email");
+            setStudent(null);
+            setScene("register");
+          }}
+          onReturnHome={() => {
+            localStorage.removeItem("student_email");
+            setStudent(null);
+            setScene("intro");
+          }}
+        />
+      )}
+      {scene === "gameover" && student && (
+        <GameOverScene
+          key="gameover"
+          student={student}
+          speak={speak}
+          isSpeaking={isSpeaking}
+          onTryAgain={() => {
+            localStorage.removeItem("student_email");
+            setStudent(null);
+            setScene("register");
+          }}
+          onReturnHome={() => {
+            localStorage.removeItem("student_email");
+            setStudent(null);
+            setScene("intro");
+          }}
+        />
+      )}
+    </AnimatePresence>
+  );
+
   return (
     <main
       className={`relative min-h-[100dvh] w-full overflow-y-auto overflow-x-hidden text-emerald-50 font-sans antialiased transition-all duration-1000 ${
@@ -205,8 +378,10 @@ function LastCandidate() {
         student && student.wrongAnswersCount >= 3 ? "bg-black brightness-50" : "bg-zinc-950"
       }`}
     >
+      {/* Dynamic Ambient Atmosphere */}
       <Atmosphere speaking={isSpeaking} />
 
+      {/* Global Background Boot Animation */}
       <AnimatePresence>
         {scene === "boot" && (
           <motion.div
@@ -221,6 +396,7 @@ function LastCandidate() {
         )}
       </AnimatePresence>
 
+      {/* Access Denied Death Sequence */}
       <AnimatePresence>
         {deathTriggered && (
           <motion.div
@@ -270,6 +446,7 @@ function LastCandidate() {
         )}
       </AnimatePresence>
 
+      {/* Top HUD Display for Authenticated Screens */}
       {!["boot", "mission-dossier", "cinematic", "intro", "meet-the-agents"].includes(scene) && (
         <TopHud
           student={student}
@@ -281,164 +458,59 @@ function LastCandidate() {
         />
       )}
 
-      {!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) && (
-        <div className="fixed right-0 bottom-0 w-[35%] sm:w-[30%] md:w-[45%] h-[30vh] sm:h-[40vh] md:h-[75vh] pointer-events-none z-0 flex items-end justify-center select-none opacity-25 sm:opacity-40 md:opacity-100 transition-opacity duration-700">
-          <Guardian
-            scale={0.3}
-            speaking={isSpeaking}
-            state={
-              scene === "gameover"
-                ? "death"
-                : scene === "final"
-                  ? "selected"
-                  : scene === "verdict"
-                    ? "success"
-                    : scene === "briefing"
-                      ? "idle"
-                      : scene === "chamber"
-                        ? student && student.wrongAnswersCount >= 3
-                          ? "angry"
-                          : student && student.wrongAnswersCount >= 1
-                            ? "warning"
-                            : "floating"
-                        : "idle"
-            }
-          />
+      {/* Layout Router (Desktop vs Tablet vs Mobile) */}
+      {deviceType === "desktop" ? (
+        /* ================= DESKTOP VIEW SHELL (LOCKED ORIGINAL) ================= */
+        <>
+          {!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) && (
+            <div className="fixed right-0 bottom-0 w-[35%] sm:w-[30%] md:w-[45%] h-[30vh] sm:h-[40vh] md:h-[75vh] pointer-events-none z-0 flex items-end justify-center select-none opacity-25 sm:opacity-40 md:opacity-100 transition-opacity duration-700">
+              <Guardian
+                scale={0.3}
+                speaking={isSpeaking}
+                state={guardianState}
+              />
+            </div>
+          )}
+
+          <div
+            className={`relative z-20 w-full min-h-[100dvh] flex items-start sm:items-center py-6 sm:py-8 md:py-0 origin-top md:origin-center ${
+              !["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene)
+                ? "w-full sm:w-[65%] md:w-[45%] lg:w-[40%] justify-start pl-4 sm:pl-8 md:pl-12 lg:pl-16"
+                : "justify-center px-4"
+            }`}
+          >
+            {activeSceneContent}
+          </div>
+        </>
+      ) : deviceType === "tablet" ? (
+        /* ================= TABLET VIEW SHELL ================= */
+        <div className="min-h-screen w-full flex flex-col md:flex-row items-center justify-center gap-8 p-8 relative">
+          <div className="flex-1 max-w-xl w-full flex justify-center items-center">
+            {activeSceneContent}
+          </div>
+
+          {!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) && (
+            <div className="w-full md:w-[35%] h-[350px] flex items-center justify-center select-none z-10 pointer-events-none">
+              <Guardian scale={0.35} speaking={isSpeaking} state={guardianState} />
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ================= MOBILE VIEW SHELL ================= */
+        <div className="min-h-screen w-full flex flex-col items-center p-4 pt-16 gap-6 relative overflow-y-auto">
+          {!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) && (
+            <div className="w-full h-[200px] flex items-center justify-center select-none z-10 pointer-events-none shrink-0">
+              <Guardian scale={0.25} speaking={isSpeaking} state={guardianState} />
+            </div>
+          )}
+
+          <div className="w-full max-w-sm flex justify-center items-center">
+            {activeSceneContent}
+          </div>
         </div>
       )}
 
-      <div
-        className={`relative z-20 w-full min-h-[100dvh] flex items-start sm:items-center py-6 sm:py-8 md:py-0 origin-top md:origin-center ${
-          !["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene)
-            ? "w-full sm:w-[65%] md:w-[45%] lg:w-[40%] justify-start pl-4 sm:pl-8 md:pl-12 lg:pl-16"
-            : "justify-center px-4"
-        }`}
-      >
-        <AnimatePresence mode="wait">
-          {scene === "boot" && (
-            <BootScene
-              key="boot"
-              onComplete={() => setScene("mission-dossier")}
-              speak={speak}
-              voiceEnabled={voiceEnabled}
-              toggleVoice={toggleVoice}
-            />
-          )}
-          {scene === "mission-dossier" && (
-            <MissionDossierScene
-              key="mission-dossier"
-              onComplete={() => setScene("cinematic")}
-              speak={speak}
-              isSpeaking={isSpeaking}
-            />
-          )}
-          {scene === "cinematic" && (
-            <CinematicScene
-              key="cinematic"
-              onComplete={() => setScene("intro")}
-              speak={speak}
-              stop={stop}
-            />
-          )}
-          {scene === "intro" && (
-            <IntroScene
-              key="intro"
-              onBegin={() => setScene(student ? "briefing" : "meet-the-agents")}
-              hasSave={Boolean(student)}
-              candidateName={student?.name || ""}
-              speak={speak}
-              isSpeaking={isSpeaking}
-            />
-          )}
-          {scene === "meet-the-agents" && (
-            <MeetAgentsScene
-              key="meet-the-agents"
-              onComplete={() => setScene("register")}
-              speak={speak}
-              isSpeaking={isSpeaking}
-            />
-          )}
-          {scene === "register" && (
-            <RegisterScene
-              key="register"
-              onComplete={handleRegister}
-              speak={speak}
-              isSpeaking={isSpeaking}
-            />
-          )}
-          {scene === "briefing" && student && (
-            <BriefingScene
-              key="briefing"
-              student={student}
-              onEnter={() => setScene("chamber")}
-              speak={speak}
-              isSpeaking={isSpeaking}
-            />
-          )}
-          {scene === "chamber" && student && currentQuestion && (
-            <ChamberScene
-              key={`chamber-${student.currentLevel}`}
-              student={student}
-              question={currentQuestion}
-              onGuessLetter={handleGuessLetter}
-              speak={speak}
-              isSpeaking={isSpeaking}
-            />
-          )}
-          {scene === "verdict" && student && (
-            <VerdictScene
-              key={`verdict-${student.levelsCompleted}`}
-              student={student}
-              onContinue={() => {
-                if (student.locked) {
-                  setScene("final");
-                } else {
-                  setScene("briefing");
-                }
-              }}
-              speak={speak}
-              isSpeaking={isSpeaking}
-            />
-          )}
-          {scene === "final" && student && (
-            <FinalScene
-              key="final"
-              student={student}
-              speak={speak}
-              isSpeaking={isSpeaking}
-              onRestart={() => {
-                localStorage.removeItem("student_email");
-                setStudent(null);
-                setScene("register");
-              }}
-              onReturnHome={() => {
-                localStorage.removeItem("student_email");
-                setStudent(null);
-                setScene("intro");
-              }}
-            />
-          )}
-          {scene === "gameover" && student && (
-            <GameOverScene
-              key="gameover"
-              student={student}
-              speak={speak}
-              isSpeaking={isSpeaking}
-              onTryAgain={() => {
-                localStorage.removeItem("student_email");
-                setStudent(null);
-                setScene("register");
-              }}
-              onReturnHome={() => {
-                localStorage.removeItem("student_email");
-                setStudent(null);
-                setScene("intro");
-              }}
-            />
-          )}
-        </AnimatePresence>
-      </div>
-
+      {/* Global Modals */}
       <AnimatePresence>
         {showLeaderboard && (
           <LeaderboardModal

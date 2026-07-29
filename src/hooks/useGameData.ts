@@ -6,6 +6,7 @@ import {
   adminUpdateQuestion,
   adminBulkUploadQuestions,
   adminUpdateStudentLock,
+  getLeaderboardData,
 } from "@/lib/server-fns";
 
 // Game hooks
@@ -67,8 +68,11 @@ export function useLeaderboard() {
   return useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
-      const res = await adminGetDashboardData();
-      return res.students.sort((a: any, b: any) => b.score - a.score || a.timeTaken - b.timeTaken);
+      const res = await getLeaderboardData({ data: { page: 1, limit: 50 } });
+      if (!res.success || !res.students) {
+        throw new Error(res.error || "Failed to fetch leaderboard");
+      }
+      return res.students;
     },
     staleTime: 10000,
   });

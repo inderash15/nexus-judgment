@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getDB, DBStudent, DBQuestion, StudentStatus, SecurityLog } from "./db";
+import { getDB, DBQuestion, SecurityLog } from "./db";
 
 // Helper to shuffle questions
 function shuffleArray<T>(array: T[]): T[] {
@@ -17,37 +17,8 @@ function serializeDoc<T>(doc: T): T {
   return JSON.parse(JSON.stringify(doc));
 }
 
-// 0. Admin Authentication
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "csda@10";
-
-// Verify admin session token in DB
-export async function verifyAdminSession(): Promise<boolean> {
-  const { getCookie, deleteCookie } = await import("@tanstack/react-start/server");
-  const token = getCookie("admin_session");
-  if (!token) return false;
-
-  try {
-    const db = await getDB();
-    const session = await db.collection("adminSessions").findOne({ token });
-    if (!session) return false;
-
-    // Check expiration
-    const expiresAt = new Date(session.expiresAt);
-    if (expiresAt.getTime() < Date.now()) {
-      // Clean up expired session
-      await db.collection("adminSessions").deleteOne({ token });
-      deleteCookie("admin_session");
-      return false;
-    }
-
-    return true;
-  } catch (e) {
-    console.error("[verifyAdminSession] Error:", e);
-    return false;
-  }
-}
-
 export const adminCheckSession = createServerFn({ method: "GET" }).handler(async () => {
+  const { verifyAdminSession } = await import("./server-helpers.server");
   const isValid = await verifyAdminSession();
   return { success: isValid };
 });
@@ -68,12 +39,21 @@ export const adminLogout = createServerFn({ method: "POST" }).handler(async () =
 });
 
 export const adminAuthenticate = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
-  try {
-    const data = ctx?.data;
-    if (!data || !data.password) {
-      return { success: false, error: "Missing password" };
-    }
+  const { checkRateLimit } = await import("./server-helpers.server");
+  const data = ctx?.data;
+  if (!data || !data.password) {
+    return { success: false, error: "Missing password" };
+  }
 
+  // Account & Token Based Rate Limiting for Admin Authenticate
+  const rateLimitKey = `admin_auth`;
+  if (!checkRateLimit(rateLimitKey, 5, 60000)) {
+    return { success: false, error: "Too many authentication attempts. Please wait 1 minute." };
+  }
+
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "csda@10";
+
+  try {
     if (data.password !== ADMIN_PASSWORD) {
       const db = await getDB();
       const logsColl = db.collection<SecurityLog>("securityLogs");
@@ -83,7 +63,7 @@ export const adminAuthenticate = createServerFn({ method: "POST" }).handler(asyn
         email: "admin",
         action: "ADMIN_AUTH_FAILURE",
         status: "suspicious",
-        details: `Failed admin login attempt from IP ${ctx?.headers?.["x-forwarded-for"] || "unknown"}`,
+        details: `Failed admin login attempt.`,
       });
       return { success: false, error: "Invalid credentials" };
     }
@@ -99,20 +79,16 @@ export const adminAuthenticate = createServerFn({ method: "POST" }).handler(asyn
       details: "Admin authenticated successfully",
     });
 
-    // Generate secure session token
     const token = crypto.randomUUID();
-    // Expiration: 24 hours, or 7 days if rememberMe is requested
-    const maxAge = data.rememberMe ? 60 * 60 * 24 * 7 : 60 * 60 * 24; // in seconds
+    const maxAge = data.rememberMe ? 60 * 60 * 24 * 7 : 60 * 60 * 24; 
     const expiresAt = new Date(Date.now() + maxAge * 1000);
 
-    // Save session in MongoDB
     await db.collection("adminSessions").insertOne({
       token,
       createdAt: new Date().toISOString(),
       expiresAt: expiresAt.toISOString(),
     });
 
-    // Set secure HTTP-only cookie
     const { setCookie } = await import("@tanstack/react-start/server");
     setCookie("admin_session", token, {
       httpOnly: true,
@@ -129,38 +105,91 @@ export const adminAuthenticate = createServerFn({ method: "POST" }).handler(asyn
   }
 });
 
-// 1. Student Registration or Resume
+// 1. Student Registration, Resume, or Login
 export const registerOrResumeStudent = createServerFn({ method: "POST" }).handler(
   async (ctx: any) => {
+    const { checkRateLimit, getCached, setCached, clearCachePrefix, getSystemConfig } = await import("./server-helpers.server");
+    const data = ctx?.data;
+    if (!data || !data.email) {
+      return { student: null, questions: [], error: "Missing email field" };
+    }
+
+    const email = data.email.toLowerCase().trim();
+    const action = data.action || "resume"; // "register" | "login" | "resume"
+    const pinInput = data.pin?.toUpperCase().trim();
+
+    // Student Login/Register Rate Limiting
+    const rateLimitKey = `student_auth:${email}`;
+    if (!checkRateLimit(rateLimitKey, 10, 60000)) {
+      return { student: null, questions: [], error: "Too many login/registration attempts. Please wait 1 minute." };
+    }
+
+    // Access Control check
+    const systemConfig = await getSystemConfig();
+    if (systemConfig.mode === "maintenance") {
+      return {
+        student: null,
+        questions: [],
+        error: "Access Denied: The system is in Maintenance Mode. Only administrators can connect."
+      };
+    }
+
     try {
-      console.log("[SERVER_FN:registerOrResumeStudent] Handler start. Email:", ctx?.data?.email);
-      const data = ctx?.data;
-      if (!data || !data.email) {
-        console.warn("[SERVER_FN:registerOrResumeStudent] Validation failed: Missing email field.");
-        return { student: null, questions: [], error: "Missing email field" };
-      }
-
-      console.log("[SERVER_FN:registerOrResumeStudent] Connecting to database...");
       const db = await getDB();
-      console.log("[SERVER_FN:registerOrResumeStudent] Database connected successfully.");
-
-      const studentsColl = db.collection<DBStudent>("students");
+      const studentsColl = db.collection<any>("students");
       const questionsColl = db.collection<DBQuestion>("questions");
       const logsColl = db.collection<SecurityLog>("securityLogs");
+      const studentSessionsColl = db.collection("studentSessions");
 
-      const email = data.email.toLowerCase().trim();
-      const name = (data.name || "").trim();
-      const department = (data.department || "").trim();
-      const year = (data.year || "").trim();
-
-      console.log("[SERVER_FN:registerOrResumeStudent] Querying student collection for:", email);
       const student = await studentsColl.findOne({ email });
 
-      if (student) {
-        console.log(
-          "[SERVER_FN:registerOrResumeStudent] Student found. Resuming session at level:",
-          student.currentLevel,
-        );
+      // If user chooses to register but email exists, deny it
+      if (action === "register" && student) {
+        return { student: null, questions: [], error: "Email already registered. Please Login/Resume with PIN." };
+      }
+
+      // If user wants to Login/Resume
+      if (action === "login" || action === "resume") {
+        if (!student) {
+          return { student: null, questions: [], error: "Email address not found. Register first." };
+        }
+
+        // Validate PIN
+        if (student.loginPin !== pinInput) {
+          const log: SecurityLog = {
+            id: Math.random().toString(36).substring(7),
+            timestamp: new Date().toISOString(),
+            email,
+            action: "STUDENT_AUTH_FAILURE",
+            status: "suspicious",
+            details: "Invalid PIN provided",
+          };
+          await logsColl.insertOne(log);
+          return { student: null, questions: [], error: "Invalid PIN code. Access denied." };
+        }
+
+        // Create secure student session
+        const token = crypto.randomUUID();
+        const maxAge = 60 * 60 * 24; // 24 hours
+        const expiresAt = new Date(Date.now() + maxAge * 1000);
+
+        await studentSessionsColl.insertOne({
+          token,
+          email,
+          createdAt: new Date().toISOString(),
+          expiresAt: expiresAt.toISOString(),
+        });
+
+        // Set secure HTTP-only cookie
+        const { setCookie } = await import("@tanstack/react-start/server");
+        setCookie("student_session", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge,
+        });
+
         const nowStr = new Date().toISOString();
         await studentsColl.updateOne(
           { email },
@@ -171,35 +200,21 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
         );
 
         const updatedStudent = await studentsColl.findOne({ email });
-        if (!updatedStudent) throw new Error("Student update failed");
-
-        console.log("[SERVER_FN:registerOrResumeStudent] Writing security log for resume...");
-        if (updatedStudent.locked) {
-          const log: SecurityLog = {
-            id: Math.random().toString(36).substring(7),
-            timestamp: nowStr,
-            email,
-            action: "RESUME_LOCKED_ACCOUNT",
-            status: "suspicious",
-            details: `Attempted to resume locked account. Current Status: ${updatedStudent.status}`,
-          };
-          await logsColl.insertOne(log);
-        } else {
-          const log: SecurityLog = {
-            id: Math.random().toString(36).substring(7),
-            timestamp: nowStr,
-            email,
-            action: "RESUME_SESSION",
-            status: "success",
-            details: `Resumed active session at level ${updatedStudent.currentLevel}`,
-          };
-          await logsColl.insertOne(log);
-        }
-
         const assignedQ = await questionsColl
           .find({ id: { $in: updatedStudent.assignedQuestions } })
           .toArray();
-        console.log("[SERVER_FN:registerOrResumeStudent] Session resume success.");
+
+        // Write security log
+        const log: SecurityLog = {
+          id: Math.random().toString(36).substring(7),
+          timestamp: nowStr,
+          email,
+          action: "RESUME_SESSION",
+          status: "success",
+          details: `Resumed active session at level ${updatedStudent.currentLevel}`,
+        };
+        await logsColl.insertOne(log);
+
         return serializeDoc({
           student: updatedStudent,
           questions: getAssignedQuestionsForStudent(updatedStudent, assignedQ),
@@ -207,29 +222,27 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
         });
       }
 
-      console.log("[SERVER_FN:registerOrResumeStudent] Student record not found in DB.");
+      // If user wants to register as a new candidate
+      const name = (data.name || "").trim();
+      const department = (data.department || "").trim();
+      const year = (data.year || "").trim();
 
-      // New student registration requires name and department
-      if (!name || !department) {
-        console.log(
-          "[SERVER_FN:registerOrResumeStudent] Missing parameters for registration. Gaze-bypassed.",
-        );
+      if (!name || !department || !year) {
         return {
           student: null,
           questions: [],
-          error: "Name and department are required for new registration",
+          error: "Full Name, Department, and Year are required to register",
         };
       }
 
-      console.log(
-        "[SERVER_FN:registerOrResumeStudent] Registering new student. Fetching questions...",
-      );
-      const activeQuestions = await questionsColl.find({ active: true }).toArray();
+      // Retrieve cached active questions or fetch from DB
+      let activeQuestions = getCached<DBQuestion[]>("active_questions");
+      if (!activeQuestions) {
+        activeQuestions = await questionsColl.find({ active: true }).toArray();
+        setCached("active_questions", activeQuestions, 30000); // cache for 30s
+      }
+
       if (activeQuestions.length < 7) {
-        console.log(
-          "[SERVER_FN:registerOrResumeStudent] Insufficient questions. Pool count:",
-          activeQuestions.length,
-        );
         return {
           student: null,
           questions: [],
@@ -240,12 +253,20 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
       const shuffled = shuffleArray(activeQuestions);
       const assigned = shuffled.slice(0, 7).map((q) => q.id);
 
+      // Generate random 6-character Pin
+      const allowedChars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // exclude confusing characters (0, 1, I, O)
+      let generatedPin = "";
+      for (let i = 0; i < 6; i++) {
+        generatedPin += allowedChars.charAt(Math.floor(Math.random() * allowedChars.length));
+      }
+
       const nowStr = new Date().toISOString();
-      const newStudent: DBStudent = {
+      const newStudent: any = {
         email,
         name,
         department,
         year,
+        loginPin: generatedPin,
         score: 0,
         levelsCompleted: 0,
         status: "Active",
@@ -263,40 +284,56 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
         lastActiveTime: nowStr,
       };
 
-      console.log("[SERVER_FN:registerOrResumeStudent] Inserting new student document...");
       await studentsColl.insertOne(newStudent);
 
-      console.log("[SERVER_FN:registerOrResumeStudent] Writing security log for registration...");
+      // Create session
+      const token = crypto.randomUUID();
+      const maxAge = 60 * 60 * 24; 
+      const expiresAt = new Date(Date.now() + maxAge * 1000);
+
+      await studentSessionsColl.insertOne({
+        token,
+        email,
+        createdAt: new Date().toISOString(),
+        expiresAt: expiresAt.toISOString(),
+      });
+
+      const { setCookie } = await import("@tanstack/react-start/server");
+      setCookie("student_session", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge,
+      });
+
       const log: SecurityLog = {
         id: Math.random().toString(36).substring(7),
         timestamp: nowStr,
         email,
         action: "REGISTRATION",
         status: "success",
-        details: `Registered candidate from ${department}`,
+        details: `Registered candidate with PIN ${generatedPin}`,
       };
       await logsColl.insertOne(log);
 
       const assignedQ = await questionsColl.find({ id: { $in: assigned } }).toArray();
-      console.log(
-        "[SERVER_FN:registerOrResumeStudent] Registration success. Outputting questions.",
-      );
+      
+      // Clear leaderboard cache as new user registered
+      clearCachePrefix("leaderboard");
+
       return serializeDoc({
         student: newStudent,
         questions: getAssignedQuestionsForStudent(newStudent, assignedQ),
+        loginPin: generatedPin,
         error: null,
       });
     } catch (error: any) {
-      console.error(
-        "[SERVER_FN:registerOrResumeStudent] Critical unhandled error caught inside handler:",
-        error.message,
-        error.stack,
-      );
+      console.error("[SERVER_FN:registerOrResumeStudent] Error:", error.message);
       return {
         student: null,
         questions: [],
         error: `Internal Server Error: ${error.message}`,
-        stack: error.stack,
       };
     }
   },
@@ -304,23 +341,35 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
 
 // 2. Submit Letter or Full Word Guess
 export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
-  try {
-    const data = ctx?.data;
-    if (!data || !data.email || !data.guess) {
-      return {
-        student: null,
-        questions: [],
-        error: "Invalid guess submission: Missing email or guess field.",
-      };
-    }
+  const { checkRateLimit, verifyStudentSession, clearCachePrefix } = await import("./server-helpers.server");
+  const data = ctx?.data;
+  if (!data || !data.email || !data.guess) {
+    return {
+      student: null,
+      questions: [],
+      error: "Invalid guess submission: Missing email or guess field.",
+    };
+  }
 
+  const email = data.email.toLowerCase().trim();
+  const guess = data.guess.toUpperCase().trim();
+
+  // API Rate Limiting: 60 requests per minute per session/account
+  const rateLimitKey = `submit_guess:${email}`;
+  if (!checkRateLimit(rateLimitKey, 60, 60000)) {
+    return { student: null, questions: [], error: "Rate limit exceeded. Please wait a moment." };
+  }
+
+  // Validate student session
+  if (!(await verifyStudentSession(email))) {
+    return { student: null, questions: [], error: "Unauthorized session. Please login again." };
+  }
+
+  try {
     const db = await getDB();
-    const studentsColl = db.collection<DBStudent>("students");
+    const studentsColl = db.collection<any>("students");
     const questionsColl = db.collection<DBQuestion>("questions");
     const logsColl = db.collection<SecurityLog>("securityLogs");
-
-    const email = data.email.toLowerCase().trim();
-    const guess = data.guess.toUpperCase().trim();
 
     const student = await studentsColl.findOne({ email });
     if (!student) return { student: null, questions: [], error: "Student not found" };
@@ -350,7 +399,6 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
     student.levelStartTime = now.toISOString();
     student.lastActiveTime = now.toISOString();
 
-    // Check if guess is single letter or whole word
     if (guess.length === 1) {
       if (student.currentGuesses.includes(guess)) {
         const assignedQ = await questionsColl
@@ -367,7 +415,6 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
       const isCorrect = word.includes(guess);
       if (!isCorrect) {
         student.wrongAnswersCount += 1;
-        // Check for Elimination
         if (student.wrongAnswersCount >= 4) {
           student.status = "Eliminated";
           student.locked = true;
@@ -384,9 +431,7 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
         }
       }
     } else {
-      // Whole word guess
       if (guess === word) {
-        // Add all letters to guesses to trigger solved check
         word.split("").forEach((c) => {
           if (!student.currentGuesses.includes(c)) student.currentGuesses.push(c);
         });
@@ -409,16 +454,13 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
       }
     }
 
-    // Check if word is fully solved
     const isSolved = word.split("").every((char) => student.currentGuesses.includes(char));
     if (isSolved && student.status === "Active") {
-      // Calculate score gained (e.g. 100 base - penalty for incorrect attempts)
       const penalty = student.wrongAnswersCount * 15;
       student.score += Math.max(40, 100 - penalty);
       student.levelsCompleted = student.currentLevel;
 
       if (student.currentLevel >= 7) {
-        // Final completion
         student.status = student.score >= 500 ? "Qualified" : "Completed";
         student.locked = true;
         student.completionTime = now.toISOString();
@@ -432,54 +474,67 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
           details: `Successfully completed all levels with score: ${student.score}`,
         });
       } else {
-        // Unlock next level
         student.currentLevel += 1;
         student.currentGuesses = [];
-        student.wrongAnswersCount = 0; // reset lives for new level
+        student.wrongAnswersCount = 0; 
         student.levelStartTime = now.toISOString();
       }
     }
 
-    // Update in DB
     await studentsColl.replaceOne({ email }, student);
 
     const assignedQ = await questionsColl
       .find({ id: { $in: student.assignedQuestions } })
       .toArray();
+      
+    // Clear leaderboard cache
+    clearCachePrefix("leaderboard");
+
     return serializeDoc({
       student,
       questions: getAssignedQuestionsForStudent(student, assignedQ),
       error: null,
     });
   } catch (error: any) {
-    console.error("[SERVER_FN:submitGuess] Error:", error.message, error.stack);
+    console.error("[SERVER_FN:submitGuess] Error:", error.message);
     return { student: null, questions: [], error: `Submit Guess failed: ${error.message}` };
   }
 });
 
 // 3. Admin Get Dashboard
 export const adminGetDashboardData = createServerFn({ method: "GET" }).handler(async () => {
+  const { verifyAdminSession, getCached, setCached } = await import("./server-helpers.server");
+  if (!(await verifyAdminSession())) {
+    return {
+      students: [],
+      questions: [],
+      securityLogs: [],
+      error: "Unauthorized",
+    };
+  }
+
+  // Cache Admin dashboard data for 5 seconds to handle heavy concurrent access
+  const cacheKey = "admin_dashboard";
+  const cached = getCached<any>(cacheKey);
+  if (cached) return cached;
+
   try {
-    if (!(await verifyAdminSession())) {
-      return {
-        students: [],
-        questions: [],
-        securityLogs: [],
-        error: "Unauthorized",
-      };
-    }
     const db = await getDB();
-    const students = await db.collection<DBStudent>("students").find().toArray();
-    const questions = await db.collection<DBQuestion>("questions").find().toArray();
-    const securityLogs = await db.collection<SecurityLog>("securityLogs").find().toArray();
-    return serializeDoc({
+    const students = await db.collection("students").find().toArray();
+    const questions = await db.collection("questions").find().toArray();
+    const securityLogs = await db.collection("securityLogs").find().sort({ timestamp: -1 }).limit(200).toArray();
+    
+    const result = serializeDoc({
       students,
       questions,
       securityLogs,
       error: null,
     });
+
+    setCached(cacheKey, result, 5000); 
+    return result;
   } catch (error: any) {
-    console.error("[SERVER_FN:adminGetDashboardData] Error:", error.message, error.stack);
+    console.error("[SERVER_FN:adminGetDashboardData] Error:", error.message);
     return {
       students: [],
       questions: [],
@@ -491,12 +546,14 @@ export const adminGetDashboardData = createServerFn({ method: "GET" }).handler(a
 
 // 4. Admin CRUD Question
 export const adminUpdateQuestion = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+  const { verifyAdminSession } = await import("./server-helpers.server");
+  if (!(await verifyAdminSession())) {
+    return { success: false, questions: [], error: "Unauthorized" };
+  }
+  const data = ctx?.data;
+  if (!data) return { success: false, questions: [], error: "Missing data payload" };
+  
   try {
-    if (!(await verifyAdminSession())) {
-      return { success: false, questions: [], error: "Unauthorized" };
-    }
-    const data = ctx?.data;
-    if (!data) return { success: false, questions: [], error: "Missing data payload" };
     const db = await getDB();
     const questionsColl = db.collection<DBQuestion>("questions");
     const { action, question } = data;
@@ -530,10 +587,14 @@ export const adminUpdateQuestion = createServerFn({ method: "POST" }).handler(as
       await questionsColl.deleteOne({ id: question.id });
     }
 
+    // Invalidate questions cache
+    const { clearCachePrefix } = await import("./server-helpers.server");
+    clearCachePrefix("active_questions");
+
     const allQuestions = await questionsColl.find().toArray();
     return serializeDoc({ success: true, questions: allQuestions, error: null });
   } catch (error: any) {
-    console.error("[SERVER_FN:adminUpdateQuestion] Error:", error.message, error.stack);
+    console.error("[SERVER_FN:adminUpdateQuestion] Error:", error.message);
     return { success: false, questions: [], error: `Update Question failed: ${error.message}` };
   }
 });
@@ -541,13 +602,15 @@ export const adminUpdateQuestion = createServerFn({ method: "POST" }).handler(as
 // 5. Admin Bulk Upload
 export const adminBulkUploadQuestions = createServerFn({ method: "POST" }).handler(
   async (ctx: any) => {
+    const { verifyAdminSession } = await import("./server-helpers.server");
+    if (!(await verifyAdminSession())) {
+      return { success: false, questions: [], error: "Unauthorized" };
+    }
+    const data = ctx?.data;
+    if (!data || !Array.isArray(data))
+      return { success: false, questions: [], error: "Invalid data payload" };
+      
     try {
-      if (!(await verifyAdminSession())) {
-        return { success: false, questions: [], error: "Unauthorized" };
-      }
-      const data = ctx?.data;
-      if (!data || !Array.isArray(data))
-        return { success: false, questions: [], error: "Invalid data payload" };
       const db = await getDB();
       const questionsColl = db.collection<DBQuestion>("questions");
 
@@ -567,10 +630,14 @@ export const adminBulkUploadQuestions = createServerFn({ method: "POST" }).handl
         await questionsColl.insertMany(newDocs);
       }
 
+      // Invalidate cache
+      const { clearCachePrefix } = await import("./server-helpers.server");
+      clearCachePrefix("active_questions");
+
       const allQuestions = await questionsColl.find().toArray();
       return serializeDoc({ success: true, questions: allQuestions, error: null });
     } catch (error: any) {
-      console.error("[SERVER_FN:adminBulkUploadQuestions] Error:", error.message, error.stack);
+      console.error("[SERVER_FN:adminBulkUploadQuestions] Error:", error.message);
       return { success: false, questions: [], error: `Bulk Upload failed: ${error.message}` };
     }
   },
@@ -579,20 +646,22 @@ export const adminBulkUploadQuestions = createServerFn({ method: "POST" }).handl
 // 6. Admin Unlock or Lock Student Account
 export const adminUpdateStudentLock = createServerFn({ method: "POST" }).handler(
   async (ctx: any) => {
+    const { verifyAdminSession, clearCachePrefix } = await import("./server-helpers.server");
+    if (!(await verifyAdminSession())) {
+      return { success: false, students: [], error: "Unauthorized" };
+    }
+    const data = ctx?.data;
+    if (!data) return { success: false, students: [], error: "Missing data payload" };
+    
     try {
-      if (!(await verifyAdminSession())) {
-        return { success: false, students: [], error: "Unauthorized" };
-      }
-      const data = ctx?.data;
-      if (!data) return { success: false, students: [], error: "Missing data payload" };
       const db = await getDB();
-      const studentsColl = db.collection<DBStudent>("students");
+      const studentsColl = db.collection<any>("students");
       const logsColl = db.collection<SecurityLog>("securityLogs");
       const email = data.email.toLowerCase().trim();
 
       const student = await studentsColl.findOne({ email });
       if (student) {
-        const updateFields: Partial<DBStudent> = {
+        const updateFields: any = {
           locked: data.locked,
         };
         if (data.status) {
@@ -611,14 +680,18 @@ export const adminUpdateStudentLock = createServerFn({ method: "POST" }).handler
           email: data.email,
           action: data.locked ? "ADMIN_LOCK_ACCOUNT" : "ADMIN_UNLOCK_ACCOUNT",
           status: "success",
-          details: `Admin changed account lock status to ${data.locked} (Status set to ${data.status || student.status})`,
+          details: `Admin changed account lock status to ${data.locked}`,
         });
       }
+
+      // Clear caches
+      clearCachePrefix("leaderboard");
+      clearCachePrefix("admin_dashboard");
 
       const allStudents = await studentsColl.find().toArray();
       return serializeDoc({ success: true, students: allStudents, error: null });
     } catch (error: any) {
-      console.error("[SERVER_FN:adminUpdateStudentLock] Error:", error.message, error.stack);
+      console.error("[SERVER_FN:adminUpdateStudentLock] Error:", error.message);
       return {
         success: false,
         students: [],
@@ -628,15 +701,75 @@ export const adminUpdateStudentLock = createServerFn({ method: "POST" }).handler
   },
 );
 
+// 7. Public Paginated Leaderboard Data (Secure)
+export const getLeaderboardData = createServerFn({ method: "GET" }).handler(async (ctx: any) => {
+  const { checkRateLimit, getCached, setCached } = await import("./server-helpers.server");
+  const data = ctx?.data || {};
+  const page = Math.max(1, parseInt(data.page || "1", 10));
+  const limit = Math.max(1, Math.min(100, parseInt(data.limit || "20", 10)));
+  const skip = (page - 1) * limit;
+
+  // Rate Limiting: max 60 requests per minute on leaderboard
+  const rateLimitKey = `leaderboard_access`;
+  if (!checkRateLimit(rateLimitKey, 120, 60000)) {
+    return { success: false, error: "Rate limit exceeded. Please wait a moment." };
+  }
+
+  const cacheKey = `leaderboard:${page}:${limit}`;
+  const cached = getCached<any>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const db = await getDB();
+    const studentsColl = db.collection("students");
+
+    // Total participants count
+    const total = await studentsColl.countDocuments();
+
+    // Query top students with pagination and strict projection (security)
+    const students = await studentsColl.find(
+      {},
+      {
+        projection: {
+          name: 1,
+          department: 1,
+          score: 1,
+          completionTime: 1,
+          timeTaken: 1,
+          status: 1,
+          levelsCompleted: 1,
+        }
+      }
+    )
+    .sort({ score: -1, completionTime: 1, lastActiveTime: 1 })
+    .skip(skip)
+    .limit(limit)
+    .toArray();
+
+    const result = {
+      success: true,
+      students: serializeDoc(students),
+      total,
+      page,
+      limit,
+    };
+
+    setCached(cacheKey, result, 5000); // cache for 5 seconds
+    return result;
+  } catch (e: any) {
+    console.error("[SERVER_FN:getLeaderboardData] Error:", e);
+    return { success: false, error: "Failed to fetch standings" };
+  }
+});
+
 // Helper: map student assigned question IDs to DBQuestion
 function getAssignedQuestionsForStudent(
-  student: DBStudent,
+  student: any,
   allQuestions: DBQuestion[],
 ): DBQuestion[] {
-  return student.assignedQuestions.map((id) => {
+  return student.assignedQuestions.map((id: number) => {
     const q = allQuestions.find((item) => item.id === id);
     if (q) return q;
-    // Fallback: return default question if deleted
     return {
       id,
       word: "FALLBACK",
@@ -647,3 +780,45 @@ function getAssignedQuestionsForStudent(
     };
   });
 }
+
+// 8. Public System Config Retrieval (Cached)
+export const getSystemConfigData = createServerFn({ method: "GET" }).handler(async () => {
+  const { getSystemConfig } = await import("./server-helpers.server");
+  const config = await getSystemConfig();
+  return serializeDoc(config);
+});
+
+// 9. Admin System Config Update
+export const adminUpdateSystemConfig = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+  const { verifyAdminSession } = await import("./server-helpers.server");
+  if (!(await verifyAdminSession())) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const data = ctx?.data;
+  if (!data) return { success: false, error: "Missing config data" };
+
+  try {
+    const db = await getDB();
+    await db.collection("systemConfig").updateOne(
+      { id: "global" },
+      {
+        $set: {
+          sessionTimeout: Math.max(10, parseInt(data.sessionTimeout, 10) || 45),
+          maxWrongAttempts: Math.max(1, parseInt(data.maxWrongAttempts, 10) || 4),
+          mode: data.mode || "workshop",
+        }
+      },
+      { upsert: true }
+    );
+
+    // Invalidate config cache
+    const { clearCachePrefix } = await import("./server-helpers.server");
+    clearCachePrefix("system_config");
+
+    return { success: true };
+  } catch (e: any) {
+    console.error("[adminUpdateSystemConfig] Error:", e);
+    return { success: false, error: e.message };
+  }
+});

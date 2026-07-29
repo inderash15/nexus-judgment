@@ -11,12 +11,14 @@ export function ChamberScene({
   onGuessLetter,
   speak,
   isSpeaking,
+  submitting = false,
 }: {
   student: DBStudent;
   question: DBQuestion;
   onGuessLetter: (char: string) => void;
   speak: (text: string, emotion?: GuardianEmotion) => void;
   isSpeaking: boolean;
+  submitting?: boolean;
 }) {
   const [seconds, setSeconds] = useState(45);
   const [hintOpen, setHintOpen] = useState(false);
@@ -33,6 +35,7 @@ export function ChamberScene({
   };
 
   const handleGuess = (char: string) => {
+    if (submitting) return;
     resetInactivity();
     onGuessLetter(char);
   };
@@ -70,19 +73,21 @@ export function ChamberScene({
   }, [lastActivity, inactiveAlert20, inactiveAlert40, speak]);
 
   // Use a ref to store latest state without constantly rebinding the listener
-  const stateRef = useRef({ guesses: student.currentGuesses, onGuessLetter });
+  const stateRef = useRef({ guesses: student.currentGuesses, onGuessLetter, submitting });
   useEffect(() => {
-    stateRef.current = { guesses: student.currentGuesses, onGuessLetter };
-  }, [student.currentGuesses, onGuessLetter]);
+    stateRef.current = { guesses: student.currentGuesses, onGuessLetter, submitting };
+  }, [student.currentGuesses, onGuessLetter, submitting]);
 
   // Physical keyboard support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
 
+      const { guesses, onGuessLetter: currentOnGuess, submitting: isSubmitting } = stateRef.current;
+      if (isSubmitting) return;
+
       const char = e.key.toUpperCase();
       if (/^[A-Z]$/.test(char)) {
-        const { guesses, onGuessLetter: currentOnGuess } = stateRef.current;
         if (!guesses.includes(char)) {
           resetInactivity();
           currentOnGuess(char);
@@ -171,14 +176,16 @@ export function ChamberScene({
             return (
               <button
                 key={letter}
-                disabled={guessed}
+                disabled={guessed || submitting}
                 onClick={() => handleGuess(letter)}
                 className={`min-h-[38px] sm:min-h-[44px] h-8 sm:h-9 md:h-11 rounded-lg font-mono text-[10px] sm:text-xs md:text-sm font-bold border transition cursor-pointer select-none ${
                   guessed
                     ? correct
                       ? "bg-emerald-600/30 border-emerald-500/40 text-emerald-300"
                       : "bg-red-950/40 border-red-900/40 text-red-500/50"
-                    : "bg-black/50 border-emerald-500/20 text-emerald-200 hover:border-emerald-400/60 hover:bg-emerald-500/10"
+                    : submitting
+                      ? "bg-emerald-950/10 border-emerald-500/10 text-emerald-500/30 cursor-not-allowed opacity-50"
+                      : "bg-black/50 border-emerald-500/20 text-emerald-200 hover:border-emerald-400/60 hover:bg-emerald-500/10"
                 }`}
               >
                 {letter}
@@ -197,7 +204,7 @@ export function ChamberScene({
             {hintOpen ? "Hide Whisper" : "Request Guardian Clue"}
           </button>
           <span className="font-mono text-[9px] text-emerald-500/50 uppercase hidden sm:inline">
-            keyboard inputs accepted
+            {submitting ? "processing matrix..." : "keyboard inputs accepted"}
           </span>
         </div>
 
