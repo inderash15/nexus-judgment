@@ -383,7 +383,7 @@ function AdminDashboard() {
                 placeholder="Enter Admin Password"
                 value={adminPasswordInput}
                 onChange={(e) => setAdminPasswordInput(e.target.value)}
-                className="w-full px-4 py-2.5 bg-black/70 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-slate-900 text-center font-mono tracking-widest placeholder:font-sans placeholder:tracking-normal placeholder:text-slate-400"
+                className="w-full px-4 py-2.5 bg-white/70 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 text-center font-mono tracking-widest placeholder:font-sans placeholder:tracking-normal placeholder:text-slate-400"
               />
             </div>
             {authError && (
