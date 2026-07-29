@@ -14,27 +14,6 @@ const RESOURCE_PERSONS: ResourcePerson[] = [
     specialization: "Full Stack Development & Product Engineering",
     photoUrl: "",
   },
-  {
-    name: "Dr. Manoj M",
-    designation: "Assistant Professor",
-    company: "Department of Computer Science with Data Analytics, KPR College Of Arts Science and Research",
-    specialization: "Event Coordinator",
-    photoUrl: "",
-  },
-  {
-    name: "inderash.M",
-    designation: "Full Stack Developer",
-    company: "Department of Computer Science with Data Analytics, KPR College Of Arts Science and Research",
-    specialization: "Full Stack Development & Product Engineering",
-    photoUrl: "",
-  },
-  {
-    name: "Pughal Vanan C",
-    designation: "UI/UX & Graphic Designer",
-    company: "Department of Computer Science with Data Analytics, KPR College Of Arts Science and Research",
-    specialization: "UI/UX & Graphic Design",
-    photoUrl: "",
-  },
 ];
 
 const OBJECTIVES = [

@@ -16,7 +16,7 @@ const AGENTS: Agent[] = [
     initials: "MM",
   },
   {
-    name: "inderash.M",
+    name: "Inderash.M",
     role: "Full Stack Developer",
     department: "Department of Computer Science with Data Analytics, KPR College Of Arts Science and Research",
     bio: "Orchestrates the client architecture and the backend servers. The core architect behind the digital system.",
@@ -33,21 +33,12 @@ const AGENTS: Agent[] = [
     quote: "Visual immersion is the bridge to human focus.",
     initials: "PV",
   },
-  {
-    name: "Jeeththenthar LA",
-    role: "Full Stack Developer & Product Development Engineer",
-    department: "Kovan Labs, Coimbatore",
-    bio: "Architects the product capabilities and full-stack system layout. Guides the team in product execution and release.",
-    skills: ["React", "Product Design", "Cloud Infrastructure", "Full Stack Development"],
-    quote: "Product engineering is about building tools that solve real problems.",
-    initials: "JL",
-  },
 ];
 
 const SEARCH_LINES = [
   "Searching Personnel Database...",
   "████████████████████████",
-  "4 AGENTS FOUND",
+  "3 AGENTS FOUND",
   "Loading Personnel...",
 ];
 
