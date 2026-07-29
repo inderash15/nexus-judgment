@@ -282,7 +282,7 @@ function LastCandidate() {
       )}
 
       {!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) && (
-        <div className="fixed right-0 bottom-0 w-[35%] sm:w-[30%] md:w-[45%] h-[30vh] sm:h-[40vh] md:h-[75vh] pointer-events-none z-0 flex items-end justify-center select-none opacity-25 sm:opacity-40 md:opacity-100 transition-opacity duration-700">
+        <div className="fixed right-0 bottom-0 w-[45%] h-[75vh] pointer-events-none z-0 hidden md:flex items-end justify-center select-none opacity-100 transition-opacity duration-700">
           <Guardian
             scale={0.3}
             speaking={isSpeaking}
@@ -308,10 +308,10 @@ function LastCandidate() {
       )}
 
       <div
-        className={`relative z-20 w-full min-h-[100dvh] flex items-start sm:items-center py-6 sm:py-8 md:py-0 origin-top md:origin-center ${
+        className={`relative z-20 w-full min-h-[100dvh] flex items-center justify-center py-4 px-3 sm:px-6 md:py-0 origin-top md:origin-center ${
           !["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene)
-            ? "w-full sm:w-[65%] md:w-[45%] lg:w-[40%] justify-start pl-4 sm:pl-8 md:pl-12 lg:pl-16"
-            : "justify-center px-4"
+            ? "md:w-[50%] lg:w-[40%] md:justify-start md:pl-12 lg:pl-16"
+            : "max-w-4xl"
         }`}
       >
         <AnimatePresence mode="wait">
