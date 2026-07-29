@@ -90,19 +90,14 @@ Your name, official email, department, and year will bind this single attempt to
             />
           </div>
           <div>
-            <Select value={dept} onValueChange={setDept} required>
-              <SelectTrigger className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-3 min-h-[44px] font-sans text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]">
-                <SelectValue placeholder="Department" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Computer Science">Computer Science</SelectItem>
-                <SelectItem value="Information Technology">Information Technology</SelectItem>
-                <SelectItem value="Electronics">Electronics</SelectItem>
-                <SelectItem value="Mechanical">Mechanical</SelectItem>
-                <SelectItem value="Civil">Civil</SelectItem>
-                <SelectItem value="Electrical">Electrical</SelectItem>
-              </SelectContent>
-            </Select>
+            <input
+              value={dept}
+              onChange={(e) => setDept(e.target.value)}
+              maxLength={60}
+              required
+              placeholder="Department Name"
+              className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-3 min-h-[44px] font-sans text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]"
+            />
           </div>
           <div>
             <Select value={year} onValueChange={setYear} required>
