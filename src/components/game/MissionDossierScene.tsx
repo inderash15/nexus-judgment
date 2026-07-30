@@ -185,7 +185,7 @@ export function MissionDossierScene({
                     CLASSIFIED
                   </motion.span>
                   <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl text-emerald-50 tracking-tight">
-                    MISSION DOSSIER
+                    AGENTIC AI WORKSHOP 
                   </h1>
                   <p className="font-mono text-[10px] sm:text-xs text-emerald-400/60 tracking-[0.4em] uppercase mt-2">
                     Operation: Guardian's Judgment
@@ -244,9 +244,11 @@ export function MissionDossierScene({
                 {/* Card 5 — Resource Persons */}
                 {revealedCards.includes(4) && (
                   <DossierCard title="Resource Persons">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className={RESOURCE_PERSONS.length === 1 ? "flex justify-center" : "grid grid-cols-1 sm:grid-cols-2 gap-3"}>
                       {RESOURCE_PERSONS.map((p, i) => (
-                        <ResourcePersonCard key={i} person={p} index={i} />
+                        <div key={i} className={RESOURCE_PERSONS.length === 1 ? "w-full max-w-sm" : ""}>
+                          <ResourcePersonCard person={p} index={i} />
+                        </div>
                       ))}
                     </div>
                   </DossierCard>
@@ -284,7 +286,9 @@ export function MissionDossierScene({
                           transition={{ delay: 0.1 * i, duration: 0.4 }}
                           className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 sm:p-4"
                         >
-                          <span className="text-2xl sm:text-3xl">{r.icon}</span>
+                          <div className="flex items-center justify-center w-12 h-12 rounded-full border border-emerald-400/30 bg-emerald-950/50 shadow-[0_0_10px_rgba(52,211,153,0.15)] mb-1">
+                            <span className="text-2xl">{r.icon}</span>
+                          </div>
                           <span className="font-mono text-[10px] sm:text-xs text-emerald-300 tracking-wider text-center">
                             {r.label}
                           </span>

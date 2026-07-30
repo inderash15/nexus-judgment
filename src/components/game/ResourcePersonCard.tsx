@@ -23,7 +23,7 @@ export function ResourcePersonCard({ person, index }: { person: ResourcePerson; 
         <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
         <div className="relative z-10 flex items-center gap-4">
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 relative">
             <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full border-2 border-emerald-400/40 bg-emerald-900/40 flex items-center justify-center overflow-hidden">
               {person.photoUrl ? (
                 <img

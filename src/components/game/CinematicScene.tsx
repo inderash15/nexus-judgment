@@ -1,23 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-const VOICE_LINES = [
-  {
-    showAt: 1.0,
-    text: "The Guardian stands vigil over the Shadow Realm.",
-    sub: "\u201CThe Guardian stands vigil over the Shadow Realm...\u201D",
-  },
-  {
-    showAt: 5.0,
-    text: "Intelligence is your only shield. One mistake holds eternal penalty.",
-    sub: "\u201CIntelligence is your only shield. One mistake holds eternal penalty.\u201D",
-  },
-  {
-    showAt: 9.5,
-    text: "Solve the word chambers. Survive, or be disqualified forever.",
-    sub: "\u201CSolve the word chambers. Survive, or be disqualified forever.\u201D",
-  },
-];
+const VOICE_LINES: { showAt: number; text: string; sub: string }[] = [];
 
 export function CinematicScene({
   onComplete,
@@ -81,7 +65,7 @@ export function CinematicScene({
       await new Promise((r) => setTimeout(r, 600));
     }
 
-    if (!stoppedRef.current) {
+    if (!stoppedRef.current && VOICE_LINES.length > 0) {
       setSubtitle("");
       setTimeout(() => {
         if (!stoppedRef.current) onCompleteRef.current();
