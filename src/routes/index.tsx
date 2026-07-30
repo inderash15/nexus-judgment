@@ -314,11 +314,11 @@ function LastCandidate() {
       )}
       {scene === "mcq" && student && assignedQuestions && (
         <MCQAssessment 
-          questions={assignedQuestions.map(q => ({
-            id: q.id.toString(),
-            category: q.level.toString(),
-            text: q.word_encrypted, 
-            options: [q.word_decrypted, "Option B", "Option C", "Option D"], 
+          questions={assignedQuestions.map((q: any, i: number) => ({
+            id: (q._id || q.id || i).toString(),
+            category: (q.level || "General").toString(),
+            text: q.word_encrypted || "Sample Question", 
+            options: [q.word_decrypted || "Option A", "Option B", "Option C", "Option D"], 
             correctAnswer: 0
           }))} 
           onComplete={(score) => {

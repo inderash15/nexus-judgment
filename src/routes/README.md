@@ -9,7 +9,42 @@ is `src/routes/__root.tsx`.
 
 | File                     | URL                                                     |
 | ------------------------ | ------------------------------------------------------- |
-| `index.tsx`              | `/`                                                     |
+| `routes-DLyvSB-9.js:15 Video Loaded: Object
+index-BEp3kZwP.js:12 TypeError: Cannot read properties of undefined (reading 'toString')
+    at routes-DLyvSB-9.js:70:75800
+    at Array.map (<anonymous>)
+    at Os (routes-DLyvSB-9.js:70:75755)
+    at ko (index-BEp3kZwP.js:9:47540)
+    at yc (index-BEp3kZwP.js:9:70044)
+    at Ic (index-BEp3kZwP.js:9:80320)
+    at Lu (index-BEp3kZwP.js:9:115727)
+    at Pu (index-BEp3kZwP.js:9:114808)
+    at Nu (index-BEp3kZwP.js:9:114646)
+    at xu (index-BEp3kZwP.js:9:111164)
+tx @ index-BEp3kZwP.js:12
+index-BEp3kZwP.js:12 TypeError: Cannot read properties of undefined (reading 'toString')
+    at routes-DLyvSB-9.js:70:75800
+    at Array.map (<anonymous>)
+    at Os (routes-DLyvSB-9.js:70:75755)
+    at ko (index-BEp3kZwP.js:9:47540)
+    at yc (index-BEp3kZwP.js:9:70044)
+    at Ic (index-BEp3kZwP.js:9:80320)
+    at Lu (index-BEp3kZwP.js:9:115727)
+    at Pu (index-BEp3kZwP.js:9:114808)
+    at Nu (index-BEp3kZwP.js:9:114646)
+    at xu (index-BEp3kZwP.js:9:111512)
+tx @ index-BEp3kZwP.js:12
+index-BEp3kZwP.js:9 TypeError: Cannot read properties of undefined (reading 'toString')
+    at routes-DLyvSB-9.js:70:75800
+    at Array.map (<anonymous>)
+    at Os (routes-DLyvSB-9.js:70:75755)
+    at ko (index-BEp3kZwP.js:9:47540)
+    at yc (index-BEp3kZwP.js:9:70044)
+    at Ic (index-BEp3kZwP.js:9:80320)
+    at Lu (index-BEp3kZwP.js:9:115727)
+    at Pu (index-BEp3kZwP.js:9:114808)
+    at Nu (index-BEp3kZwP.js:9:114646)
+    at xu (index-BEp3kZwP.js:9:111512)`              | `/`                                                     |
 | `about.tsx`              | `/about`                                                |
 | `users/index.tsx`        | `/users`                                                |
 | `users/$id.tsx`          | `/users/:id` (dynamic — bare `$`, no curly braces)      |
