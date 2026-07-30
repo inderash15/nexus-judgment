@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { GuardianDesktop } from "./GuardianDesktop";
-import { GuardianMobile } from "./GuardianMobile";
 
 type Props = {
   scale?: number;
@@ -11,19 +10,10 @@ type Props = {
 };
 
 export function Guardian(props: Props) {
-  const [isDesktop, setIsDesktop] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const checkViewport = () => {
-      // Screens 768px (md breakpoint) and larger render the desktop version
-      setIsDesktop(window.innerWidth >= 768);
-    };
-
-    checkViewport();
-    window.addEventListener("resize", checkViewport);
-    return () => window.removeEventListener("resize", checkViewport);
   }, []);
 
   if (!mounted) {
@@ -34,22 +24,5 @@ export function Guardian(props: Props) {
     );
   }
 
-  if (isDesktop) {
-    return <GuardianDesktop {...props} />;
-  }
-
-  // Mobile custom size constraints
-  const mobileSizeClasses = `
-    w-full
-    h-[220px] 
-    xs:h-[260px] 
-    landscape:h-[300px] 
-    flex items-center justify-center select-none overflow-visible
-  `.replace(/\s+/g, " ").trim();
-
-  return (
-    <div className={`${mobileSizeClasses} ${props.className || ""}`}>
-      <GuardianMobile {...props} />
-    </div>
-  );
+  return <GuardianDesktop {...props} />;
 }

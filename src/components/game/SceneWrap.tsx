@@ -7,7 +7,7 @@ export function SceneWrap({ children }: { children: React.ReactNode }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: "easeInOut" }}
-      className="relative z-10 flex min-h-screen w-full items-center justify-center px-4 py-4 sm:py-24 sm:px-6 landscape:py-6"
+      className="scene-wrapper relative z-10 flex min-h-[100dvh] w-full items-center justify-center p-4 sm:p-6 md:p-8"
     >
       {children}
     </motion.section>

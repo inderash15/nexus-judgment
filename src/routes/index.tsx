@@ -26,6 +26,8 @@ import type { Scene } from "@/components/game";
 import { InstructionsScene } from "@/components/game/InstructionsScene";
 import { MCQAssessment } from "@/components/game/MCQAssessment";
 import bgImage from "@/assets/background.png";
+import { useResponsive } from "@/hooks/useResponsive";
+import { PortraitOverlay } from "@/components/PortraitOverlay";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -43,32 +45,13 @@ export const Route = createFileRoute("/")({
 
 const LOCAL_EMAIL_KEY = "last-candidate:email:v4";
 
-function useDeviceType() {
-  const [deviceType, setDeviceType] = useState<"desktop" | "tablet" | "mobile">("desktop");
+function LastCandidate() {
+  const { isPhonePortrait, isTablet, isDesktop } = useResponsive();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const handleResize = () => {
-      const w = window.innerWidth;
-      if (w < 768) {
-        setDeviceType("mobile");
-      } else if (w >= 768 && w < 1200) {
-        setDeviceType("tablet");
-      } else {
-        setDeviceType("desktop");
-      }
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  return { deviceType, mounted };
-}
-
-function LastCandidate() {
-  const { deviceType, mounted } = useDeviceType();
   const [scene, setScene] = useState<Scene>("boot");
   const [student, setStudent] = useState<DBStudent | null>(null);
   const [assignedQuestions, setAssignedQuestions] = useState<DBQuestion[]>([]);
@@ -395,7 +378,7 @@ function LastCandidate() {
 
   return (
     <main
-      className={`relative ${deviceType === 'mobile' ? 'h-[100dvh] overflow-hidden' : 'min-h-[100dvh] overflow-y-auto'} w-full overflow-x-hidden text-emerald-50 font-sans antialiased transition-all duration-1000 ${
+      className={`relative min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto text-emerald-50 font-sans antialiased transition-all duration-1000 ${
         deathTriggered && deathPhase >= 1 ? "animate-shake bg-red-950/20" : ""
       } ${student && student.wrongAnswersCount === 2 ? "bg-black/90 brightness-75" : ""} ${
         student && student.wrongAnswersCount >= 3 ? "bg-black brightness-50" : "bg-zinc-950"
@@ -481,57 +464,36 @@ function LastCandidate() {
         />
       )}
 
-      {/* Layout Router (Desktop vs Tablet vs Mobile) */}
-      {deviceType === "desktop" ? (
-        /* ================= DESKTOP VIEW SHELL (LOCKED ORIGINAL) ================= */
-        <>
-          {!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) && (
-            <div className="fixed right-0 bottom-0 w-[35%] sm:w-[30%] md:w-[45%] h-[30vh] sm:h-[40vh] md:h-[75vh] pointer-events-none z-0 flex items-end justify-center select-none opacity-25 sm:opacity-40 md:opacity-100 transition-opacity duration-700">
-              <Guardian
-                scale={0.3}
-                speaking={isSpeaking}
-                state={guardianState}
-              />
-            </div>
-          )}
+      {/* Portrait Overlay */}
+      {isPhonePortrait && <PortraitOverlay />}
 
-          <div
-            className={`relative z-20 w-full min-h-[100dvh] flex items-start sm:items-center py-6 sm:py-8 md:py-0 origin-top md:origin-center ${
-              !["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene)
-                ? "w-full sm:w-[65%] md:w-[45%] lg:w-[40%] justify-start pl-4 sm:pl-8 md:pl-12 lg:pl-16"
-                : "justify-center px-4"
-            }`}
-          >
-            {activeSceneContent}
+      {/* Unified Layout Shell */}
+      <div className="absolute inset-0 flex flex-row overflow-hidden pointer-events-none">
+        
+        {/* Guardian Layer */}
+        {!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) && (
+          <div className="absolute right-0 bottom-0 w-[45%] md:w-[40%] lg:w-[45%] h-[90svh] md:h-[95vh] flex items-end justify-center z-0 opacity-40 md:opacity-100 transition-opacity duration-700 pb-2 md:pb-8 pr-2 md:pr-8">
+            <Guardian
+              scale={isTablet ? 0.35 : (isDesktop ? 0.3 : 0.25)}
+              speaking={isSpeaking}
+              state={guardianState}
+            />
           </div>
-        </>
-      ) : deviceType === "tablet" ? (
-        /* ================= TABLET VIEW SHELL ================= */
-        <div className="min-h-screen w-full flex flex-col md:flex-row items-center justify-center gap-8 p-8 relative">
-          <div className="flex-1 max-w-xl w-full flex justify-center items-center">
-            {activeSceneContent}
-          </div>
+        )}
 
-          {!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) && (
-            <div className="w-full md:w-[35%] h-[350px] flex items-center justify-center select-none z-10 pointer-events-none">
-              <Guardian scale={0.35} speaking={isSpeaking} state={guardianState} />
-            </div>
-          )}
+        {/* Scene Content Container */}
+        <div 
+          className={`relative z-20 h-full w-full flex items-center transition-all duration-700 pointer-events-auto
+            ${!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) 
+              ? "justify-start pl-6 sm:pl-10 md:pl-16 lg:pl-24 w-full md:w-[60%] lg:w-[55%]"
+              : "justify-center px-4 w-full"
+            }
+          `}
+        >
+          {activeSceneContent}
         </div>
-      ) : (
-        /* ================= MOBILE VIEW SHELL ================= */
-        <div className="h-[100dvh] w-full flex flex-col relative overflow-hidden">
-          {!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) && (
-            <div className="absolute top-0 left-0 w-full h-[150px] flex items-center justify-center select-none z-0 pointer-events-none opacity-20">
-              <Guardian scale={0.25} speaking={isSpeaking} state={guardianState} />
-            </div>
-          )}
-
-          <div className="w-full h-full flex flex-col relative z-10 overflow-hidden">
-            {activeSceneContent}
-          </div>
-        </div>
-      )}
+        
+      </div>
 
       {/* Global Modals */}
       <AnimatePresence>

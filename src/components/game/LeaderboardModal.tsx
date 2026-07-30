@@ -71,7 +71,7 @@ export function LeaderboardModal({
           </div>
         </div>
 
-        <ScrollArea className="flex-1 pr-4">
+        <div className="flex-1 pr-4 overflow-y-auto">
           <div className="p-4 space-y-4">
             {/* Top 3 podium cards */}
             {top3.length > 0 && (
@@ -146,7 +146,7 @@ export function LeaderboardModal({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </motion.div>
     </div>
   );

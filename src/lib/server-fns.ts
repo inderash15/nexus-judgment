@@ -51,7 +51,10 @@ export const adminAuthenticate = createServerFn({ method: "POST" }).handler(asyn
     return { success: false, error: "Too many authentication attempts. Please wait 1 minute." };
   }
 
-  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "csda@10";
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+  if (!ADMIN_PASSWORD) {
+    throw new Error("CRITICAL SECURITY ERROR: ADMIN_PASSWORD environment variable is not defined.");
+  }
 
   try {
     if (data.password !== ADMIN_PASSWORD) {
@@ -225,13 +228,13 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
       // If user wants to register as a new candidate
       const name = (data.name || "").trim();
       const department = (data.department || "").trim();
-      const year = (data.year || "").trim();
+      const macAddress = (data.macAddress || "").trim();
 
-      if (!name || !department || !year) {
+      if (!name || !department || !macAddress) {
         return {
           student: null,
           questions: [],
-          error: "Full Name, Department, and Year are required to register",
+          error: "Full Name, Department, and Laptop MAC Address are required to register",
         };
       }
 
@@ -265,7 +268,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
         email,
         name,
         department,
-        year,
+        macAddress,
         loginPin: generatedPin,
         score: 0,
         levelsCompleted: 0,

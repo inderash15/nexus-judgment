@@ -168,7 +168,7 @@ export function MissionDossierScene({
             >
               <div
                 ref={scrollRef}
-                className="max-h-[80vh] overflow-y-auto overscroll-contain px-5 sm:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8"
+                className="max-h-[70svh] md:max-h-[80vh] overflow-y-auto overscroll-contain px-5 sm:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8"
               >
                 {/* Header */}
                 <motion.div
@@ -339,16 +339,18 @@ export function MissionDossierScene({
 function DossierCard({
   title,
   children,
+  className = "",
 }: {
   title: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="relative rounded-xl border border-emerald-500/20 bg-emerald-950/20 p-4 sm:p-5"
+      className={`relative rounded-xl border border-emerald-500/20 bg-emerald-950/20 p-4 sm:p-5 ${className}`}
     >
       <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
       <p className="relative z-10 font-mono text-[9px] sm:text-[10px] text-emerald-400/60 tracking-[0.3em] uppercase mb-2 sm:mb-3">

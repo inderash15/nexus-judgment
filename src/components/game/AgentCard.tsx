@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { SkillBadge } from "./SkillBadge";
-import { useRatioEngine } from "@/hooks/useRatioEngine";
+import { useResponsive } from "@/hooks/useResponsive";
 
 export interface Agent {
   name: string;
@@ -13,7 +13,7 @@ export interface Agent {
 }
 
 export function AgentCard({ agent }: { agent: Agent }) {
-  const { isMobile } = useRatioEngine();
+  const { isMobile } = useResponsive();
   
   return (
     <motion.div

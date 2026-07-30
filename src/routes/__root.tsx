@@ -12,7 +12,6 @@ import { AlertTriangle } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { ThemeProvider } from "../components/ThemeProvider";
-import { RotatePrompt } from "../components/RotatePrompt";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -162,7 +161,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <RotatePrompt />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </ThemeProvider>

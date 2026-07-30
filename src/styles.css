@@ -4,6 +4,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
+
 /*
  * Design system definition.
  *
@@ -145,7 +146,38 @@
     color: var(--color-foreground);
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
+
+  /* Fluid typography and spacing for tight horizontal viewports (phones in landscape) */
+  @media (max-height: 500px) and (orientation: landscape) {
+    h1 {
+      font-size: clamp(1.25rem, 7svh, 2.5rem) !important;
+      line-height: 1.1 !important;
+    }
+    h2, h3 {
+      font-size: clamp(1.1rem, 6svh, 1.75rem) !important;
+      line-height: 1.1 !important;
+    }
+    p, span, div {
+      font-size: clamp(0.7rem, 3.5svh, 1rem);
+      line-height: 1.4;
+    }
+    
+    /* Safely compress vertical padding in scene wrappers */
+    .scene-wrapper {
+      padding-top: clamp(0.5rem, 2svh, 2rem) !important;
+      padding-bottom: clamp(0.5rem, 2svh, 2rem) !important;
+    }
+    
+    /* Ensure internal scroll is enabled on specific deep cards if they still overflow */
+    .scene-wrapper > div {
+      max-height: calc(100dvh - env(safe-area-inset-bottom, 20px) - 1rem);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+  }
 }
+
+
 
 @font-face {
   font-family: "placeholder";

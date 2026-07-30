@@ -32,7 +32,7 @@ export type DBStudent = {
   email: string;
   name: string;
   department: string;
-  year: string;
+  macAddress: string;
   score: number;
   levelsCompleted: number;
   status: StudentStatus;
