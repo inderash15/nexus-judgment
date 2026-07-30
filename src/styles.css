@@ -173,4 +173,23 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
+
+  @media (max-width: 1024px) {
+    html, body {
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    #root {
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+  }
 }

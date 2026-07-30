@@ -23,6 +23,8 @@ import {
   ProfileModal,
 } from "@/components/game";
 import type { Scene } from "@/components/game";
+import { InstructionsScene } from "@/components/game/InstructionsScene";
+import { MCQAssessment } from "@/components/game/MCQAssessment";
 import bgImage from "@/assets/background.png";
 
 export const Route = createFileRoute("/")({
@@ -108,7 +110,7 @@ function LastCandidate() {
             setScene("final");
           }
         } else {
-          setScene("briefing");
+          setScene("instructions");
         }
       }
     } catch (err) {
@@ -129,7 +131,7 @@ function LastCandidate() {
         setScene("final");
       }
     } else {
-      setScene("briefing");
+      setScene("instructions");
     }
   };
 
@@ -224,8 +226,8 @@ function LastCandidate() {
     if (scene === "gameover") return "death";
     if (scene === "final") return "selected";
     if (scene === "verdict") return "success";
-    if (scene === "briefing") return "idle";
-    if (scene === "chamber") {
+    if (scene === "briefing" || scene === "instructions") return "idle";
+    if (scene === "chamber" || scene === "mcq") {
       if (student && student.wrongAnswersCount >= 3) return "angry";
       if (student && student.wrongAnswersCount >= 1) return "warning";
       return "floating";
@@ -305,6 +307,27 @@ function LastCandidate() {
           isSpeaking={isSpeaking}
         />
       )}
+      {scene === "instructions" && student && (
+        <InstructionsScene 
+          onStart={() => setScene("mcq")} 
+        />
+      )}
+      {scene === "mcq" && student && assignedQuestions && (
+        <MCQAssessment 
+          questions={assignedQuestions.map(q => ({
+            id: q.id.toString(),
+            category: q.level.toString(),
+            text: q.word_encrypted, 
+            options: [q.word_decrypted, "Option B", "Option C", "Option D"], 
+            correctAnswer: 0
+          }))} 
+          onComplete={(score) => {
+            console.log("Score", score);
+            setVerdictCorrect(true);
+            setScene("verdict");
+          }} 
+        />
+      )}
       {scene === "chamber" && student && currentQuestion && (
         <ChamberScene
           key={`chamber-${student.currentLevel}`}
@@ -372,7 +395,7 @@ function LastCandidate() {
 
   return (
     <main
-      className={`relative min-h-[100dvh] w-full overflow-y-auto overflow-x-hidden text-emerald-50 font-sans antialiased transition-all duration-1000 ${
+      className={`relative ${deviceType === 'mobile' ? 'h-[100dvh] overflow-hidden' : 'min-h-[100dvh] overflow-y-auto'} w-full overflow-x-hidden text-emerald-50 font-sans antialiased transition-all duration-1000 ${
         deathTriggered && deathPhase >= 1 ? "animate-shake bg-red-950/20" : ""
       } ${student && student.wrongAnswersCount === 2 ? "bg-black/90 brightness-75" : ""} ${
         student && student.wrongAnswersCount >= 3 ? "bg-black brightness-50" : "bg-zinc-950"
@@ -497,14 +520,14 @@ function LastCandidate() {
         </div>
       ) : (
         /* ================= MOBILE VIEW SHELL ================= */
-        <div className="min-h-screen w-full flex flex-col items-center p-4 pt-16 gap-6 relative overflow-y-auto">
+        <div className="h-[100dvh] w-full flex flex-col relative overflow-hidden">
           {!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) && (
-            <div className="w-full h-[200px] flex items-center justify-center select-none z-10 pointer-events-none shrink-0">
+            <div className="absolute top-0 left-0 w-full h-[150px] flex items-center justify-center select-none z-0 pointer-events-none opacity-20">
               <Guardian scale={0.25} speaking={isSpeaking} state={guardianState} />
             </div>
           )}
 
-          <div className="w-full max-w-sm flex justify-center items-center">
+          <div className="w-full h-full flex flex-col relative z-10 overflow-hidden">
             {activeSceneContent}
           </div>
         </div>

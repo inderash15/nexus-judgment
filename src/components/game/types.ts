@@ -8,6 +8,8 @@ export type Scene =
   | "meet-the-agents"
   | "register"
   | "briefing"
+  | "instructions"
+  | "mcq"
   | "chamber"
   | "verdict"
   | "final"
