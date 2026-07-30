@@ -70,6 +70,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             An unexpected error occurred while processing system modules. The system telemetry has
             logged this event, and automatic recovery protocols are standing by.
           </p>
+          <div className="mt-4 p-3 rounded bg-red-950/50 border border-red-500/30 text-xs font-mono text-red-400 text-left overflow-auto max-h-32">
+            {error?.message || "Unknown error occurred"}
+          </div>
           <div className="mt-4 inline-block px-3 py-1 rounded bg-slate-800/80 border border-slate-700 text-[10px] font-mono text-slate-400 font-bold">
             TRACKING ID: {errorId}
           </div>

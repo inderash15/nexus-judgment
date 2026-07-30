@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { SkillBadge } from "./SkillBadge";
+import { useRatioEngine } from "@/hooks/useRatioEngine";
 
 export interface Agent {
   name: string;
@@ -12,6 +13,8 @@ export interface Agent {
 }
 
 export function AgentCard({ agent }: { agent: Agent }) {
+  const { isMobile } = useRatioEngine();
+  
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95, filter: "blur(8px)" }}
@@ -20,6 +23,10 @@ export function AgentCard({ agent }: { agent: Agent }) {
       transition={{ duration: 0.7, ease: "easeInOut" }}
       className="w-full max-w-lg sm:max-w-xl mx-auto flex flex-col items-center text-center px-4 sm:px-6"
     >
+      <div 
+        className="w-full flex flex-col items-center origin-top transition-transform duration-300"
+        style={{ transform: isMobile ? "scale(0.85)" : "scale(1)" }}
+      >
       {/* Holographic portrait frame */}
       <motion.div
         initial={{ opacity: 0, scale: 0.7 }}
@@ -100,7 +107,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
-        className="font-mono text-[8px] xs:text-[9px] sm:text-[10px] text-emerald-400/50 tracking-[0.1em] sm:tracking-[0.2em] uppercase mt-0.5 max-w-xs sm:max-w-md mx-auto whitespace-normal break-words leading-relaxed"
+        className="font-mono text-[min(2vw,0.6rem)] sm:text-[10px] text-emerald-400/50 tracking-[0.1em] sm:tracking-[0.2em] uppercase mt-0.5 max-w-[90%] sm:max-w-md mx-auto overflow-hidden text-ellipsis line-clamp-2 leading-snug"
       >
         {agent.department}
       </motion.p>
@@ -136,6 +143,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
       >
         <p className="text-xs sm:text-sm italic text-emerald-200/60">"{agent.quote}"</p>
       </motion.blockquote>
+      </div>
     </motion.div>
   );
 }

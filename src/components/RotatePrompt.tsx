@@ -89,13 +89,31 @@ export function RotatePrompt({ children }: { children: React.ReactNode }) {
             </p>
           </div>
 
-          <motion.div 
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="mt-8 text-[10px] font-mono tracking-[0.3em] text-emerald-500 uppercase"
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const docEl = document.documentElement;
+                if (docEl.requestFullscreen) {
+                  await docEl.requestFullscreen();
+                } else if ((docEl as any).webkitRequestFullscreen) {
+                  await (docEl as any).webkitRequestFullscreen();
+                }
+                
+                if (window.screen.orientation && window.screen.orientation.lock) {
+                  await window.screen.orientation.lock("landscape");
+                } else if ((window.screen as any).lockOrientation) {
+                  await (window.screen as any).lockOrientation("landscape");
+                }
+              } catch (err) {
+                console.warn("Fullscreen/orientation lock failed:", err);
+                alert("Please rotate your device manually.");
+              }
+            }}
+            className="mt-8 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-8 py-4 font-mono text-sm font-bold text-emerald-400 shadow-lg shadow-emerald-950/20 backdrop-blur transition-all hover:bg-emerald-500 hover:text-white active:scale-95 cursor-pointer uppercase tracking-widest"
           >
-            WAITING FOR LANDSCAPE MODE.....
-          </motion.div>
+            Enter Experience
+          </button>
         </motion.div>
       </div>
     );
