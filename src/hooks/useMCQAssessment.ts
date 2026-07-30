@@ -5,7 +5,6 @@ export interface Question {
   category: string;
   text: string;
   options: string[];
-  correctAnswer: number;
 }
 
 export type QuestionStatus = 'unanswered' | 'answered' | 'skipped' | 'marked';

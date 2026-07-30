@@ -25,6 +25,15 @@ export type DBQuestion = {
   active: boolean;
 };
 
+export type DBMCQQuestion = {
+  id: string;
+  category: string;
+  text: string;
+  options: string[];
+  correctAnswer: number;
+  active: boolean;
+};
+
 export type StudentStatus =
   "Active" | "Selected" | "Qualified" | "Eliminated" | "Disqualified" | "Completed";
 
@@ -48,6 +57,12 @@ export type DBStudent = {
   currentGuesses: string[]; // guessed characters
   levelStartTime: string;
   lastActiveTime: string;
+  // MCQ Assessment Data
+  mcqCompleted?: boolean;
+  mcqScore?: number;
+  mcqPercentage?: number;
+  mcqAnswers?: Record<string, number>;
+  mcqTimeTaken?: number;
 };
 
 export type SecurityLog = {
@@ -309,6 +324,49 @@ const DEFAULT_QUESTIONS: DBQuestion[] = [
   },
 ];
 
+const DEFAULT_MCQ_QUESTIONS: DBMCQQuestion[] = [
+  {
+    id: "mcq1",
+    category: "General",
+    text: "Which protocol is commonly used for secure web communication?",
+    options: ["HTTP", "HTTPS", "FTP", "SMTP"],
+    correctAnswer: 1,
+    active: true,
+  },
+  {
+    id: "mcq2",
+    category: "General",
+    text: "What does SQL stand for?",
+    options: ["Structured Query Language", "Simple Question Language", "Standard Query Logic", "System Query Link"],
+    correctAnswer: 0,
+    active: true,
+  },
+  {
+    id: "mcq3",
+    category: "General",
+    text: "Which of the following is a NoSQL database?",
+    options: ["MySQL", "PostgreSQL", "MongoDB", "SQLite"],
+    correctAnswer: 2,
+    active: true,
+  },
+  {
+    id: "mcq4",
+    category: "General",
+    text: "What is the primary function of a Router?",
+    options: ["Store files", "Connect local devices to the Internet", "Compile code", "Provide power"],
+    correctAnswer: 1,
+    active: true,
+  },
+  {
+    id: "mcq5",
+    category: "General",
+    text: "Which HTTP method is typically used to create a new resource?",
+    options: ["GET", "POST", "PUT", "DELETE"],
+    correctAnswer: 1,
+    active: true,
+  }
+];
+
 const MONGODB_URI = process.env.MONGODB_URI;
 const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || "nexus_judgment";
 
@@ -344,6 +402,13 @@ export async function getDB(): Promise<Db> {
   const count = await questionsColl.countDocuments();
   if (count === 0) {
     await questionsColl.insertMany(DEFAULT_QUESTIONS);
+  }
+
+  // Seed default MCQ questions if empty
+  const mcqColl = dbInstance.collection("mcqQuestions");
+  const mcqCount = await mcqColl.countDocuments();
+  if (mcqCount === 0) {
+    await mcqColl.insertMany(DEFAULT_MCQ_QUESTIONS);
   }
 
   // Seed default configuration if empty

@@ -4,8 +4,10 @@ import { SceneWrap } from "./SceneWrap";
 
 interface MCQAssessmentProps {
   questions: Question[];
-  onComplete: (score: number) => void;
+  onComplete: (answers: Record<string, number>, timeRemaining: number) => void;
 }
+
+const DEFAULT_TIME = 60 * 60; // 60 minutes
 
 export function MCQAssessment({ questions, onComplete }: MCQAssessmentProps) {
   const {
@@ -23,14 +25,7 @@ export function MCQAssessment({ questions, onComplete }: MCQAssessmentProps) {
 
   const handleNext = () => {
     if (isLastQuestion) {
-      // Calculate score and complete
-      let score = 0;
-      questions.forEach((q) => {
-        if (state.answers[q.id] === q.correctAnswer) {
-          score++;
-        }
-      });
-      onComplete(score);
+      onComplete(state.answers, DEFAULT_TIME - state.timeRemaining);
     } else {
       goToNext();
     }

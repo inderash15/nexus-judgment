@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getDB, DBQuestion, SecurityLog } from "./db";
+import { getDB, DBQuestion, SecurityLog, DBMCQQuestion } from "./db";
 
 // Helper to shuffle questions
 function shuffleArray<T>(array: T[]): T[] {
@@ -141,10 +141,21 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
       const db = await getDB();
       const studentsColl = db.collection<any>("students");
       const questionsColl = db.collection<DBQuestion>("questions");
+      const mcqColl = db.collection<DBMCQQuestion>("mcqQuestions");
       const logsColl = db.collection<SecurityLog>("securityLogs");
       const studentSessionsColl = db.collection("studentSessions");
 
       const student = await studentsColl.findOne({ email });
+
+      // Fetch and sanitize MCQ questions for the payload
+      const allMCQs = await mcqColl.find({ active: true }).toArray();
+      const sanitizedMCQs = shuffleArray(allMCQs).slice(0, 5).map(q => ({
+        id: q.id,
+        category: q.category,
+        text: q.text,
+        options: q.options,
+        // specifically NOT returning correctAnswer!
+      }));
 
       // If user chooses to register but email exists, deny it
       if (action === "register" && student) {
@@ -221,6 +232,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
         return serializeDoc({
           student: updatedStudent,
           questions: getAssignedQuestionsForStudent(updatedStudent, assignedQ),
+          mcqQuestions: sanitizedMCQs,
           error: null,
         });
       }
@@ -228,7 +240,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
       // If user wants to register as a new candidate
       const name = (data.name || "").trim();
       const department = (data.department || "").trim();
-      const macAddress = (data.macAddress || "").trim();
+      const macAddress = (data.macAddress || "").trim().toUpperCase();
 
       if (!name || !department || !macAddress) {
         return {
@@ -236,6 +248,17 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
           questions: [],
           error: "Full Name, Department, and Laptop MAC Address are required to register",
         };
+      }
+
+      // Strict validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return { student: null, questions: [], error: "Invalid email format" };
+      }
+      
+      const macRegex = /^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$/;
+      if (!macRegex.test(macAddress)) {
+        return { student: null, questions: [], error: "Invalid MAC Address format (e.g. 00:1A:2B:3C:4D:5E)" };
       }
 
       // Retrieve cached active questions or fetch from DB
@@ -328,6 +351,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
       return serializeDoc({
         student: newStudent,
         questions: getAssignedQuestionsForStudent(newStudent, assignedQ),
+        mcqQuestions: sanitizedMCQs,
         loginPin: generatedPin,
         error: null,
       });
@@ -341,6 +365,89 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
     }
   },
 );
+
+// 1.5 Submit MCQ Assessment Results (SECURE)
+export const submitMCQResults = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+  const { checkRateLimit, verifyStudentSession } = await import("./server-helpers.server");
+  const data = ctx?.data;
+  
+  if (!data || !data.email || !data.answers) {
+    return { success: false, error: "Invalid submission payload" };
+  }
+
+  const email = data.email.toLowerCase().trim();
+
+  // Rate Limiting
+  const rateLimitKey = `submit_mcq:${email}`;
+  if (!checkRateLimit(rateLimitKey, 5, 60000)) {
+    return { success: false, error: "Rate limit exceeded." };
+  }
+
+  if (!(await verifyStudentSession(email))) {
+    return { success: false, error: "Unauthorized session." };
+  }
+
+  try {
+    const db = await getDB();
+    const studentsColl = db.collection<any>("students");
+    const mcqColl = db.collection<DBMCQQuestion>("mcqQuestions");
+    const logsColl = db.collection<SecurityLog>("securityLogs");
+
+    const student = await studentsColl.findOne({ email });
+    if (!student) return { success: false, error: "Student not found" };
+
+    if (student.mcqCompleted) {
+      return { success: false, error: "MCQ Assessment already submitted" };
+    }
+
+    // Backend Scoring Validation
+    let score = 0;
+    const allQuestions = await mcqColl.find({ active: true }).toArray();
+    const totalQuestions = Object.keys(data.answers).length;
+
+    for (const [qId, optionIdx] of Object.entries(data.answers)) {
+      const q = allQuestions.find(item => item.id === qId);
+      if (q && q.correctAnswer === optionIdx) {
+        score++;
+      }
+    }
+
+    const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
+    
+    // Save to DB
+    await studentsColl.updateOne(
+      { email },
+      {
+        $set: {
+          mcqCompleted: true,
+          mcqScore: score,
+          mcqPercentage: percentage,
+          mcqAnswers: data.answers,
+          mcqTimeTaken: data.timeTaken || 0,
+        },
+      }
+    );
+
+    await logsColl.insertOne({
+      id: Math.random().toString(36).substring(7),
+      timestamp: new Date().toISOString(),
+      email,
+      action: "MCQ_SUBMISSION",
+      status: "success",
+      details: `Submitted MCQ with score ${score}/${totalQuestions} (${percentage.toFixed(1)}%)`,
+    });
+
+    return {
+      success: true,
+      score,
+      percentage,
+      totalQuestions
+    };
+  } catch (error: any) {
+    console.error("[SERVER_FN:submitMCQResults] Error:", error.message);
+    return { success: false, error: "Internal Server Error" };
+  }
+});
 
 // 2. Submit Letter or Full Word Guess
 export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx: any) => {

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Guardian } from "@/components/Guardian";
 import { Atmosphere } from "@/components/Atmosphere";
 import { useGuardianVoice } from "@/hooks/useGuardianVoice";
-import { registerOrResumeStudent, submitGuess, getLeaderboardData } from "@/lib/server-fns";
+import { registerOrResumeStudent, submitGuess, getLeaderboardData, submitMCQResults } from "@/lib/server-fns";
 import { DBStudent, DBQuestion } from "@/lib/db";
 import {
   BootScene,
@@ -55,6 +55,7 @@ function LastCandidate() {
   const [scene, setScene] = useState<Scene>("boot");
   const [student, setStudent] = useState<DBStudent | null>(null);
   const [assignedQuestions, setAssignedQuestions] = useState<DBQuestion[]>([]);
+  const [mcqQuestions, setMcqQuestions] = useState<any[]>([]);
   const [verdictCorrect, setVerdictCorrect] = useState(true);
 
   const [deathTriggered, setDeathTriggered] = useState(false);
@@ -85,6 +86,7 @@ function LastCandidate() {
       if (res.student) {
         setStudent(res.student);
         setAssignedQuestions(res.questions);
+        setMcqQuestions(res.mcqQuestions || []);
 
         if (res.student.locked) {
           if (res.student.status === "Eliminated" || res.student.status === "Disqualified") {
@@ -102,9 +104,10 @@ function LastCandidate() {
     }
   };
 
-  const handleAuthSuccess = (student: DBStudent, questions: DBQuestion[]) => {
+  const handleAuthSuccess = (student: DBStudent, questions: DBQuestion[], mcqQs?: any[]) => {
     setStudent(student);
     setAssignedQuestions(questions);
+    setMcqQuestions(mcqQs || []);
     localStorage.setItem(LOCAL_EMAIL_KEY, student.email);
 
     if (student.locked) {
@@ -276,7 +279,7 @@ function LastCandidate() {
       {scene === "register" && (
         <RegisterScene
           key="register"
-          onComplete={handleAuthSuccess}
+          onComplete={(student, questions) => handleAuthSuccess(student, questions, mcqQuestions)} // the payload might not have it from register scene directly without passing it up, wait, I need to pass mcqQuestions up from RegisterScene. Let's just rely on registerOrResumeStudent returning it inside RegisterScene and passing it up.
           speak={speak}
           isSpeaking={isSpeaking}
         />
@@ -295,19 +298,23 @@ function LastCandidate() {
           onStart={() => setScene("mcq")} 
         />
       )}
-      {scene === "mcq" && student && assignedQuestions && (
+      {scene === "mcq" && student && mcqQuestions && mcqQuestions.length > 0 && (
         <MCQAssessment 
-          questions={assignedQuestions.map((q: any, i: number) => ({
-            id: (q._id || q.id || i).toString(),
-            category: (q.level || "General").toString(),
-            text: q.word_encrypted || "Sample Question", 
-            options: [q.word_decrypted || "Option A", "Option B", "Option C", "Option D"], 
-            correctAnswer: 0
-          }))} 
-          onComplete={(score) => {
-            console.log("Score", score);
-            setVerdictCorrect(true);
-            setScene("verdict");
+          questions={mcqQuestions} 
+          onComplete={async (answers, timeRemaining) => {
+            try {
+              const res = await submitMCQResults({ data: { email: student.email, answers, timeTaken: timeRemaining } });
+              if (res.error) {
+                console.error("MCQ Submission Error", res.error);
+                alert(res.error);
+              } else {
+                setStudent((prev) => prev ? { ...prev, mcqCompleted: true, mcqScore: res.score, mcqPercentage: res.percentage } : prev);
+                setVerdictCorrect(res.percentage >= 60); // example passing score
+                setScene("verdict");
+              }
+            } catch (err) {
+              console.error(err);
+            }
           }} 
         />
       )}

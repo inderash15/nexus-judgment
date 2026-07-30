@@ -19,7 +19,7 @@ export function RegisterScene({
   speak,
   isSpeaking,
 }: {
-  onComplete: (student: DBStudent, questions: DBQuestion[]) => void;
+  onComplete: (student: DBStudent, questions: DBQuestion[], mcqQuestions?: any[]) => void;
   speak: (text: string, emotion?: GuardianEmotion) => void;
   isSpeaking: boolean;
 }) {
@@ -35,6 +35,7 @@ export function RegisterScene({
   const [generatedPin, setGeneratedPin] = useState("");
   const [registeredStudent, setRegisteredStudent] = useState<DBStudent | null>(null);
   const [registeredQuestions, setRegisteredQuestions] = useState<DBQuestion[]>([]);
+  const [registeredMcq, setRegisteredMcq] = useState<any[]>([]);
   
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +87,7 @@ export function RegisterScene({
           setGeneratedPin(res.loginPin || "");
           setRegisteredStudent(res.student);
           setRegisteredQuestions(res.questions);
+          setRegisteredMcq(res.mcqQuestions || []);
           setPhase("pin-display");
           speak("Your unique identity is bound. Secure your access key before entering the shadow realm.", "success");
         }
@@ -108,7 +110,7 @@ export function RegisterScene({
           setError(res.error);
           speak("Invalid credentials. The shadows do not recognize this binding.", "warning");
         } else if (res.student) {
-          onComplete(res.student, res.questions);
+          onComplete(res.student, res.questions, res.mcqQuestions);
         }
       }
     } catch (err: any) {
@@ -166,7 +168,7 @@ export function RegisterScene({
             <ActionButton
               onClick={() => {
                 if (registeredStudent) {
-                  onComplete(registeredStudent, registeredQuestions);
+                  onComplete(registeredStudent, registeredQuestions, registeredMcq);
                 }
               }}
             >
