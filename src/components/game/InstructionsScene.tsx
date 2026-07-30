@@ -8,13 +8,15 @@ export function InstructionsScene({ onStart }: { onStart: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <header className="flex-none p-4 border-b border-white/10 bg-zinc-900/50 backdrop-blur-md">
-        <h1 className="text-xl font-serif text-emerald-400">Trial Instructions</h1>
+      {/* 15% Top Safe Area & Header */}
+      <header className="flex-none h-[15%] p-4 border-b border-white/10 bg-zinc-900/50 backdrop-blur-md flex flex-col justify-end pb-4">
+        <h1 className="text-[min(6vw,1.5rem)] font-serif text-emerald-400">Trial Instructions</h1>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-        <div className="bg-zinc-900 border border-white/5 p-6 rounded-2xl shadow-xl max-w-2xl mx-auto w-full">
-          <ul className="space-y-4 text-zinc-300 list-disc list-inside">
+      {/* 65% Main Content Area */}
+      <main className="flex-none h-[65%] w-full flex items-center justify-center p-4 sm:p-6">
+        <div className="bg-zinc-900 border border-white/5 p-4 sm:p-6 rounded-2xl shadow-xl w-full max-w-2xl mx-auto h-full flex flex-col overflow-y-auto">
+          <ul className="space-y-4 text-[min(4vw,1rem)] text-zinc-300 list-disc list-inside h-full flex flex-col justify-center">
             <li>You will face 40 questions testing your knowledge in AI, ML, and Reasoning.</li>
             <li>You have 60 minutes to complete the trial.</li>
             <li>You can mark questions for review and skip them to answer later.</li>
@@ -24,11 +26,12 @@ export function InstructionsScene({ onStart }: { onStart: () => void }) {
         </div>
       </main>
 
-      <footer className="flex-none p-4 border-t border-white/10 bg-zinc-950 pb-safe">
-        <div className="max-w-2xl mx-auto flex items-center justify-center">
+      {/* 20% Fixed Footer Navigation Area */}
+      <footer className="flex-none h-[20%] p-4 border-t border-white/10 bg-zinc-950 flex flex-col justify-start pt-6 pb-safe">
+        <div className="max-w-2xl mx-auto w-full flex items-center justify-center">
           <button
             onClick={onStart}
-            className="w-full sm:w-auto px-8 py-4 rounded-xl font-mono text-sm uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+            className="w-full h-14 sm:h-16 rounded-xl font-mono text-[min(3.5vw,1rem)] uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
           >
             Acknowledge & Begin
           </button>
