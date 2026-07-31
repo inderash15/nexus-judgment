@@ -244,8 +244,8 @@ function LastCandidate() {
   // Loading indicator for mounting
   if (!mounted) {
     return (
-      <div className="min-h-screen w-full bg-zinc-950 flex items-center justify-center font-mono text-xs text-emerald-400 animate-pulse">
-        Laying Gateway Protocol...
+      <div className="h-[100dvh] overflow-hidden w-full bg-zinc-950 flex items-center justify-center font-mono text-xs text-emerald-400 animate-pulse">
+        [ SYSTEM INITIALIZING ]
       </div>
     );
   }

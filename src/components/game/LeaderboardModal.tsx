@@ -84,7 +84,7 @@ export function LeaderboardModal({
                   ];
                   return (
                     <div
-                      key={student.email}
+                      key={`${student.email}-${idx}`}
                       className={`border rounded-xl p-3 text-center flex flex-col items-center justify-between ${colors[idx] || ""}`}
                     >
                       {idx === 0 && <span className="text-lg">👑</span>}
@@ -107,7 +107,7 @@ export function LeaderboardModal({
                 </div>
                 {top10.map((student, idx) => (
                   <div
-                    key={student.email}
+                    key={`${student.email}-${idx}`}
                     className="bg-black/50 border border-emerald-500/10 rounded-xl px-4 py-2.5 flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
@@ -133,7 +133,7 @@ export function LeaderboardModal({
                 </div>
                 {rest.map((student, idx) => (
                   <div
-                    key={student.email}
+                    key={`${student.email}-${idx}`}
                     className="bg-black/30 border border-emerald-500/5 rounded-lg px-4 py-2 flex items-center justify-between text-[11px]"
                   >
                     <div className="flex items-center gap-3">

@@ -414,7 +414,8 @@ export const submitMCQResults = createServerFn({ method: "POST" }).handler(async
 
     const config = await getSystemConfig();
     
-    // Auto-fail logic if score is 0 and they ran out of time? The server just calculates score.
+    // Calculate percentage dynamically
+    const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
     
     const finalScore = (student.round1Score || 0) + score;
     const isSelected = score >= config.round2PassingScore; // simple logic for now

@@ -469,7 +469,7 @@ function AdminDashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-[#E2F0ED] via-[#E6E6FA] to-[#FFE4E1] p-4 sm:p-6 font-sans flex items-center justify-center">
+      <div className="h-[100dvh] overflow-hidden w-full bg-gradient-to-br from-[#E2F0ED] via-[#E6E6FA] to-[#FFE4E1] p-4 sm:p-6 font-sans flex items-center justify-center">
         <div className="w-full max-w-md bg-white/30 backdrop-blur-2xl border border-white/50 shadow-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 space-y-5 sm:space-y-6 text-slate-805">
           <div className="w-12 h-12 rounded-full bg-slate-950 text-white flex items-center justify-center mx-auto shadow-lg shadow-black/10 border border-white/20">
             <Lock className="w-5 h-5" />
@@ -539,9 +539,8 @@ function AdminDashboard() {
       </div>
     );
   }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E2F0ED] via-[#E6E6FA] to-[#FFE4E1] p-3 sm:p-4 md:p-6 lg:p-10 font-sans flex items-center justify-center">
+    <div className="h-[100dvh] overflow-hidden bg-gradient-to-br from-[#E2F0ED] via-[#E6E6FA] to-[#FFE4E1] p-3 sm:p-4 md:p-6 lg:p-10 font-sans flex items-center justify-center">
       <div className="w-full max-w-7xl min-h-[85vh] bg-white/35 backdrop-blur-2xl border border-white/60 shadow-2xl rounded-2xl sm:rounded-[32px] overflow-hidden flex flex-col md:flex-row">
         {/* Mobile overlay backdrop */}
         {sidebarOpen && (

@@ -32,7 +32,15 @@ export function MobileEntryGate({ onUnlocked }: MobileEntryGateProps) {
 
       // Request Orientation Lock to Landscape
       if (screen.orientation && screen.orientation.lock) {
-        await screen.orientation.lock("landscape");
+        try {
+          await screen.orientation.lock("landscape");
+        } catch (e) {
+          // If browser doesn't support locking, check physical orientation fallback
+          const isLandscape = window.innerWidth > window.innerHeight;
+          if (!isLandscape) {
+            throw new Error("Orientation lock not supported. Please physically rotate your device to landscape first.");
+          }
+        }
       } else {
         // Fallback for browsers that don't support lock API natively
         const isLandscape = window.innerWidth > window.innerHeight;
