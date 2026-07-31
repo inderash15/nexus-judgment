@@ -27,7 +27,7 @@ import { InstructionsScene } from "@/components/game/InstructionsScene";
 import { MCQAssessment } from "@/components/game/MCQAssessment";
 import bgImage from "@/assets/background.png";
 import { useResponsive } from "@/hooks/useResponsive";
-import { PortraitOverlay } from "@/components/PortraitOverlay";
+import { MobileEntryGate } from "@/components/MobileEntryGate";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -46,8 +46,10 @@ export const Route = createFileRoute("/")({
 const LOCAL_EMAIL_KEY = "last-candidate:email:v4";
 
 function LastCandidate() {
-  const { isPhonePortrait, isTablet, isDesktop } = useResponsive();
+  const { isPhonePortrait, isPhoneLandscape, isTablet, isDesktop } = useResponsive();
+  const isPhone = isPhonePortrait || isPhoneLandscape;
   const [mounted, setMounted] = useState(false);
+  const [mobileUnlocked, setMobileUnlocked] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -67,6 +69,16 @@ function LastCandidate() {
   const [submittingGuess, setSubmittingGuess] = useState(false);
 
   const { voiceEnabled, toggleVoice, isSpeaking, speak, stop } = useGuardianVoice();
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && isPhone) {
+        setMobileUnlocked(false);
+      }
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, [isPhone]);
 
   useEffect(() => {
     const email = localStorage.getItem(LOCAL_EMAIL_KEY);
@@ -383,6 +395,11 @@ function LastCandidate() {
     </AnimatePresence>
   );
 
+  // STRICT MOBILE GATE
+  if (isPhone && !mobileUnlocked && mounted) {
+    return <MobileEntryGate onUnlocked={() => setMobileUnlocked(true)} />;
+  }
+
   return (
     <main
       className={`relative min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto text-emerald-50 font-sans antialiased transition-all duration-1000 ${
@@ -470,9 +487,6 @@ function LastCandidate() {
           onToggleVoice={toggleVoice}
         />
       )}
-
-      {/* Portrait Overlay */}
-      {isPhonePortrait && <PortraitOverlay />}
 
       {/* Unified Layout Shell */}
       <div className="absolute inset-0 flex flex-row overflow-hidden pointer-events-none">
