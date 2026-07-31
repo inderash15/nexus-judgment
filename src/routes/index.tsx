@@ -100,9 +100,13 @@ function LastCandidate() {
         setAssignedQuestions(res.questions);
         setMcqQuestions(res.mcqQuestions || []);
 
-        if (res.student.locked) {
-          if (res.student.status === "Eliminated" || res.student.status === "Disqualified") {
-            setScene("gameover");
+        if (res.student.status === "Eliminated" || res.student.status === "Disqualified") {
+          setScene("gameover");
+        } else if (res.student.mcqCompleted) {
+          setScene("final");
+        } else if (res.student.round1Completed) {
+          if (res.student.round1Qualified) {
+            setScene("mcq"); // or verdict to show them they qualified
           } else {
             setScene("final");
           }
@@ -122,9 +126,13 @@ function LastCandidate() {
     setMcqQuestions(mcqQs || []);
     localStorage.setItem(LOCAL_EMAIL_KEY, student.email);
 
-    if (student.locked) {
-      if (student.status === "Eliminated" || student.status === "Disqualified") {
-        setScene("gameover");
+    if (student.status === "Eliminated" || student.status === "Disqualified") {
+      setScene("gameover");
+    } else if (student.mcqCompleted) {
+      setScene("final");
+    } else if (student.round1Completed) {
+      if (student.round1Qualified) {
+        setScene("mcq");
       } else {
         setScene("final");
       }
@@ -307,7 +315,7 @@ function LastCandidate() {
       )}
       {scene === "instructions" && student && (
         <InstructionsScene 
-          onStart={() => setScene("mcq")} 
+          onStart={() => setScene(student.round1Completed && student.round1Qualified ? "mcq" : "chamber")} 
         />
       )}
       {scene === "mcq" && student && mcqQuestions && mcqQuestions.length > 0 && (
@@ -346,10 +354,14 @@ function LastCandidate() {
           key={`verdict-${student.levelsCompleted}`}
           student={student}
           onContinue={() => {
-            if (student.locked) {
+            if (student.mcqCompleted) {
+              setScene("final");
+            } else if (student.round1Completed && student.round1Qualified) {
+              setScene("mcq");
+            } else if (student.locked) {
               setScene("final");
             } else {
-              setScene("briefing");
+              setScene("chamber");
             }
           }}
           speak={speak}

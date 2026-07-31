@@ -9,6 +9,14 @@ type SystemRulesTabProps = {
   setMaxWrongAttempts: (val: number) => void;
   mode: "normal" | "workshop" | "maintenance";
   setMode: (val: "normal" | "workshop" | "maintenance") => void;
+  round1PassingScore: number;
+  setRound1PassingScore: (val: number) => void;
+  round2PassingScore: number;
+  setRound2PassingScore: (val: number) => void;
+  round1TimeLimit: number;
+  setRound1TimeLimit: (val: number) => void;
+  round2TimeLimit: number;
+  setRound2TimeLimit: (val: number) => void;
   onSave: () => Promise<void>;
 };
 
@@ -19,6 +27,14 @@ export function SystemRulesTab({
   setMaxWrongAttempts,
   mode,
   setMode,
+  round1PassingScore,
+  setRound1PassingScore,
+  round2PassingScore,
+  setRound2PassingScore,
+  round1TimeLimit,
+  setRound1TimeLimit,
+  round2TimeLimit,
+  setRound2TimeLimit,
   onSave,
 }: SystemRulesTabProps) {
   const [saving, setSaving] = useState(false);
@@ -124,6 +140,54 @@ export function SystemRulesTab({
               max={10}
               value={maxWrongAttempts}
               onChange={(e) => setMaxWrongAttempts(Number(e.target.value))}
+              className="w-full p-2.5 bg-slate-50/40 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-slate-500 font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider text-[10px]">
+              Round 1 Passing Score
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={round1PassingScore}
+              onChange={(e) => setRound1PassingScore(Number(e.target.value))}
+              className="w-full p-2.5 bg-slate-50/40 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-slate-500 font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider text-[10px]">
+              Round 2 Passing Score
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={round2PassingScore}
+              onChange={(e) => setRound2PassingScore(Number(e.target.value))}
+              className="w-full p-2.5 bg-slate-50/40 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-slate-500 font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider text-[10px]">
+              Round 1 Time Limit (s)
+            </label>
+            <input
+              type="number"
+              min={10}
+              value={round1TimeLimit}
+              onChange={(e) => setRound1TimeLimit(Number(e.target.value))}
+              className="w-full p-2.5 bg-slate-50/40 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-slate-500 font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-500 mb-1.5 font-bold uppercase tracking-wider text-[10px]">
+              Round 2 Time Limit (s)
+            </label>
+            <input
+              type="number"
+              min={10}
+              value={round2TimeLimit}
+              onChange={(e) => setRound2TimeLimit(Number(e.target.value))}
               className="w-full p-2.5 bg-slate-50/40 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-slate-500 font-mono"
             />
           </div>

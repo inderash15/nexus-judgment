@@ -412,8 +412,13 @@ export const submitMCQResults = createServerFn({ method: "POST" }).handler(async
       }
     }
 
-    const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
+    const config = await getSystemConfig();
     
+    // Auto-fail logic if score is 0 and they ran out of time? The server just calculates score.
+    
+    const finalScore = (student.round1Score || 0) + score;
+    const isSelected = score >= config.round2PassingScore; // simple logic for now
+
     // Save to DB
     await studentsColl.updateOne(
       { email },
@@ -424,6 +429,13 @@ export const submitMCQResults = createServerFn({ method: "POST" }).handler(async
           mcqPercentage: percentage,
           mcqAnswers: data.answers,
           mcqTimeTaken: data.timeTaken || 0,
+          mcqCompletionTime: new Date().toISOString(),
+          finalScore,
+          finalPercentage: percentage, // This could be combined, but we'll use MCQ % for now
+          workshopSelected: isSelected,
+          status: isSelected ? "Selected" : "Completed",
+          locked: true,
+          finalSubmissionTime: new Date().toISOString()
         },
       }
     );
@@ -475,11 +487,13 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
     return { student: null, questions: [], error: "Unauthorized session. Please login again." };
   }
 
-  try {
-    const db = await getDB();
-    const studentsColl = db.collection<any>("students");
-    const questionsColl = db.collection<DBQuestion>("questions");
-    const logsColl = db.collection<SecurityLog>("securityLogs");
+    try {
+      const { getSystemConfig } = await import("./server-helpers.server");
+      const config = await getSystemConfig();
+      const db = await getDB();
+      const studentsColl = db.collection<any>("students");
+      const questionsColl = db.collection<DBQuestion>("questions");
+      const logsColl = db.collection<SecurityLog>("securityLogs");
 
     const student = await studentsColl.findOne({ email });
     if (!student) return { student: null, questions: [], error: "Student not found" };
@@ -525,8 +539,10 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
       const isCorrect = word.includes(guess);
       if (!isCorrect) {
         student.wrongAnswersCount += 1;
-        if (student.wrongAnswersCount >= 4) {
+        if (student.wrongAnswersCount >= config.maxWrongAttempts) {
           student.status = "Eliminated";
+          student.round1Completed = true;
+          student.round1Qualified = false;
           student.locked = true;
           student.eliminationDetails = `Failed level ${student.currentLevel} by guessing incorrect letter '${guess}'`;
 
@@ -547,8 +563,10 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
         });
       } else {
         student.wrongAnswersCount += 1;
-        if (student.wrongAnswersCount >= 4) {
+        if (student.wrongAnswersCount >= config.maxWrongAttempts) {
           student.status = "Eliminated";
+          student.round1Completed = true;
+          student.round1Qualified = false;
           student.locked = true;
           student.eliminationDetails = `Failed level ${student.currentLevel} by guessing incorrect word '${guess}'`;
 
@@ -571,9 +589,20 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
       student.levelsCompleted = student.currentLevel;
 
       if (student.currentLevel >= 7) {
-        student.status = student.score >= 500 ? "Qualified" : "Completed";
-        student.locked = true;
-        student.completionTime = now.toISOString();
+        student.round1Completed = true;
+        student.round1Score = student.score;
+        student.round1TimeTaken = student.timeTaken;
+        student.round1CompletionTime = now.toISOString();
+
+        if (student.score >= config.round1PassingScore) {
+          student.status = "Qualified";
+          student.round1Qualified = true;
+          student.locked = false; // Keep open for Round 2
+        } else {
+          student.status = "Completed";
+          student.round1Qualified = false;
+          student.locked = true;
+        }
 
         await logsColl.insertOne({
           id: Math.random().toString(36).substring(7),
@@ -632,11 +661,13 @@ export const adminGetDashboardData = createServerFn({ method: "GET" }).handler(a
     const db = await getDB();
     const students = await db.collection("students").find().toArray();
     const questions = await db.collection("questions").find().toArray();
+    const mcqQuestions = await db.collection("mcqQuestions").find().toArray();
     const securityLogs = await db.collection("securityLogs").find().sort({ timestamp: -1 }).limit(200).toArray();
     
     const result = serializeDoc({
       students,
       questions,
+      mcqQuestions,
       securityLogs,
       error: null,
     });
@@ -706,6 +737,57 @@ export const adminUpdateQuestion = createServerFn({ method: "POST" }).handler(as
   } catch (error: any) {
     console.error("[SERVER_FN:adminUpdateQuestion] Error:", error.message);
     return { success: false, questions: [], error: `Update Question failed: ${error.message}` };
+  }
+});
+
+export const adminUpdateMCQQuestion = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+  const { verifyAdminSession } = await import("./server-helpers.server");
+  if (!(await verifyAdminSession())) {
+    return { success: false, mcqQuestions: [], error: "Unauthorized" };
+  }
+  const data = ctx?.data;
+  if (!data) return { success: false, mcqQuestions: [], error: "Missing data payload" };
+  
+  try {
+    const db = await getDB();
+    const mcqColl = db.collection<DBMCQQuestion>("mcqQuestions");
+    const { action, question } = data;
+
+    if (action === "add") {
+      const newQ: DBMCQQuestion = {
+        id: crypto.randomUUID(),
+        category: question.category || "General",
+        text: question.text || "",
+        options: question.options || ["A", "B", "C", "D"],
+        correctAnswer: question.correctAnswer || 0,
+        active: question.active !== false,
+      };
+      await mcqColl.insertOne(newQ);
+    } else if (action === "edit") {
+      await mcqColl.updateOne(
+        { id: question.id },
+        {
+          $set: {
+            category: question.category || "General",
+            text: question.text || "",
+            options: question.options || ["A", "B", "C", "D"],
+            correctAnswer: question.correctAnswer !== undefined ? question.correctAnswer : 0,
+            active: question.active !== undefined ? question.active : true,
+          },
+        },
+      );
+    } else if (action === "delete") {
+      await mcqColl.deleteOne({ id: question.id });
+    }
+
+    const { clearCachePrefix } = await import("./server-helpers.server");
+    clearCachePrefix("admin_dashboard");
+
+    const allQuestions = await mcqColl.find().toArray();
+    return serializeDoc({ success: true, mcqQuestions: allQuestions, error: null });
+  } catch (error: any) {
+    console.error("[SERVER_FN:adminUpdateMCQQuestion] Error:", error.message);
+    return { success: false, mcqQuestions: [], error: `Update MCQ failed: ${error.message}` };
   }
 });
 

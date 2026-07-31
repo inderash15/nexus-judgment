@@ -8,3 +8,5 @@ export { SystemRulesTab } from "./SystemRulesTab";
 export { StudentDrawer } from "./StudentDrawer";
 export { QuestionModal } from "./QuestionModal";
 export { BulkImportModal } from "./BulkImportModal";
+export { MCQTab } from "./MCQTab";
+export { MCQModal } from "./MCQModal";

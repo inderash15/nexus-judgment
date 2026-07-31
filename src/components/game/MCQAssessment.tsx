@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useMCQAssessment, Question } from "@/hooks/useMCQAssessment";
 import { SceneWrap } from "./SceneWrap";
@@ -22,6 +23,13 @@ export function MCQAssessment({ questions, onComplete }: MCQAssessmentProps) {
 
   const isLastQuestion = state.currentQuestionIndex === questions.length - 1;
   const isFirstQuestion = state.currentQuestionIndex === 0;
+
+  // Auto-submit when time runs out
+  useEffect(() => {
+    if (state.timeRemaining <= 0) {
+      onComplete(state.answers, DEFAULT_TIME);
+    }
+  }, [state.timeRemaining, onComplete, state.answers]);
 
   const handleNext = () => {
     if (isLastQuestion) {

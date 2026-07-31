@@ -1,11 +1,12 @@
-import { DBStudent, DBQuestion, SecurityLog } from "@/lib/db";
+import { DBStudent, DBQuestion, SecurityLog, DBMCQQuestion } from "@/lib/db";
 
 export type Tab =
-  "overview" | "students" | "live" | "questions" | "leaderboard" | "audit" | "settings";
+  "overview" | "students" | "live" | "questions" | "mcq" | "leaderboard" | "audit" | "settings";
 
 export type DataState = {
   students: DBStudent[];
   questions: DBQuestion[];
+  mcqQuestions: DBMCQQuestion[];
   securityLogs: SecurityLog[];
 };
 

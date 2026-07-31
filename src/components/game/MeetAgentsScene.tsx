@@ -168,7 +168,7 @@ export function MeetAgentsScene({
 
               {/* Agent card area */}
               <div
-                className="relative min-h-[45svh] md:min-h-[500px] max-h-[60svh] md:max-h-none overflow-y-auto flex items-center justify-center"
+                className="relative min-h-[45svh] md:min-h-[380px] max-h-[60svh] md:max-h-none overflow-y-auto flex items-center justify-center"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
               >
@@ -182,7 +182,7 @@ export function MeetAgentsScene({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-6 sm:mt-8 flex items-center justify-center gap-4 sm:gap-6"
+                className="mt-4 sm:mt-5 flex items-center justify-center gap-4 sm:gap-6"
               >
                 <button
                   onClick={goPrev}

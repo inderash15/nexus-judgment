@@ -24,8 +24,9 @@ import {
   adminLogout,
   getSystemConfigData,
   adminUpdateSystemConfig,
+  adminUpdateMCQQuestion,
 } from "../lib/server-fns";
-import { DBStudent, DBQuestion, SecurityLog } from "../lib/db";
+import { DBStudent, DBQuestion, DBMCQQuestion, SecurityLog } from "../lib/db";
 import {
   OverviewTab,
   CandidatesTab,
@@ -37,6 +38,8 @@ import {
   StudentDrawer,
   QuestionModal,
   BulkImportModal,
+  MCQTab,
+  MCQModal,
 } from "@/components/admin";
 import type { Tab, DataState } from "@/components/admin";
 
@@ -57,7 +60,7 @@ export const Route = createFileRoute("/admin")({
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<DataState>({ students: [], questions: [], securityLogs: [] });
+  const [data, setData] = useState<DataState>({ students: [], questions: [], mcqQuestions: [], securityLogs: [] });
 
   const [studentSearch, setStudentSearch] = useState("");
   const [studentDeptFilter, setStudentDeptFilter] = useState("all");
@@ -72,6 +75,11 @@ function AdminDashboard() {
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Partial<DBQuestion> | null>(null);
+  
+  const [mcqSearch, setMcqSearch] = useState("");
+  const [isMcqModalOpen, setIsMcqModalOpen] = useState(false);
+  const [editingMcq, setEditingMcq] = useState<Partial<DBMCQQuestion> | null>(null);
+  const [mcqForm, setMcqForm] = useState<Partial<DBMCQQuestion>>({});
 
   const [wordForm, setWordForm] = useState("");
   const [categoryForm, setCategoryForm] = useState("Artificial Intelligence");
@@ -82,6 +90,10 @@ function AdminDashboard() {
   const [sessionTimeout, setSessionTimeout] = useState(45);
   const [maxWrongAttempts, setMaxWrongAttempts] = useState(4);
   const [systemMode, setSystemMode] = useState<"normal" | "workshop" | "maintenance">("workshop");
+  const [round1PassingScore, setRound1PassingScore] = useState(60);
+  const [round2PassingScore, setRound2PassingScore] = useState(60);
+  const [round1TimeLimit, setRound1TimeLimit] = useState(300);
+  const [round2TimeLimit, setRound2TimeLimit] = useState(600);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
@@ -98,6 +110,10 @@ function AdminDashboard() {
       setSessionTimeout(config.sessionTimeout);
       setMaxWrongAttempts(config.maxWrongAttempts);
       setSystemMode(config.mode);
+      setRound1PassingScore(config.round1PassingScore || 60);
+      setRound2PassingScore(config.round2PassingScore || 60);
+      setRound1TimeLimit(config.round1TimeLimit || 300);
+      setRound2TimeLimit(config.round2TimeLimit || 600);
     } catch (e) {
       console.error("Failed to load admin dashboard data", e);
     } finally {
@@ -112,6 +128,10 @@ function AdminDashboard() {
           sessionTimeout,
           maxWrongAttempts,
           mode: systemMode,
+          round1PassingScore,
+          round2PassingScore,
+          round1TimeLimit,
+          round2TimeLimit,
         }
       });
       if (res.success) {
@@ -220,6 +240,13 @@ function AdminDashboard() {
       return matchSearch && matchDept && matchStatus;
     });
   }, [data.students, studentSearch, studentDeptFilter, studentStatusFilter]);
+
+  const filteredMCQs = useMemo(() => {
+    return (data.mcqQuestions || []).filter((q) => {
+      const matchSearch = q.text.toLowerCase().includes(mcqSearch.toLowerCase());
+      return matchSearch;
+    });
+  }, [data.mcqQuestions, mcqSearch]);
 
   const sortedStudents = useMemo(() => {
     const sorted = [...filteredStudents];
@@ -373,6 +400,57 @@ function AdminDashboard() {
     }
   };
 
+  const handleEditMCQClick = (q: DBMCQQuestion) => {
+    setEditingMcq(q);
+    setMcqForm(q);
+    setIsMcqModalOpen(true);
+  };
+
+  const handleAddMCQClick = () => {
+    setEditingMcq(null);
+    setMcqForm({
+      category: "General",
+      text: "",
+      options: ["", "", "", ""],
+      correctAnswer: 0,
+      active: true,
+    });
+    setIsMcqModalOpen(true);
+  };
+
+  const handleSaveMCQ = async () => {
+    if (!mcqForm.text || mcqForm.text.trim() === "") return;
+
+    try {
+      if (editingMcq) {
+        const res = await adminUpdateMCQQuestion({
+          data: { action: "edit", question: mcqForm },
+        });
+        if (res.success) setData((prev) => ({ ...prev, mcqQuestions: res.mcqQuestions }));
+      } else {
+        const res = await adminUpdateMCQQuestion({
+          data: { action: "add", question: mcqForm },
+        });
+        if (res.success) setData((prev) => ({ ...prev, mcqQuestions: res.mcqQuestions }));
+      }
+      setIsMcqModalOpen(false);
+    } catch (e) {
+      console.error("MCQ save failed", e);
+    }
+  };
+
+  const handleDeleteMCQ = async (id: string) => {
+    if (!confirm("Remove this MCQ from the active pool?")) return;
+    try {
+      const res = await adminUpdateMCQQuestion({
+        data: { action: "delete", question: { id } },
+      });
+      if (res.success) setData((prev) => ({ ...prev, mcqQuestions: res.mcqQuestions }));
+    } catch (e) {
+      console.error("MCQ deletion failed", e);
+    }
+  };
+
   const handleBulkUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -504,7 +582,8 @@ function AdminDashboard() {
                   { id: "overview", label: "Dashboard", icon: BarChart2 },
                   { id: "students", label: "Candidates", icon: Users },
                   { id: "live", label: "Live Room", icon: Radio },
-                  { id: "questions", label: "Questions", icon: BookOpen },
+                  { id: "questions", label: "Round 1 Puzzles", icon: BookOpen },
+                  { id: "mcq", label: "Round 2 MCQs", icon: BookOpen },
                   { id: "leaderboard", label: "Standings", icon: TrendingUp },
                   { id: "audit", label: "Security Logs", icon: History },
                   { id: "settings", label: "System Rules", icon: Settings },
@@ -628,6 +707,17 @@ function AdminDashboard() {
             />
           )}
 
+          {activeTab === "mcq" && (
+            <MCQTab
+              mcqSearch={mcqSearch}
+              setMcqSearch={setMcqSearch}
+              filteredMCQs={filteredMCQs}
+              handleAddMCQClick={handleAddMCQClick}
+              handleEditMCQClick={handleEditMCQClick}
+              handleDeleteMCQ={handleDeleteMCQ}
+            />
+          )}
+
           {activeTab === "leaderboard" && <StandingsTab students={data.students} />}
 
           {activeTab === "audit" && <AuditLogsTab securityLogs={data.securityLogs} />}
@@ -640,6 +730,14 @@ function AdminDashboard() {
               setMaxWrongAttempts={setMaxWrongAttempts}
               mode={systemMode}
               setMode={setSystemMode}
+              round1PassingScore={round1PassingScore}
+              setRound1PassingScore={setRound1PassingScore}
+              round2PassingScore={round2PassingScore}
+              setRound2PassingScore={setRound2PassingScore}
+              round1TimeLimit={round1TimeLimit}
+              setRound1TimeLimit={setRound1TimeLimit}
+              round2TimeLimit={round2TimeLimit}
+              setRound2TimeLimit={setRound2TimeLimit}
               onSave={handleSaveSettings}
             />
           )}
@@ -671,6 +769,17 @@ function AdminDashboard() {
           activeForm={activeForm}
           setActiveForm={setActiveForm}
           handleSaveQuestion={handleSaveQuestion}
+        />
+      )}
+
+      {isMcqModalOpen && (
+        <MCQModal
+          isOpen={isMcqModalOpen}
+          setIsOpen={setIsMcqModalOpen}
+          editingMCQ={editingMcq}
+          mcqForm={mcqForm}
+          setMcqForm={setMcqForm}
+          handleSaveMCQ={handleSaveMCQ}
         />
       )}
 

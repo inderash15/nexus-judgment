@@ -57,12 +57,28 @@ export type DBStudent = {
   currentGuesses: string[]; // guessed characters
   levelStartTime: string;
   lastActiveTime: string;
-  // MCQ Assessment Data
+  // Round 1 (Puzzle Assessment)
+  round1Completed?: boolean;
+  round1Score?: number;
+  round1TimeTaken?: number;
+  round1Answers?: string[];
+  round1Qualified?: boolean;
+  round1CompletionTime?: string | null;
+
+  // Round 2 (MCQ Assessment)
   mcqCompleted?: boolean;
   mcqScore?: number;
   mcqPercentage?: number;
   mcqAnswers?: Record<string, number>;
   mcqTimeTaken?: number;
+  mcqCompletionTime?: string | null;
+
+  // Final Results & Selection
+  finalScore?: number;
+  finalPercentage?: number;
+  rank?: number;
+  workshopSelected?: boolean;
+  finalSubmissionTime?: string | null;
 };
 
 export type SecurityLog = {
@@ -79,6 +95,10 @@ export type SystemConfig = {
   sessionTimeout: number; // in seconds
   maxWrongAttempts: number;
   mode: "normal" | "workshop" | "maintenance";
+  round1PassingScore: number;
+  round2PassingScore: number;
+  round1TimeLimit: number;
+  round2TimeLimit: number;
 };
 
 const DEFAULT_QUESTIONS: DBQuestion[] = [
@@ -420,6 +440,10 @@ export async function getDB(): Promise<Db> {
       sessionTimeout: 45,
       maxWrongAttempts: 4,
       mode: "workshop",
+      round1PassingScore: 60,
+      round2PassingScore: 60,
+      round1TimeLimit: 300,
+      round2TimeLimit: 600,
     });
   }
 
