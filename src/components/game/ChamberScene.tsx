@@ -20,7 +20,7 @@ export function ChamberScene({
   isSpeaking: boolean;
   submitting?: boolean;
 }) {
-  const [seconds, setSeconds] = useState(45);
+  const [seconds, setSeconds] = useState(60);
   const [hintOpen, setHintOpen] = useState(false);
   const [lastActivity, setLastActivity] = useState(Date.now());
   const [inactiveAlert20, setInactiveAlert20] = useState(false);
@@ -59,11 +59,11 @@ export function ChamberScene({
   useEffect(() => {
     const checkTimer = setInterval(() => {
       const elapsed = Date.now() - lastActivity;
-      if (elapsed > 40000 && !inactiveAlert40) {
+      if (elapsed > 45000 && !inactiveAlert40) {
         setInactiveAlert40(true);
         speak("Time waits for no one.", "warning");
         setGuardianEmotionOverride("warning");
-      } else if (elapsed > 20000 && !inactiveAlert20) {
+      } else if (elapsed > 30000 && !inactiveAlert20) {
         setInactiveAlert20(true);
         speak("Have the shadows frightened you?", "normal");
         setGuardianEmotionOverride("talking");
@@ -104,7 +104,7 @@ export function ChamberScene({
       setSeconds((s) => {
         if (s <= 1) {
           clearInterval(timer);
-          handleGuess("-"); // Force wrong guess on timeout
+          handleGuess("-TIMEOUT-");
           return 0;
         }
         return s - 1;

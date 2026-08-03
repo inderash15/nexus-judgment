@@ -190,7 +190,7 @@ export function GameOverScene({
                   <Award className="w-4 h-4 text-red-400 shrink-0" />
                   <span>
                     Failed Level:{" "}
-                    <strong className="text-red-300 font-black">{student.currentLevel} / 7</strong>
+                    <strong className="text-red-300 font-black">{student.currentLevel} / 3</strong>
                   </span>
                 </div>
                 <div className="flex items-center gap-2">

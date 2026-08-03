@@ -53,8 +53,8 @@ export function ProfileModal({ student, onClose }: { student: DBStudent; onClose
               <div className="text-[8px] uppercase tracking-wider text-emerald-500/60">
                 Completed Levels
               </div>
-              <div className="text-sm font-bold text-emerald-100">
-                {student.levelsCompleted} / 7
+              <div className="font-mono text-sm sm:text-base font-bold text-white">
+                {student.levelsCompleted} / 3
               </div>
             </div>
             <div className="space-y-0.5">

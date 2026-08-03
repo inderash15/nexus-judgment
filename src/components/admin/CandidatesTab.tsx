@@ -131,7 +131,7 @@ export function CandidatesTab({
                       </div>
                     </td>
                     <td className="p-4 font-semibold text-slate-500">{student.department}</td>
-                    <td className="p-4 font-semibold">{student.levelsCompleted} / 7</td>
+                    <td className="p-4 font-semibold">{student.levelsCompleted} / 3</td>
                     <td className="p-4 text-teal-800 font-black">{student.score}</td>
                     <td className="p-4 font-mono font-semibold">{student.attempts}</td>
                     <td className="p-4">{renderStatusBadge(student.status)}</td>

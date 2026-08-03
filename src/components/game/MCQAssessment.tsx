@@ -8,7 +8,7 @@ interface MCQAssessmentProps {
   onComplete: (answers: Record<string, number>, timeRemaining: number) => void;
 }
 
-const DEFAULT_TIME = 60 * 60; // 60 minutes
+const DEFAULT_TIME = 15; // 15 seconds
 
 export function MCQAssessment({ questions, onComplete }: MCQAssessmentProps) {
   const {
@@ -24,10 +24,10 @@ export function MCQAssessment({ questions, onComplete }: MCQAssessmentProps) {
   const isLastQuestion = state.currentQuestionIndex === questions.length - 1;
   const isFirstQuestion = state.currentQuestionIndex === 0;
 
-  // Auto-submit when time runs out
+  // Auto-submit current answers if time runs out
   useEffect(() => {
     if (state.timeRemaining <= 0) {
-      onComplete(state.answers, DEFAULT_TIME);
+      onComplete(state.answers, 0);
     }
   }, [state.timeRemaining, onComplete, state.answers]);
 

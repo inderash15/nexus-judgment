@@ -77,8 +77,8 @@ export function TopHud({
                 </span>
                 <span className="font-mono text-[10px] sm:text-xs font-bold text-emerald-300">
                   {student.status === "Completed" || student.status === "Qualified"
-                    ? "7/7"
-                    : `${student.currentLevel}/7`}
+                    ? "3/3"
+                    : `${student.currentLevel}/3`}
                 </span>
               </div>
 

@@ -17,7 +17,7 @@ export interface AssessmentState {
 }
 
 const STORAGE_KEY = 'nexus_mcq_session';
-const DEFAULT_TIME = 60 * 60; // 60 minutes
+const DEFAULT_TIME = 15; // 15 seconds per question
 
 export function useMCQAssessment(questions: Question[]) {
   const [state, setState] = useState<AssessmentState>(() => {
@@ -73,7 +73,7 @@ export function useMCQAssessment(questions: Question[]) {
 
   const goToNext = () => {
     if (state.currentQuestionIndex < questions.length - 1) {
-      setState(s => ({ ...s, currentQuestionIndex: s.currentQuestionIndex + 1 }));
+      setState(s => ({ ...s, currentQuestionIndex: s.currentQuestionIndex + 1, timeRemaining: DEFAULT_TIME }));
     }
   };
 

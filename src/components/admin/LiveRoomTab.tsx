@@ -35,9 +35,9 @@ export function LiveRoomTab({ students }: LiveRoomTabProps) {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-xs leading-relaxed border-t border-slate-100 pt-3 text-slate-600 font-bold">
-                  <div>
-                    <p className="text-[10px] text-slate-400">Current Level</p>
-                    <p className="text-slate-800 font-black">Level {student.currentLevel} of 7</p>
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500 mb-0.5">Current Progress</p>
+                    <p className="text-slate-800 font-black">Level {student.currentLevel} of 3</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400">Trial Score</p>

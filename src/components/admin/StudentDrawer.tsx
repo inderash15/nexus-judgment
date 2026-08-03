@@ -54,9 +54,9 @@ export function StudentDrawer({
                 <p className="text-[10px] text-slate-400">Trial Score</p>
                 <p className="text-teal-700 font-black">{selectedStudent.score} pts</p>
               </div>
-              <div>
-                <p className="text-[10px] text-slate-400">Completed</p>
-                <p className="text-slate-800">{selectedStudent.levelsCompleted} of 7</p>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Levels Cleared</p>
+                <p className="text-slate-800">{selectedStudent.levelsCompleted} of 3</p>
               </div>
               <div>
                 <p className="text-[10px] text-slate-400">Status</p>

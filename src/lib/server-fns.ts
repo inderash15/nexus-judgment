@@ -149,7 +149,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
 
       // Fetch and sanitize MCQ questions for the payload
       const allMCQs = await mcqColl.find({ active: true }).toArray();
-      const sanitizedMCQs = shuffleArray(allMCQs).slice(0, 5).map(q => ({
+      const sanitizedMCQs = shuffleArray(allMCQs).slice(0, 3).map(q => ({
         id: q.id,
         category: q.category,
         text: q.text,
@@ -268,7 +268,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
         setCached("active_questions", activeQuestions, 30000); // cache for 30s
       }
 
-      if (activeQuestions.length < 7) {
+      if (activeQuestions.length < 3) {
         return {
           student: null,
           questions: [],
@@ -277,7 +277,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
       }
 
       const shuffled = shuffleArray(activeQuestions);
-      const assigned = shuffled.slice(0, 7).map((q) => q.id);
+      const assigned = shuffled.slice(0, 3).map((q) => q.id);
 
       // Generate random 6-character Pin
       const allowedChars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // exclude confusing characters (0, 1, I, O)
@@ -524,7 +524,22 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
     student.levelStartTime = now.toISOString();
     student.lastActiveTime = now.toISOString();
 
-    if (guess.length === 1) {
+    if (guess === "-TIMEOUT-") {
+      student.status = "Eliminated";
+      student.round1Completed = true;
+      student.round1Qualified = false;
+      student.locked = true;
+      student.eliminationDetails = `Failed level ${student.currentLevel} by running out of time`;
+
+      await logsColl.insertOne({
+        id: Math.random().toString(36).substring(7),
+        timestamp: now.toISOString(),
+        email,
+        action: "ELIMINATION",
+        status: "failed",
+        details: `Eliminated on level ${student.currentLevel} due to time expiration. Target word was: ${word}`,
+      });
+    } else if (guess.length === 1) {
       if (student.currentGuesses.includes(guess)) {
         const assignedQ = await questionsColl
           .find({ id: { $in: student.assignedQuestions } })
@@ -589,7 +604,7 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
       student.score += Math.max(40, 100 - penalty);
       student.levelsCompleted = student.currentLevel;
 
-      if (student.currentLevel >= 7) {
+      if (student.currentLevel >= 3) {
         student.round1Completed = true;
         student.round1Score = student.score;
         student.round1TimeTaken = student.timeTaken;

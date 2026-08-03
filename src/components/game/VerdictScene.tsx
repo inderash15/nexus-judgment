@@ -58,12 +58,12 @@ export function VerdictScene({
               Level Finished
             </div>
             <div className="text-base sm:text-lg font-bold text-emerald-100">
-              {student.levelsCompleted} / 7
+              {student.levelsCompleted} / 3
             </div>
           </div>
         </div>
 
-        {student.levelsCompleted === 7 && <InlineLeaderboard currentEmail={student.email} />}
+        {student.levelsCompleted === 3 && <InlineLeaderboard currentEmail={student.email} />}
 
         <div className="pt-4">
           <ActionButton onClick={onContinue}>
