@@ -19,12 +19,22 @@ export interface AssessmentState {
 const STORAGE_KEY = 'nexus_mcq_session';
 const DEFAULT_TIME = 15; // 15 seconds per question
 
-export function useMCQAssessment(questions: Question[]) {
+export function useMCQAssessment(questions: Question[], email: string) {
+  const STORAGE_KEY = `nexus_mcq_session_${email}`;
   const [state, setState] = useState<AssessmentState>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.currentQuestionIndex !== 'number' || parsed.currentQuestionIndex >= questions.length || parsed.currentQuestionIndex < 0) {
+          parsed.currentQuestionIndex = 0;
+        }
+        if (typeof parsed.timeRemaining !== 'number' || parsed.timeRemaining > DEFAULT_TIME || parsed.timeRemaining < 0) {
+          parsed.timeRemaining = DEFAULT_TIME;
+        }
+        if (!parsed.answers) parsed.answers = {};
+        if (!parsed.statuses) parsed.statuses = {};
+        return parsed;
       } catch (e) {
         console.error('Failed to parse saved session', e);
       }
@@ -39,7 +49,7 @@ export function useMCQAssessment(questions: Question[]) {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+  }, [state, STORAGE_KEY]);
 
   useEffect(() => {
     if (state.timeRemaining <= 0) return;

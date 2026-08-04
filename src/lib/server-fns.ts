@@ -147,15 +147,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
 
       const student = await studentsColl.findOne({ email });
 
-      // Fetch and sanitize MCQ questions for the payload
-      const allMCQs = await mcqColl.find({ active: true }).toArray();
-      const sanitizedMCQs = shuffleArray(allMCQs).slice(0, 3).map(q => ({
-        id: q.id,
-        category: q.category,
-        text: q.text,
-        options: q.options,
-        // specifically NOT returning correctAnswer!
-      }));
+      // (MCQs are assigned conditionally based on action and student status)
 
       // If user chooses to register but email exists, deny it
       if (action === "register" && student) {
@@ -169,17 +161,24 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
         }
 
         // Validate PIN
-        if (student.loginPin !== pinInput) {
-          const log: SecurityLog = {
-            id: Math.random().toString(36).substring(7),
-            timestamp: new Date().toISOString(),
-            email,
-            action: "STUDENT_AUTH_FAILURE",
-            status: "suspicious",
-            details: "Invalid PIN provided",
-          };
-          await logsColl.insertOne(log);
-          return { student: null, questions: [], error: "Invalid PIN code. Access denied." };
+        if (action === "login") {
+          if (student.loginPin !== pinInput) {
+            const log: SecurityLog = {
+              id: Math.random().toString(36).substring(7),
+              timestamp: new Date().toISOString(),
+              email,
+              action: "STUDENT_AUTH_FAILURE",
+              status: "suspicious",
+              details: "Invalid PIN provided",
+            };
+            await logsColl.insertOne(log);
+            return { student: null, questions: [], error: "Invalid PIN code. Access denied." };
+          }
+        } else if (action === "resume") {
+          const { verifyStudentSession } = await import("./server-helpers.server");
+          if (!(await verifyStudentSession(email))) {
+            return { student: null, questions: [], error: "Session expired or invalid. Please log in again." };
+          }
         }
 
         // Create secure student session
@@ -229,6 +228,28 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
         };
         await logsColl.insertOne(log);
 
+        let assignedMCQIds = updatedStudent.assignedMCQs || [];
+        if (assignedMCQIds.length < 4) {
+          const randomMCQs = await mcqColl.aggregate([
+            { $match: { active: true } },
+            { $sample: { size: 4 } }
+          ]).toArray();
+          if (randomMCQs.length < 4) {
+            return { student: null, questions: [], error: "System configuration error: At least 4 active MCQs are required. Contact administrator." };
+          }
+          assignedMCQIds = randomMCQs.map(q => q.id);
+          await studentsColl.updateOne({ email }, { $set: { assignedMCQs: assignedMCQIds } });
+          updatedStudent.assignedMCQs = assignedMCQIds;
+        }
+
+        const mcqDocs = await mcqColl.find({ id: { $in: assignedMCQIds } }).toArray();
+        const sanitizedMCQs = shuffleArray(mcqDocs).map((q: any) => ({
+          id: q.id,
+          category: q.category,
+          text: q.text,
+          options: q.options,
+        }));
+
         return serializeDoc({
           student: updatedStudent,
           questions: getAssignedQuestionsForStudent(updatedStudent, assignedQ),
@@ -268,11 +289,11 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
         setCached("active_questions", activeQuestions, 30000); // cache for 30s
       }
 
-      if (activeQuestions.length < 3) {
+      if (activeQuestions.length === 0) {
         return {
           student: null,
           questions: [],
-          error: "Insufficient questions in pool to start test. Contact administrator.",
+          error: "No active questions in pool to start test. Contact administrator.",
         };
       }
 
@@ -310,6 +331,17 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
         lastActiveTime: nowStr,
       };
 
+      let assignedMCQIds: string[] = [];
+      const randomMCQs = await mcqColl.aggregate([
+        { $match: { active: true } },
+        { $sample: { size: 4 } }
+      ]).toArray();
+      if (randomMCQs.length < 4) {
+        return { student: null, questions: [], error: "System configuration error: At least 4 active MCQs are required to start the assessment. Contact administrator." };
+      }
+      assignedMCQIds = randomMCQs.map(q => q.id);
+      newStudent.assignedMCQs = assignedMCQIds;
+
       await studentsColl.insertOne(newStudent);
 
       // Create session
@@ -345,6 +377,14 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
 
       const assignedQ = await questionsColl.find({ id: { $in: assigned } }).toArray();
       
+      const mcqDocs = await mcqColl.find({ id: { $in: assignedMCQIds } }).toArray();
+      const sanitizedMCQs = shuffleArray(mcqDocs).map((q: any) => ({
+        id: q.id,
+        category: q.category,
+        text: q.text,
+        options: q.options,
+      }));
+
       // Clear leaderboard cache as new user registered
       clearCachePrefix("leaderboard");
 
@@ -368,7 +408,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
 
 // 1.5 Submit MCQ Assessment Results (SECURE)
 export const submitMCQResults = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
-  const { checkRateLimit, verifyStudentSession } = await import("./server-helpers.server");
+  const { checkRateLimit, verifyStudentSession, getSystemConfig } = await import("./server-helpers.server");
   const data = ctx?.data;
   
   if (!data || !data.email || !data.answers) {
@@ -402,11 +442,15 @@ export const submitMCQResults = createServerFn({ method: "POST" }).handler(async
 
     // Backend Scoring Validation
     let score = 0;
-    const allQuestions = await mcqColl.find({ active: true }).toArray();
-    const totalQuestions = Object.keys(data.answers).length;
+    const assignedMCQIds = student.assignedMCQs || [];
+    const totalQuestions = assignedMCQIds.length > 0 ? assignedMCQIds.length : 4;
+    const assignedQuestions = await mcqColl.find({ id: { $in: assignedMCQIds } }).toArray();
 
     for (const [qId, optionIdx] of Object.entries(data.answers)) {
-      const q = allQuestions.find(item => item.id === qId);
+      // Only score questions that were actually assigned to this student
+      if (!assignedMCQIds.includes(qId)) continue;
+      
+      const q = assignedQuestions.find(item => item.id === qId);
       if (q && q.correctAnswer === optionIdx) {
         score++;
       }
@@ -414,11 +458,11 @@ export const submitMCQResults = createServerFn({ method: "POST" }).handler(async
 
     const config = await getSystemConfig();
     
-    // Calculate percentage dynamically
+    // Calculate percentage against TOTAL ASSIGNED QUESTIONS, not just answered ones
     const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
     
-    const finalScore = (student.round1Score || 0) + score;
-    const isSelected = score >= config.round2PassingScore; // simple logic for now
+    // MCQ is now Round 1
+    const isSelected = percentage >= (config.round1PassingScore || 0);
 
     // Save to DB
     await studentsColl.updateOne(
@@ -431,12 +475,8 @@ export const submitMCQResults = createServerFn({ method: "POST" }).handler(async
           mcqAnswers: data.answers,
           mcqTimeTaken: data.timeTaken || 0,
           mcqCompletionTime: new Date().toISOString(),
-          finalScore,
-          finalPercentage: percentage, // This could be combined, but we'll use MCQ % for now
-          workshopSelected: isSelected,
-          status: isSelected ? "Selected" : "Completed",
-          locked: true,
-          finalSubmissionTime: new Date().toISOString()
+          status: "Active",
+          locked: false,
         },
       }
     );
@@ -498,6 +538,10 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
 
     const student = await studentsColl.findOne({ email });
     if (!student) return { student: null, questions: [], error: "Student not found" };
+
+    if (!student.mcqCompleted) {
+      return { student: null, questions: [], error: "Must complete MCQ round first." };
+    }
 
     if (student.locked) {
       const assignedQ = await questionsColl
@@ -599,26 +643,26 @@ export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx
     }
 
     const isSolved = word.split("").every((char) => student.currentGuesses.includes(char));
-    if (isSolved && student.status === "Active") {
+    if (isSolved && (student.status === "Active" || student.status === "Qualified")) {
       const penalty = student.wrongAnswersCount * 15;
       student.score += Math.max(40, 100 - penalty);
       student.levelsCompleted = student.currentLevel;
 
-      if (student.currentLevel >= 3) {
+      if (student.currentLevel >= student.assignedQuestions.length) {
         student.round1Completed = true;
         student.round1Score = student.score;
         student.round1TimeTaken = student.timeTaken;
         student.round1CompletionTime = now.toISOString();
 
-        if (student.score >= config.round1PassingScore) {
-          student.status = "Qualified";
-          student.round1Qualified = true;
-          student.locked = false; // Keep open for Round 2
-        } else {
-          student.status = "Completed";
-          student.round1Qualified = false;
-          student.locked = true;
-        }
+        // Puzzle is now Round 2, meaning it's the final round
+        const finalScore = (student.mcqScore || 0) + student.score;
+        student.finalScore = finalScore;
+        student.score = finalScore;
+        student.finalSubmissionTime = now.toISOString();
+
+        student.status = "Completed";
+        student.round1Qualified = true;
+        student.locked = true;
 
         await logsColl.insertOne({
           id: Math.random().toString(36).substring(7),
@@ -977,7 +1021,10 @@ function getAssignedQuestionsForStudent(
 ): DBQuestion[] {
   return student.assignedQuestions.map((id: number) => {
     const q = allQuestions.find((item) => item.id === id);
-    if (q) return q;
+    if (q) {
+      const { _id, ...rest } = q as any;
+      return rest;
+    }
     return {
       id,
       word: "FALLBACK",

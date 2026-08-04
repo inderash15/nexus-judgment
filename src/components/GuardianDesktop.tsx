@@ -50,6 +50,7 @@ export function GuardianDesktop({
   }, [mounted]);
 
   useEffect(() => {
+    let active = true;
     const handleMouseDown = () => {
       clickAnim
         .start({
@@ -59,17 +60,22 @@ export function GuardianDesktop({
           transition: { duration: 0.08, ease: "easeOut" },
         })
         .then(() => {
-          clickAnim.start({
-            scaleY: 1,
-            scaleX: 1,
-            y: 0,
-            transition: { type: "spring", stiffness: 160, damping: 9 },
-          });
+          if (active) {
+            clickAnim.start({
+              scaleY: 1,
+              scaleX: 1,
+              y: 0,
+              transition: { type: "spring", stiffness: 160, damping: 9 },
+            });
+          }
         });
     };
 
     window.addEventListener("mousedown", handleMouseDown);
-    return () => window.removeEventListener("mousedown", handleMouseDown);
+    return () => {
+      active = false;
+      window.removeEventListener("mousedown", handleMouseDown);
+    };
   }, [clickAnim]);
 
   useEffect(() => {

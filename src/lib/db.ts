@@ -66,6 +66,7 @@ export type DBStudent = {
   round1CompletionTime?: string | null;
 
   // Round 2 (MCQ Assessment)
+  assignedMCQs?: string[]; // Array of exactly 4 assigned MCQ IDs
   mcqCompleted?: boolean;
   mcqScore?: number;
   mcqPercentage?: number;

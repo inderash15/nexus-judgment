@@ -4,13 +4,14 @@ import { useMCQAssessment, Question } from "@/hooks/useMCQAssessment";
 import { SceneWrap } from "./SceneWrap";
 
 interface MCQAssessmentProps {
+  email: string;
   questions: Question[];
   onComplete: (answers: Record<string, number>, timeRemaining: number) => void;
 }
 
 const DEFAULT_TIME = 15; // 15 seconds
 
-export function MCQAssessment({ questions, onComplete }: MCQAssessmentProps) {
+export function MCQAssessment({ email, questions, onComplete }: MCQAssessmentProps) {
   const {
     state,
     answerQuestion,
@@ -19,17 +20,21 @@ export function MCQAssessment({ questions, onComplete }: MCQAssessmentProps) {
     goToNext,
     goToPrevious,
     currentQuestion
-  } = useMCQAssessment(questions);
+  } = useMCQAssessment(questions, email);
 
   const isLastQuestion = state.currentQuestionIndex === questions.length - 1;
   const isFirstQuestion = state.currentQuestionIndex === 0;
 
-  // Auto-submit current answers if time runs out
+  // Auto-submit or auto-advance if time runs out
   useEffect(() => {
     if (state.timeRemaining <= 0) {
-      onComplete(state.answers, 0);
+      if (isLastQuestion) {
+        onComplete(state.answers, 0);
+      } else {
+        goToNext();
+      }
     }
-  }, [state.timeRemaining, onComplete, state.answers]);
+  }, [state.timeRemaining, onComplete, state.answers, isLastQuestion, goToNext]);
 
   const handleNext = () => {
     if (isLastQuestion) {

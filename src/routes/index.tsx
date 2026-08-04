@@ -102,16 +102,16 @@ function LastCandidate() {
 
         if (res.student.status === "Eliminated" || res.student.status === "Disqualified") {
           setScene("gameover");
-        } else if (res.student.mcqCompleted) {
-          setScene("final");
         } else if (res.student.round1Completed) {
-          if (res.student.round1Qualified) {
-            setScene("mcq"); // or verdict to show them they qualified
-          } else {
-            setScene("final");
-          }
+          setScene("final");
+        } else if (!res.student.mcqCompleted) {
+          setScene("mcq");
         } else {
-          setScene("instructions");
+          if (res.student.locked) {
+            setScene("final");
+          } else {
+            setScene("instructions");
+          }
         }
       }
     } catch (err) {
@@ -128,16 +128,16 @@ function LastCandidate() {
 
     if (student.status === "Eliminated" || student.status === "Disqualified") {
       setScene("gameover");
-    } else if (student.mcqCompleted) {
-      setScene("final");
     } else if (student.round1Completed) {
-      if (student.round1Qualified) {
-        setScene("mcq");
-      } else {
-        setScene("final");
-      }
+      setScene("final");
+    } else if (!student.mcqCompleted) {
+      setScene("mcq");
     } else {
-      setScene("instructions");
+      if (student.locked) {
+        setScene("final");
+      } else {
+        setScene("instructions");
+      }
     }
   };
 
@@ -194,7 +194,7 @@ function LastCandidate() {
       } else {
         if (
           res.student.currentLevel > prevLevel ||
-          res.student.status === "Qualified" ||
+          res.student.status === "Selected" ||
           res.student.status === "Completed"
         ) {
           setVerdictCorrect(true);
@@ -299,7 +299,7 @@ function LastCandidate() {
       {scene === "register" && (
         <RegisterScene
           key="register"
-          onComplete={(student, questions) => handleAuthSuccess(student, questions, mcqQuestions)} // the payload might not have it from register scene directly without passing it up, wait, I need to pass mcqQuestions up from RegisterScene. Let's just rely on registerOrResumeStudent returning it inside RegisterScene and passing it up.
+          onComplete={(student, questions, mcqQs) => handleAuthSuccess(student, questions, mcqQs)} // the payload might not have it from register scene directly without passing it up, wait, I need to pass mcqQuestions up from RegisterScene. Let's just rely on registerOrResumeStudent returning it inside RegisterScene and passing it up.
           speak={speak}
           isSpeaking={isSpeaking}
         />
@@ -315,28 +315,38 @@ function LastCandidate() {
       )}
       {scene === "instructions" && student && (
         <InstructionsScene 
-          onStart={() => setScene(student.round1Completed && student.round1Qualified ? "mcq" : "chamber")} 
+          key="instructions"
+          onStart={() => setScene("chamber")} 
         />
       )}
-      {scene === "mcq" && student && mcqQuestions && mcqQuestions.length > 0 && (
-        <MCQAssessment 
-          questions={mcqQuestions} 
-          onComplete={async (answers, timeRemaining) => {
-            try {
-              const res = await submitMCQResults({ data: { email: student.email, answers, timeTaken: timeRemaining } });
-              if (res.error) {
-                console.error("MCQ Submission Error", res.error);
-                alert(res.error);
-              } else {
-                setStudent((prev) => prev ? { ...prev, mcqCompleted: true, mcqScore: res.score, mcqPercentage: res.percentage } : prev);
-                setVerdictCorrect(res.percentage >= 60); // example passing score
-                setScene("verdict");
+      {scene === "mcq" && student && (
+        (!mcqQuestions || mcqQuestions.length === 0) ? (
+          <div className="flex flex-col items-center justify-center w-full h-full text-center space-y-4">
+            <h2 className="text-red-500 font-mono text-xl sm:text-3xl tracking-widest uppercase">System Error</h2>
+            <p className="text-red-400/80 font-mono text-xs sm:text-sm">NO MCQ DATA FOUND. PLEASE CONTACT ADMINISTRATOR.</p>
+          </div>
+        ) : (
+          <MCQAssessment 
+            key="mcq"
+            email={student.email}
+            questions={mcqQuestions} 
+            onComplete={async (answers, timeRemaining) => {
+              try {
+                const res = await submitMCQResults({ data: { email: student.email, answers, timeTaken: timeRemaining } });
+                if (res.error) {
+                  console.error("MCQ Submission Error", res.error);
+                  alert(res.error);
+                } else {
+                  localStorage.removeItem(`nexus_mcq_session_${student.email}`);
+                  setStudent((prev) => prev ? { ...prev, mcqCompleted: true, mcqScore: res.score, mcqPercentage: res.percentage, status: "Active", locked: false } : prev);
+                  setScene("instructions");
+                }
+              } catch (err) {
+                console.error(err);
               }
-            } catch (err) {
-              console.error(err);
-            }
-          }} 
-        />
+            }} 
+          />
+        )
       )}
       {scene === "chamber" && student && currentQuestion && (
         <ChamberScene
@@ -354,10 +364,8 @@ function LastCandidate() {
           key={`verdict-${student.levelsCompleted}`}
           student={student}
           onContinue={() => {
-            if (student.mcqCompleted) {
+            if (student.round1Completed) {
               setScene("final");
-            } else if (student.round1Completed && student.round1Qualified) {
-              setScene("mcq");
             } else if (student.locked) {
               setScene("final");
             } else {
