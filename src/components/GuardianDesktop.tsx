@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { motion, useAnimation } from "framer-motion";
+import { motion, useAnimation, useMotionValue, useSpring, useTransform } from "framer-motion";
 import guardianAsset from "@/assets/guardian-hero.png";
 
 export interface GuardianProps {
@@ -18,13 +18,31 @@ export function GuardianDesktop({
   state = "idle",
 }: GuardianProps) {
   const [mounted, setMounted] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isBlinking, setIsBlinking] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const clickAnim = useAnimation();
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 120, damping: 16, mass: 0.3 });
+  const springY = useSpring(mouseY, { stiffness: 120, damping: 16, mass: 0.3 });
+
+  const typingOffsetX = useMotionValue(0);
+  const typingOffsetY = useMotionValue(0);
+  useEffect(() => {
+    typingOffsetX.set(isTyping ? -38 : 0);
+    typingOffsetY.set(isTyping ? 12 : 0);
+  }, [isTyping, typingOffsetX, typingOffsetY]);
+
+  const glowX = useTransform(() => (springX.get() + typingOffsetX.get()) * -0.5);
+  const glowY = useTransform(() => springY.get() * -0.5);
+  const auroraX = useTransform(() => (springX.get() + typingOffsetX.get()) * -0.25);
+  const auroraY = useTransform(() => springY.get() * -0.25);
+  const bodyX = useTransform(() => springX.get() + typingOffsetX.get());
+  const bodyY = useTransform(() => springY.get() + typingOffsetY.get());
 
   useEffect(() => {
     setMounted(true);
@@ -39,15 +57,13 @@ export function GuardianDesktop({
       const dx = (e.clientX - centerX) / (window.innerWidth / 2);
       const dy = (e.clientY - centerY) / (window.innerHeight / 2);
 
-      setMousePos({
-        x: Math.max(-1, Math.min(1, dx)) * 24,
-        y: Math.max(-1, Math.min(1, dy)) * 18,
-      });
+      mouseX.set(Math.max(-1, Math.min(1, dx)) * 24);
+      mouseY.set(Math.max(-1, Math.min(1, dy)) * 18);
     };
 
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [mounted]);
+  }, [mouseX, mouseY]);
 
   useEffect(() => {
     let active = true;
@@ -141,7 +157,6 @@ export function GuardianDesktop({
     { left: "88%", delay: 2.9, duration: 9, scale: 1.1 },
   ];
 
-  const typingLookX = isTyping ? -38 : 0;
   const typingRotateY = isTyping ? -15 : 0;
 
   return (
@@ -152,11 +167,7 @@ export function GuardianDesktop({
       {glow && (
         <motion.div
           className="absolute inset-0 -z-30 pointer-events-none"
-          animate={{
-            x: (mousePos.x + typingLookX) * -0.5,
-            y: mousePos.y * -0.5,
-          }}
-          transition={{ type: "tween", ease: "easeOut", duration: 0.35 }}
+          style={{ x: glowX, y: glowY }}
         >
           <div
             className="absolute inset-[-80px] blur-[100px] opacity-80 transition-colors duration-1000"
@@ -175,11 +186,7 @@ export function GuardianDesktop({
 
       <motion.div
         className="absolute inset-0 -z-20 pointer-events-none opacity-45 mix-blend-screen"
-        animate={{
-          x: (mousePos.x + typingLookX) * -0.25,
-          y: mousePos.y * -0.25,
-        }}
-        transition={{ type: "tween", ease: "easeOut", duration: 0.35 }}
+        style={{ x: auroraX, y: auroraY }}
       >
         <div className="absolute top-[10%] left-[-10%] w-[120%] h-[80%] bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.1),transparent_50%)] blur-[40px] animate-pulse" />
         <div
@@ -234,10 +241,8 @@ export function GuardianDesktop({
         </div>
 
         <motion.div
-          style={{ transformOrigin: "bottom center" }}
+          style={{ x: bodyX, y: bodyY, transformOrigin: "bottom center" }}
           animate={{
-            x: mousePos.x + typingLookX,
-            y: mousePos.y + (speaking ? Math.sin(Date.now() / 150) * 1.5 : 0) + (isTyping ? 12 : 0),
             scale: isTyping ? 1.05 : 1,
             rotateX: isTyping ? 5 : 0,
             rotateY: typingRotateY,

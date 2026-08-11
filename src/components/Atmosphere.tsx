@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import chamberBg from "@/assets/chamber-bg.jpg";
-import bgVideo from "@/assets/Ancient_Gothic_shadow_temple_loop_202607231856_1_apo8_prob4.mp4";
+import bgVideo from "@/assets/Ancient_Gothic_shadow_temple_loop_202607231856.mp4";
 
 type Particle = {
   id: number;
@@ -37,6 +37,20 @@ export function Atmosphere({
     );
   }, []);
 
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      const video = videoRef.current;
+      if (!video) return;
+      if (document.hidden) {
+        video.pause();
+      } else if (video.paused) {
+        video.play().catch(() => {});
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, []);
+
   return (
     <div className="pointer-events-none fixed inset-0 overflow-hidden bg-black">
       {/* LAYER 1: Fullscreen Video & Fallback Static Image */}
@@ -54,7 +68,7 @@ export function Atmosphere({
         loop
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
         onLoadedData={() => {
           if (videoRef.current) {
             videoRef.current.playbackRate = 1.0;

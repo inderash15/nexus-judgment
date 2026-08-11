@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SceneWrap } from "./SceneWrap";
 import loadingVideo from "@/assets/0724 (1).mp4";
@@ -21,16 +21,31 @@ export function BootScene({
   const [logs, setLogs] = useState<string[]>([]);
   const [progress, setProgress] = useState(0);
 
+  const startedRef = useRef(false);
+  const timersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
+
+  useEffect(() => {
+    const timers = timersRef.current;
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+      timers.forEach((t) => clearInterval(t));
+    };
+  }, []);
+
   const startBoot = () => {
+    if (startedRef.current) return;
+    startedRef.current = true;
     setStage("loading");
     if (!voiceEnabled) {
       toggleVoice();
     }
 
     // Delay speak call to allow voice state to propagate and speech engine to warm up
-    setTimeout(() => {
-      speak("Establishing link with Sector 0 7. Decrypting seals. Standing by for selection.");
-    }, 300);
+    timersRef.current.push(
+      setTimeout(() => {
+        speak("Establishing link with Sector 0 7. Decrypting seals. Standing by for selection.");
+      }, 300),
+    );
 
     const logTimeline = [
       { delay: 300, text: "> CONNECTING TO SHADOW REALM CONTROLLER..." },
@@ -43,27 +58,29 @@ export function BootScene({
     ];
 
     logTimeline.forEach((item) => {
-      setTimeout(() => {
-        setLogs((prev) => [...prev, item.text]);
-      }, item.delay);
+      timersRef.current.push(
+        setTimeout(() => {
+          setLogs((prev) => [...prev, item.text]);
+        }, item.delay),
+      );
     });
 
-    const interval = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return p + 2;
-      });
-    }, 80);
+    timersRef.current.push(
+      setInterval(() => {
+        setProgress((p) => Math.min(100, p + 2));
+      }, 80) as unknown as ReturnType<typeof setTimeout>,
+    );
 
-    setTimeout(() => {
-      setStage("ready");
+    timersRef.current.push(
       setTimeout(() => {
-        onComplete();
-      }, 800);
-    }, 4800);
+        setStage("ready");
+        timersRef.current.push(
+          setTimeout(() => {
+            onComplete();
+          }, 800),
+        );
+      }, 4800),
+    );
   };
 
   return (
@@ -100,7 +117,7 @@ export function BootScene({
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center w-[90%] max-w-[340px] sm:max-w-md mx-auto px-4 sm:px-6 py-5 sm:py-6 backdrop-blur-md bg-black/40 border border-emerald-500/20 rounded-3xl shadow-[0_0_50px_rgba(16,185,129,0.15)] flex flex-col items-center justify-center gap-1 sm:gap-2"
+            className="relative overflow-hidden text-center w-[90%] max-w-[300px] sm:max-w-md mx-auto px-3 sm:px-6 py-4 sm:py-6 backdrop-blur-xl bg-black/30 border border-emerald-500/20 rounded-3xl shadow-[0_0_60px_rgba(16,185,129,0.2)] before:absolute before:inset-0 before:rounded-3xl before:bg-gradient-to-b before:from-emerald-500/5 before:to-transparent before:pointer-events-none flex flex-col items-center justify-center gap-1 sm:gap-2"
           >
             <div className="relative z-10 w-full flex justify-center pointer-events-none mt-1 mb-2 sm:mb-4 px-2">
               <img
@@ -131,7 +148,7 @@ export function BootScene({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05, filter: "brightness(2)" }}
             transition={{ duration: 0.5 }}
-            className="w-full max-w-md rounded-2xl border border-emerald-500/20 bg-black/80 p-4 sm:p-5 font-mono text-xs backdrop-blur-md shadow-[0_0_60px_rgba(16,185,129,0.15)] text-left"
+            className="relative overflow-hidden w-full max-w-[300px] sm:max-w-md rounded-2xl border border-emerald-500/20 bg-black/40 p-4 sm:p-5 font-mono text-xs backdrop-blur-xl shadow-[0_0_60px_rgba(16,185,129,0.2)] before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-b before:from-emerald-500/5 before:to-transparent before:pointer-events-none text-left"
           >
             <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2 mb-3">
               <span className="text-emerald-400/80 uppercase tracking-widest text-[9px] sm:text-[10px]">

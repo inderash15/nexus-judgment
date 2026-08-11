@@ -22,29 +22,50 @@ export function ChamberScene({
 }) {
   const [seconds, setSeconds] = useState(60);
   const [hintOpen, setHintOpen] = useState(false);
-  const [lastActivity, setLastActivity] = useState(Date.now());
   const [inactiveAlert20, setInactiveAlert20] = useState(false);
   const [inactiveAlert40, setInactiveAlert40] = useState(false);
   const [guardianEmotionOverride, setGuardianEmotionOverride] = useState<string | null>(null);
 
+  const lastActivityRef = useRef(Date.now());
+  const inactiveAlert20Ref = useRef(false);
+  const inactiveAlert40Ref = useRef(false);
+  const timeoutFiredRef = useRef(false);
+
+  const onGuessRef = useRef(onGuessLetter);
+  useEffect(() => {
+    onGuessRef.current = onGuessLetter;
+  }, [onGuessLetter]);
+
+  const speakRef = useRef(speak);
+  useEffect(() => {
+    speakRef.current = speak;
+  }, [speak]);
+
+  const submittingRef = useRef(submitting);
+  useEffect(() => {
+    submittingRef.current = submitting;
+  }, [submitting]);
+
   const resetInactivity = () => {
-    setLastActivity(Date.now());
-    setInactiveAlert20(false);
-    setInactiveAlert40(false);
-    setGuardianEmotionOverride(null);
+    lastActivityRef.current = Date.now();
+    inactiveAlert20Ref.current = false;
+    inactiveAlert40Ref.current = false;
+    setInactiveAlert20((v) => (v ? false : v));
+    setInactiveAlert40((v) => (v ? false : v));
+    setGuardianEmotionOverride((v) => (v ? null : v));
   };
 
   const handleGuess = (char: string) => {
-    if (submitting) return;
+    if (submittingRef.current) return;
     resetInactivity();
-    onGuessLetter(char);
+    onGuessRef.current(char);
   };
 
-  // Add event listeners for mousemove, keydown, click to reset inactivity
+  // Add event listeners for mousemove, keydown, click to reset inactivity.
+  // resetInactivity only writes refs + bails out on unchanged state, so normal
+  // mouse movement never triggers a re-render here.
   useEffect(() => {
-    const handleInteraction = () => {
-      resetInactivity();
-    };
+    const handleInteraction = () => resetInactivity();
     window.addEventListener("mousemove", handleInteraction);
     window.addEventListener("keydown", handleInteraction);
     window.addEventListener("click", handleInteraction);
@@ -55,22 +76,28 @@ export function ChamberScene({
     };
   }, []);
 
-  // Check inactivity every second
+  // Check inactivity every second (ref-backed, stable interval)
   useEffect(() => {
     const checkTimer = setInterval(() => {
-      const elapsed = Date.now() - lastActivity;
-      if (elapsed > 45000 && !inactiveAlert40) {
-        setInactiveAlert40(true);
-        speak("Time waits for no one.", "warning");
-        setGuardianEmotionOverride("warning");
-      } else if (elapsed > 30000 && !inactiveAlert20) {
-        setInactiveAlert20(true);
-        speak("Have the shadows frightened you?", "normal");
-        setGuardianEmotionOverride("talking");
+      const elapsed = Date.now() - lastActivityRef.current;
+      if (elapsed > 45000) {
+        if (!inactiveAlert40Ref.current) {
+          inactiveAlert40Ref.current = true;
+          setInactiveAlert40(true);
+          setGuardianEmotionOverride("warning");
+          speakRef.current("Time waits for no one.", "warning");
+        }
+      } else if (elapsed > 30000) {
+        if (!inactiveAlert20Ref.current) {
+          inactiveAlert20Ref.current = true;
+          setInactiveAlert20(true);
+          setGuardianEmotionOverride("talking");
+          speakRef.current("Have the shadows frightened you?", "normal");
+        }
       }
     }, 1000);
     return () => clearInterval(checkTimer);
-  }, [lastActivity, inactiveAlert20, inactiveAlert40, speak]);
+  }, []);
 
   // Use a ref to store latest state without constantly rebinding the listener
   const stateRef = useRef({ guesses: student.currentGuesses, onGuessLetter, submitting });
@@ -98,20 +125,21 @@ export function ChamberScene({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Timer countdown
+  // Stable 1s countdown ticker
   useEffect(() => {
     const timer = setInterval(() => {
-      setSeconds((s) => {
-        if (s <= 1) {
-          clearInterval(timer);
-          handleGuess("-TIMEOUT-");
-          return 0;
-        }
-        return s - 1;
-      });
+      setSeconds((s) => (s <= 1 ? 0 : s - 1));
     }, 1000);
     return () => clearInterval(timer);
-  }, [onGuessLetter, lastActivity]);
+  }, []);
+
+  // Fire the timeout once when the counter reaches zero
+  useEffect(() => {
+    if (seconds === 0 && !timeoutFiredRef.current) {
+      timeoutFiredRef.current = true;
+      handleGuess("-TIMEOUT-");
+    }
+  }, [seconds]);
 
   useEffect(() => {
     if (hintOpen) {

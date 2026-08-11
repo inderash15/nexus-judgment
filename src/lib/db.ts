@@ -395,28 +395,12 @@ const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || "nexus_judgment";
 interface GlobalMongo {
   _mongoClient?: MongoClient;
   _mongoDbInstance?: Db;
+  _mongoInitPromise?: Promise<Db>;
 }
 const globalWithMongo = globalThis as unknown as GlobalMongo;
 
-export async function getDB(): Promise<Db> {
-  if (globalWithMongo._mongoDbInstance) return globalWithMongo._mongoDbInstance;
-  if (!MONGODB_URI) {
-    throw new Error(
-      "MONGODB_URI environment variable is not set. Please configure it in your deployment settings.",
-    );
-  }
-  if (!globalWithMongo._mongoClient) {
-    globalWithMongo._mongoClient = new MongoClient(MONGODB_URI, {
-      maxPoolSize: 100,
-      minPoolSize: 10,
-      maxIdleTimeMS: 30000,
-      connectTimeoutMS: 10000,
-      socketTimeoutMS: 30000,
-    });
-    await globalWithMongo._mongoClient.connect();
-  }
-  const dbInstance = globalWithMongo._mongoClient.db(MONGODB_DB_NAME);
-  globalWithMongo._mongoDbInstance = dbInstance;
+async function initializeDB(client: MongoClient): Promise<Db> {
+  const dbInstance = client.db(MONGODB_DB_NAME);
 
   // Seed default questions if empty
   const questionsColl = dbInstance.collection("questions");
@@ -458,7 +442,8 @@ export async function getDB(): Promise<Db> {
     await studentsColl.createIndex({ email: 1 }, { unique: true });
     await studentsColl.createIndex({ score: -1, completionTime: 1 });
     await questionsColl.createIndex({ id: 1 }, { unique: true });
-    await securityLogsColl.createIndex({ email: 1, createdAt: -1 });
+    await securityLogsColl.createIndex({ email: 1, timestamp: -1 });
+    await securityLogsColl.createIndex({ timestamp: -1 });
     await adminSessionsColl.createIndex({ token: 1 });
     await adminSessionsColl.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
     await studentSessionsColl.createIndex({ token: 1 });
@@ -471,4 +456,39 @@ export async function getDB(): Promise<Db> {
   }
 
   return dbInstance;
+}
+
+export async function getDB(): Promise<Db> {
+  if (globalWithMongo._mongoDbInstance) return globalWithMongo._mongoDbInstance;
+  if (!MONGODB_URI) {
+    throw new Error(
+      "MONGODB_URI environment variable is not set. Please configure it in your deployment settings.",
+    );
+  }
+
+  // Single-flight init so concurrent first requests share one connect + seed + index pass
+  if (!globalWithMongo._mongoInitPromise) {
+    globalWithMongo._mongoInitPromise = (async () => {
+      try {
+        if (!globalWithMongo._mongoClient) {
+          globalWithMongo._mongoClient = new MongoClient(MONGODB_URI, {
+            maxPoolSize: 100,
+            minPoolSize: 10,
+            maxIdleTimeMS: 30000,
+            connectTimeoutMS: 10000,
+            socketTimeoutMS: 30000,
+          });
+          await globalWithMongo._mongoClient.connect();
+        }
+        const dbInstance = await initializeDB(globalWithMongo._mongoClient);
+        globalWithMongo._mongoDbInstance = dbInstance;
+        return dbInstance;
+      } catch (e) {
+        globalWithMongo._mongoInitPromise = undefined;
+        throw e;
+      }
+    })();
+  }
+
+  return globalWithMongo._mongoInitPromise;
 }

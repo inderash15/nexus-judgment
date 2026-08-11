@@ -31,9 +31,22 @@ export function clearCachePrefix(prefix: string) {
 
 // Global In-Memory Rate Limiter
 const rateLimitMap = new Map<string, number[]>();
+let lastPruneTime = Date.now();
 
 export function checkRateLimit(key: string, maxRequests: number, windowMs: number): boolean {
   const now = Date.now();
+
+  // Periodically drop stale keys (once a minute) so idle buckets don't accumulate forever
+  if (now - lastPruneTime > 60000) {
+    lastPruneTime = now;
+    for (const [k, timestamps] of rateLimitMap) {
+      const last = timestamps[timestamps.length - 1];
+      if (!last || now - last > 600000) {
+        rateLimitMap.delete(k);
+      }
+    }
+  }
+
   const timestamps = rateLimitMap.get(key) || [];
   const validTimestamps = timestamps.filter((ts) => now - ts < windowMs);
   

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export function useViewport() {
   const [viewport, setViewport] = useState({
@@ -6,17 +6,27 @@ export function useViewport() {
     height: typeof window !== 'undefined' ? window.innerHeight : 1080,
   });
 
+  const rafRef = useRef<number | null>(null);
+
   useEffect(() => {
     const handleResize = () => {
-      setViewport({ width: window.innerWidth, height: window.innerHeight });
+      if (rafRef.current != null) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        setViewport({ width: window.innerWidth, height: window.innerHeight });
+      });
     };
-    
+
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
-    
+
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
   }, []);
 

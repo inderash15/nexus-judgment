@@ -1,9 +1,9 @@
 import { useViewport } from './useViewport';
-import { useOrientation } from './useOrientation';
+import { getOrientation } from './useOrientation';
 
 export function useResponsive() {
   const { width, height } = useViewport();
-  const { orientation } = useOrientation();
+  const { orientation } = getOrientation(width, height);
   
   const minDim = Math.min(width, height);
   const maxDim = Math.max(width, height);

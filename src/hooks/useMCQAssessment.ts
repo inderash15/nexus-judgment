@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export interface Question {
   id: string;
@@ -51,13 +51,21 @@ export function useMCQAssessment(questions: Question[], email: string) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state, STORAGE_KEY]);
 
+  // Single stable, drift-resistant countdown: tracks real elapsed wall-clock time
+  // so backgrounded tabs don't lose time, and never re-creates the interval.
   useEffect(() => {
-    if (state.timeRemaining <= 0) return;
+    let lastTick = Date.now();
     const interval = setInterval(() => {
-      setState(s => ({ ...s, timeRemaining: s.timeRemaining - 1 }));
-    }, 1000);
+      const now = Date.now();
+      const elapsed = Math.floor((now - lastTick) / 1000);
+      if (elapsed <= 0) return;
+      lastTick = now;
+      setState(s =>
+        s.timeRemaining <= 0 ? s : { ...s, timeRemaining: Math.max(0, s.timeRemaining - elapsed) }
+      );
+    }, 250);
     return () => clearInterval(interval);
-  }, [state.timeRemaining]);
+  }, []);
 
   const answerQuestion = (questionId: string, optionIndex: number) => {
     setState(s => ({
