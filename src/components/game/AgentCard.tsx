@@ -32,7 +32,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
         initial={{ opacity: 0, scale: 0.7 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.15, duration: 0.6, type: "spring", stiffness: 120 }}
-        className="relative mb-5 sm:mb-6"
+        className="relative mb-3 sm:mb-4"
       >
         {/* Outer rotating ring */}
         <motion.div
@@ -58,12 +58,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
                 "repeating-linear-gradient(0deg, rgba(52,211,153,0.4) 0px, rgba(52,211,153,0.4) 1px, transparent 1px, transparent 3px)",
             }}
           />
-          {/* Scanning beam */}
-          <motion.div
-            animate={{ top: ["0%", "100%", "0%"] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-            className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent pointer-events-none"
-          />
+
           <span className="text-xl xs:text-3xl sm:text-4xl font-serif text-emerald-300/80 select-none">
             {agent.initials}
           </span>
@@ -117,7 +112,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6, duration: 0.5 }}
-        className="mt-3 sm:mt-4 text-xs sm:text-sm text-emerald-100/70 leading-relaxed max-w-md"
+        className="mt-2 sm:mt-3 text-xs sm:text-sm text-emerald-100/70 leading-relaxed max-w-md"
       >
         {agent.bio}
       </motion.p>
@@ -127,7 +122,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.7, duration: 0.5 }}
-        className="mt-3 sm:mt-4 flex flex-wrap justify-center gap-2"
+        className="mt-2 sm:mt-3 flex flex-wrap justify-center gap-2"
       >
         {agent.skills.map((skill, i) => (
           <SkillBadge key={skill} skill={skill} index={i} />
@@ -139,7 +134,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.9, duration: 0.6 }}
-        className="mt-4 sm:mt-5 relative px-4 py-3 rounded-lg border-l-2 border-emerald-400/30 bg-emerald-500/5"
+        className="mt-3 sm:mt-4 relative px-4 py-2 rounded-lg border-l-2 border-emerald-400/30 bg-emerald-500/5"
       >
         <p className="text-xs sm:text-sm italic text-emerald-200/60">"{agent.quote}"</p>
       </motion.blockquote>

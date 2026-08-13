@@ -78,19 +78,12 @@ export function GuardianDesktop({
     ? "bg-red-400 shadow-[0_0_15px_rgba(239,68,68,1)]"
     : "bg-emerald-300 shadow-[0_0_10px_rgba(52,211,153,1)]";
 
-  const particles = [
-    { left: "8%", delay: 0, duration: 9, scale: 0.8 },
-    { left: "22%", delay: 2.5, duration: 7, scale: 1.2 },
-    { left: "38%", delay: 1.2, duration: 10, scale: 0.6 },
-    { left: "55%", delay: 3.8, duration: 8, scale: 1.0 },
-    { left: "72%", delay: 0.6, duration: 11, scale: 0.7 },
-    { left: "88%", delay: 2.9, duration: 9, scale: 1.1 },
-  ];
+
 
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-[350px] sm:h-[480px] md:h-[580px] lg:h-[760px] flex items-center justify-center select-none overflow-visible ${className}`}
+      className={`relative w-full h-[250px] sm:h-[340px] md:h-[400px] lg:h-[530px] flex items-center justify-center select-none overflow-visible ${className}`}
     >
       {glow && (
         <motion.div
@@ -123,28 +116,7 @@ export function GuardianDesktop({
         />
       </motion.div>
 
-      <div className="absolute inset-0 -z-10 pointer-events-none">
-        {particles.map((p, idx) => (
-          <motion.div
-            key={idx}
-            className={`absolute bottom-[-10px] w-2.5 h-2.5 rounded-full ${
-              isApocalypse ? "bg-red-500/25" : "bg-emerald-500/25"
-            }`}
-            style={{ left: p.left }}
-            animate={{
-              y: -600,
-              x: [0, Math.sin(idx) * 25, 0],
-              opacity: [0, 0.6, 0.6, 0],
-            }}
-            transition={{
-              duration: p.duration,
-              repeat: Infinity,
-              delay: p.delay,
-              ease: "linear",
-            }}
-          />
-        ))}
-      </div>
+
 
       <motion.div
         className="relative mx-auto h-[95%] flex items-end justify-center overflow-visible"
@@ -172,21 +144,13 @@ export function GuardianDesktop({
           className="relative max-h-full flex items-end justify-center"
         >
           <motion.div
-            animate={{
-              y: [0, -12, 0],
-            }}
-            transition={{
-              duration: speaking ? 3.0 : 6.0,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
             className="relative max-h-full"
           >
             <img
               src={activeImage}
               alt="The Guardian"
               draggable={false}
-              className={`relative mx-auto max-h-[220px] sm:max-h-[420px] md:max-h-[520px] lg:max-h-[690px] object-contain transition-all duration-500 translate-y-4 sm:translate-y-0 ${
+              className={`relative mx-auto max-h-[150px] sm:max-h-[300px] md:max-h-[360px] lg:max-h-[480px] object-contain transition-all duration-500 translate-y-4 sm:translate-y-0 ${
                 isApocalypse
                   ? "drop-shadow-[0_0_80px_rgba(239,68,68,0.7)] filter saturate-[1.15] brightness-[1.08] contrast-[1.05]"
                   : "drop-shadow-[0_0_80px_rgba(16,185,129,0.55)] filter saturate-[1.1] brightness-[1.05]"

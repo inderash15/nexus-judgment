@@ -225,6 +225,10 @@
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
       padding-bottom: env(safe-area-inset-bottom);
+      
+      /* Global Mobile Keyboard offset logic */
+      transform: translateY(var(--keyboard-offset, 0px));
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
     }
   }
 }

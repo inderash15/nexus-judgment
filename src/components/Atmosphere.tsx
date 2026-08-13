@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import chamberBg from "@/assets/chamber-bg.jpg";
-import bgVideo from "@/assets/Ancient_Gothic_shadow_temple_loop_202607231856.mp4";
+import bgVideo from "@/assets/Ancient_Gothic_shadow_temple_loop_202607231856_1_apo8_prob4.mp4";
 
 type Particle = {
   id: number;

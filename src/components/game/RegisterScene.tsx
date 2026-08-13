@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SceneWrap } from "./SceneWrap";
 import { ActionButton } from "./ActionButton";
+import { VirtualKeyboard } from "./VirtualKeyboard";
 import {
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ export function RegisterScene({
   const [dept, setDept] = useState("");
   const [macAddress, setMacAddress] = useState("");
   const [pin, setPin] = useState("");
+  const [activeField, setActiveField] = useState<"name" | "email" | "mac" | "pin" | null>(null);
   
   // Registration complete phase
   const [phase, setPhase] = useState<"input" | "pin-display">("input");
@@ -234,12 +236,14 @@ export function RegisterScene({
             : "Provide your registered email and the unique 6-character PIN generated during registration."}
         </p>
 
-        <form className="mt-4 sm:mt-6 space-y-3.5 w-full" onSubmit={handleSubmit}>
+        <form className={`mt-4 sm:mt-6 space-y-3.5 w-full transition-all duration-300 ${activeField ? 'pb-[320px] sm:pb-[360px]' : ''}`} onSubmit={handleSubmit}>
           {tab === "register" && (
             <div>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                onFocus={() => setActiveField("name")}
+                inputMode="none"
                 maxLength={40}
                 required
                 placeholder="Full Name"
@@ -253,6 +257,8 @@ export function RegisterScene({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onFocus={() => setActiveField("email")}
+              inputMode="none"
               maxLength={50}
               required
               placeholder="Official Email Address"
@@ -289,6 +295,8 @@ export function RegisterScene({
                   type="text"
                   value={macAddress}
                   onChange={(e) => setMacAddress(e.target.value)}
+                  onFocus={() => setActiveField("mac")}
+                  inputMode="none"
                   maxLength={17}
                   required
                   placeholder="Laptop MAC Address (e.g. 00:1A:2B:3C:4D:5E)"
@@ -302,6 +310,8 @@ export function RegisterScene({
                 type="text"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
+                onFocus={() => setActiveField("pin")}
+                inputMode="none"
                 maxLength={6}
                 required
                 placeholder="6-Digit Access PIN"
@@ -329,6 +339,24 @@ export function RegisterScene({
           </div>
         </form>
       </motion.div>
+
+      <VirtualKeyboard 
+        isOpen={activeField !== null}
+        onClose={() => setActiveField(null)}
+        type={activeField || "text"}
+        value={
+          activeField === "name" ? name :
+          activeField === "email" ? email :
+          activeField === "mac" ? macAddress :
+          activeField === "pin" ? pin : ""
+        }
+        onChange={(val) => {
+          if (activeField === "name") setName(val);
+          else if (activeField === "email") setEmail(val);
+          else if (activeField === "mac") setMacAddress(val);
+          else if (activeField === "pin") setPin(val.substring(0, 6)); // cap pin at 6
+        }}
+      />
     </SceneWrap>
   );
 }

@@ -5,6 +5,7 @@ import { ActionButton } from "./ActionButton";
 import { ResourcePersonCard, type ResourcePerson } from "./ResourcePersonCard";
 import { MissionTimeline } from "./MissionTimeline";
 import type { GuardianEmotion } from "@/hooks/useGuardianVoice";
+import { Award, Target, Rocket, Gift } from "lucide-react";
 
 const RESOURCE_PERSONS: ResourcePerson[] = [
   {
@@ -25,10 +26,10 @@ const OBJECTIVES = [
 ];
 
 const REWARDS = [
-  { label: "Certificate" },
-  { label: "Challenge Completion" },
-  { label: "AI Skills" },
-  { label: "Surprise Rewards" },
+  { icon: Award, label: "Certificate" },
+  { icon: Target, label: "Challenge Completion" },
+  { icon: Rocket, label: "AI Skills" },
+  { icon: Gift, label: "Surprise Rewards" },
 ];
 
 const SCHEDULE = [
@@ -278,19 +279,25 @@ export function MissionDossierScene({
                 {revealedCards.includes(6) && (
                   <DossierCard title="Mission Rewards">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {REWARDS.map((r, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.1 * i, duration: 0.4 }}
-                          className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 sm:p-4"
-                        >
-                          <span className="font-mono text-[10px] sm:text-xs text-emerald-300 tracking-wider text-center">
-                            {r.label}
-                          </span>
-                        </motion.div>
-                      ))}
+                      {REWARDS.map((r, i) => {
+                        const Icon = r.icon;
+                        return (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.1 * i, duration: 0.4 }}
+                            className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 sm:p-4"
+                          >
+                            <div className="flex items-center justify-center w-12 h-12 rounded-full border border-emerald-400/30 bg-transparent shadow-[0_0_10px_rgba(52,211,153,0.15)] mb-1">
+                              <Icon className="w-5 h-5 text-emerald-400" strokeWidth={1.5} />
+                            </div>
+                            <span className="font-mono text-[10px] sm:text-xs text-emerald-300 tracking-wider text-center">
+                              {r.label}
+                            </span>
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   </DossierCard>
                 )}

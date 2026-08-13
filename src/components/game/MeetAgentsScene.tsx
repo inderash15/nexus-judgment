@@ -4,6 +4,7 @@ import { SceneWrap } from "./SceneWrap";
 import { ActionButton } from "./ActionButton";
 import { AgentCard, type Agent } from "./AgentCard";
 import type { GuardianEmotion } from "@/hooks/useGuardianVoice";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const AGENTS: Agent[] = [
   {
@@ -113,7 +114,7 @@ export function MeetAgentsScene({
 
   return (
     <SceneWrap>
-      <div className="w-full max-w-lg sm:max-w-xl mx-auto">
+      <div className="w-full max-w-xl md:max-w-3xl lg:max-w-4xl mx-auto px-2 sm:px-4">
         <AnimatePresence mode="wait">
           {phase === "search" && (
             <motion.div
@@ -156,43 +157,86 @@ export function MeetAgentsScene({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-center mb-6 sm:mb-8"
+                className="text-center mb-1 sm:mb-2"
               >
                 <h1 className="font-serif text-xl sm:text-2xl md:text-3xl text-emerald-50 tracking-tight">
                   MEET THE AGENTS
                 </h1>
-                <p className="font-mono text-[9px] sm:text-[10px] text-emerald-400/60 tracking-[0.4em] uppercase mt-1.5">
+                <p className="font-mono text-[9px] sm:text-[10px] text-emerald-400/60 tracking-[0.4em] uppercase mt-1">
                   Guardian Technical Division
                 </p>
               </motion.div>
 
-              {/* Agent card area */}
-              <div
-                className="relative min-h-[45svh] md:min-h-[380px] max-h-[60svh] md:max-h-none overflow-y-auto flex items-center justify-center"
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-              >
-                <AnimatePresence mode="wait">
-                  <AgentCard key={agentIndex} agent={AGENTS[agentIndex]} />
-                </AnimatePresence>
+              {/* Main Content Area with Side Buttons */}
+              <div className="flex items-start justify-between w-full gap-2 sm:gap-6 relative mt-4">
+                {/* Left Button */}
+                <button
+                  onClick={goPrev}
+                  disabled={agentIndex === 0}
+                  className="hidden sm:flex self-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2 sm:p-3 items-center justify-center text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-0 transition cursor-pointer z-10 shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.15)]"
+                >
+                  <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
+                </button>
+
+                {/* Agent card area */}
+                <div
+                  className="relative flex-1 flex items-start justify-center pt-4 sm:pt-6"
+                  onTouchStart={handleTouchStart}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  <AnimatePresence mode="wait">
+                    <AgentCard key={agentIndex} agent={AGENTS[agentIndex]} />
+                  </AnimatePresence>
+                </div>
+
+                {/* Right Button */}
+                <button
+                  onClick={isLast ? onComplete : goNext}
+                  className={`hidden sm:flex self-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2 sm:p-3 items-center justify-center text-emerald-300 hover:bg-emerald-500/20 transition cursor-pointer z-10 shrink-0 ${isLast ? 'shadow-[0_0_20px_rgba(52,211,153,0.5)] animate-pulse' : 'shadow-[0_0_15px_rgba(16,185,129,0.15)]'}`}
+                >
+                  <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
+                </button>
               </div>
 
-              {/* Navigation */}
+              {/* Bottom Navigation & Actions */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-4 sm:mt-5 flex items-center justify-center gap-4 sm:gap-6"
+                className="mt-3 sm:mt-4 flex flex-col items-center justify-center gap-3 sm:gap-4"
               >
-                <button
-                  onClick={goPrev}
-                  disabled={agentIndex === 0}
-                  className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 font-mono text-[10px] sm:text-xs text-emerald-300 tracking-wider uppercase hover:bg-emerald-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
-                >
-                  Previous
-                </button>
+                {/* Mobile Navigation Buttons (Visible only on small screens) */}
+                <div className="flex sm:hidden items-center justify-between w-full px-4 mb-2">
+                  <button
+                    onClick={goPrev}
+                    disabled={agentIndex === 0}
+                    className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-emerald-300 disabled:opacity-0 transition"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {AGENTS.map((_, i) => (
+                      <motion.span
+                        key={i}
+                        animate={{
+                          width: i === agentIndex ? 20 : 6,
+                          opacity: i === agentIndex ? 1 : 0.3,
+                        }}
+                        transition={{ duration: 0.3 }}
+                        className="h-1.5 rounded-full bg-emerald-400"
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={isLast ? onComplete : goNext}
+                    className={`rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-emerald-300 transition ${isLast ? 'shadow-[0_0_15px_rgba(52,211,153,0.4)] animate-pulse' : ''}`}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
 
-                <div className="flex items-center gap-1.5">
+                {/* Desktop Dots (Hidden on mobile) */}
+                <div className="hidden sm:flex items-center gap-1.5">
                   {AGENTS.map((_, i) => (
                     <motion.span
                       key={i}
@@ -206,31 +250,12 @@ export function MeetAgentsScene({
                   ))}
                 </div>
 
-                {isLast ? (
-                  <motion.div
-                    animate={{
-                      boxShadow: [
-                        "0 0 15px rgba(52,211,153,0.3)",
-                        "0 0 30px rgba(52,211,153,0.6)",
-                        "0 0 15px rgba(52,211,153,0.3)",
-                      ],
-                    }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <ActionButton onClick={onComplete}>JOIN THE MISSION</ActionButton>
-                  </motion.div>
-                ) : (
-                  <button
-                    onClick={goNext}
-                    className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 font-mono text-[10px] sm:text-xs text-emerald-300 tracking-wider uppercase hover:bg-emerald-500/20 transition cursor-pointer"
-                  >
-                    Next
-                  </button>
-                )}
+
+
               </motion.div>
 
               {/* Counter */}
-              <p className="mt-3 text-center font-mono text-[9px] sm:text-[10px] text-emerald-400/40 tracking-widest">
+              <p className="mt-2 text-center font-mono text-[9px] sm:text-[10px] text-emerald-400/40 tracking-widest">
                 {String(agentIndex + 1).padStart(2, "0")} / {String(AGENTS.length).padStart(2, "0")}
               </p>
             </motion.div>
