@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { motion, useAnimation, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import guardianAsset from "@/assets/guardian-hero.png";
 
 export interface GuardianProps {
@@ -19,98 +19,28 @@ export function GuardianDesktop({
 }: GuardianProps) {
   const [mounted, setMounted] = useState(false);
   const [isBlinking, setIsBlinking] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const clickAnim = useAnimation();
-  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const springX = useSpring(mouseX, { stiffness: 120, damping: 16, mass: 0.3 });
   const springY = useSpring(mouseY, { stiffness: 120, damping: 16, mass: 0.3 });
 
-  const typingOffsetX = useMotionValue(0);
-  const typingOffsetY = useMotionValue(0);
-  useEffect(() => {
-    typingOffsetX.set(isTyping ? -38 : 0);
-    typingOffsetY.set(isTyping ? 12 : 0);
-  }, [isTyping, typingOffsetX, typingOffsetY]);
-
-  const glowX = useTransform(() => (springX.get() + typingOffsetX.get()) * -0.5);
+  const glowX = useTransform(() => springX.get() * -0.5);
   const glowY = useTransform(() => springY.get() * -0.5);
-  const auroraX = useTransform(() => (springX.get() + typingOffsetX.get()) * -0.25);
+  const auroraX = useTransform(() => springX.get() * -0.25);
   const auroraY = useTransform(() => springY.get() * -0.25);
-  const bodyX = useTransform(() => springX.get() + typingOffsetX.get());
-  const bodyY = useTransform(() => springY.get() + typingOffsetY.get());
+  const bodyX = useTransform(() => springX.get());
+  const bodyY = useTransform(() => springY.get());
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const dx = (e.clientX - centerX) / (window.innerWidth / 2);
-      const dy = (e.clientY - centerY) / (window.innerHeight / 2);
 
-      mouseX.set(Math.max(-1, Math.min(1, dx)) * 24);
-      mouseY.set(Math.max(-1, Math.min(1, dy)) * 18);
-    };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [mouseX, mouseY]);
 
-  useEffect(() => {
-    let active = true;
-    const handleMouseDown = () => {
-      clickAnim
-        .start({
-          scaleY: 0.93,
-          scaleX: 1.03,
-          y: 8,
-          transition: { duration: 0.08, ease: "easeOut" },
-        })
-        .then(() => {
-          if (active) {
-            clickAnim.start({
-              scaleY: 1,
-              scaleX: 1,
-              y: 0,
-              transition: { type: "spring", stiffness: 160, damping: 9 },
-            });
-          }
-        });
-    };
-
-    window.addEventListener("mousedown", handleMouseDown);
-    return () => {
-      active = false;
-      window.removeEventListener("mousedown", handleMouseDown);
-    };
-  }, [clickAnim]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (["Input", "TextArea"].includes((e.target as HTMLElement).tagName)) {
-        setIsTyping(true);
-        if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
-        typingTimerRef.current = setTimeout(() => {
-          setIsTyping(false);
-        }, 1200);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
-    };
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -156,8 +86,6 @@ export function GuardianDesktop({
     { left: "72%", delay: 0.6, duration: 11, scale: 0.7 },
     { left: "88%", delay: 2.9, duration: 9, scale: 1.1 },
   ];
-
-  const typingRotateY = isTyping ? -15 : 0;
 
   return (
     <div
@@ -219,7 +147,6 @@ export function GuardianDesktop({
       </div>
 
       <motion.div
-        animate={clickAnim}
         className="relative mx-auto h-[95%] flex items-end justify-center overflow-visible"
         style={{ transformOrigin: "bottom center" }}
       >
@@ -242,16 +169,6 @@ export function GuardianDesktop({
 
         <motion.div
           style={{ x: bodyX, y: bodyY, transformOrigin: "bottom center" }}
-          animate={{
-            scale: isTyping ? 1.05 : 1,
-            rotateX: isTyping ? 5 : 0,
-            rotateY: typingRotateY,
-          }}
-          transition={{
-            type: "spring",
-            stiffness: isTyping ? 80 : 120,
-            damping: isTyping ? 12 : 14,
-          }}
           className="relative max-h-full flex items-end justify-center"
         >
           <motion.div
@@ -269,7 +186,7 @@ export function GuardianDesktop({
               src={activeImage}
               alt="The Guardian"
               draggable={false}
-              className={`relative mx-auto max-h-[300px] sm:max-h-[420px] md:max-h-[520px] lg:max-h-[690px] object-contain transition-all duration-500 ${
+              className={`relative mx-auto max-h-[220px] sm:max-h-[420px] md:max-h-[520px] lg:max-h-[690px] object-contain transition-all duration-500 translate-y-4 sm:translate-y-0 ${
                 isApocalypse
                   ? "drop-shadow-[0_0_80px_rgba(239,68,68,0.7)] filter saturate-[1.15] brightness-[1.08] contrast-[1.05]"
                   : "drop-shadow-[0_0_80px_rgba(16,185,129,0.55)] filter saturate-[1.1] brightness-[1.05]"

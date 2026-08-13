@@ -25,10 +25,10 @@ const OBJECTIVES = [
 ];
 
 const REWARDS = [
-  { icon: "\uD83C\uDFC6", label: "Certificate" },
-  { icon: "\uD83C\uDFAF", label: "Challenge Completion" },
-  { icon: "\uD83D\uDE80", label: "AI Skills" },
-  { icon: "\uD83C\uDF81", label: "Surprise Rewards" },
+  { label: "Certificate" },
+  { label: "Challenge Completion" },
+  { label: "AI Skills" },
+  { label: "Surprise Rewards" },
 ];
 
 const SCHEDULE = [
@@ -286,9 +286,6 @@ export function MissionDossierScene({
                           transition={{ delay: 0.1 * i, duration: 0.4 }}
                           className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 sm:p-4"
                         >
-                          <div className="flex items-center justify-center w-12 h-12 rounded-full border border-emerald-400/30 bg-emerald-950/50 shadow-[0_0_10px_rgba(52,211,153,0.15)] mb-1">
-                            <span className="text-2xl">{r.icon}</span>
-                          </div>
                           <span className="font-mono text-[10px] sm:text-xs text-emerald-300 tracking-wider text-center">
                             {r.label}
                           </span>
