@@ -67,8 +67,8 @@ export function RegisterScene({
 
     try {
       if (tab === "register") {
-        if (!name.trim() || !email.includes("@") || !dept || !macAddress) {
-          setError("All fields are required.");
+        if (!name.trim() || !email.includes("@") || !dept) {
+          setError("All required fields must be filled.");
           setSubmitting(false);
           return;
         }
@@ -232,7 +232,7 @@ export function RegisterScene({
         </h2>
         <p className="mt-1.5 sm:mt-2 text-xs text-emerald-100/60 leading-relaxed font-sans">
           {tab === "register"
-            ? "Your name, official email, department, and laptop MAC address will bind this single attempt. Retakes are locked."
+            ? "Your name, official email, and department will bind this single attempt. Laptop MAC address is optional. Retakes are locked."
             : "Provide your registered email and the unique 6-character PIN generated during registration."}
         </p>
 
@@ -298,8 +298,7 @@ export function RegisterScene({
                   onFocus={() => setActiveField("mac")}
                   inputMode="none"
                   maxLength={17}
-                  required
-                  placeholder="Laptop MAC Address (e.g. 00:1A:2B:3C:4D:5E)"
+                  placeholder="Laptop MAC Address (Optional, e.g. 00:1A:2B:3C:4D:5E)"
                   className="w-full rounded-xl border border-emerald-500/30 bg-black/60 px-4 py-2.5 min-h-[40px] sm:min-h-[44px] font-sans text-sm sm:text-base text-emerald-50 outline-none backdrop-blur focus:border-emerald-400 focus:shadow-[0_0_20px_rgba(52,211,153,0.2)]"
                 />
               </div>
@@ -332,7 +331,7 @@ export function RegisterScene({
 
           <div className="pt-2 flex items-center gap-4">
             <ActionButton
-              disabled={submitting || (tab === "register" ? (name.trim().length < 2 || !email.includes("@") || !dept || !macAddress) : (!email.includes("@") || pin.trim().length !== 6))}
+              disabled={submitting || (tab === "register" ? (name.trim().length < 2 || !email.includes("@") || !dept) : (!email.includes("@") || pin.trim().length !== 6))}
             >
               {submitting ? "Processing Ledger..." : (tab === "register" ? "Initiate Judgment →" : "Verify Token →")}
             </ActionButton>

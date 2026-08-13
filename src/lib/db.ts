@@ -21,6 +21,7 @@ export type DBQuestion = {
   word: string;
   category: string;
   hint: string;
+  imageUrl?: string; // New field for technical image puzzles
   difficulty: "easy" | "medium" | "hard";
   active: boolean;
 };
@@ -475,7 +476,7 @@ export async function getDB(): Promise<Db> {
             maxPoolSize: 100,
             minPoolSize: 10,
             maxIdleTimeMS: 30000,
-            connectTimeoutMS: 10000,
+            connectTimeoutMS: 30000,
             socketTimeoutMS: 30000,
           });
           await globalWithMongo._mongoClient.connect();
@@ -485,6 +486,7 @@ export async function getDB(): Promise<Db> {
         return dbInstance;
       } catch (e) {
         globalWithMongo._mongoInitPromise = undefined;
+        globalWithMongo._mongoClient = undefined; // Force full client recreation on next attempt
         throw e;
       }
     })();

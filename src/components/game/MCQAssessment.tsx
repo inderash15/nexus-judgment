@@ -55,7 +55,7 @@ export function MCQAssessment({ email, questions, onComplete }: MCQAssessmentPro
   return (
     <SceneWrap>
       <motion.div 
-        className="flex flex-col w-full max-w-2xl bg-zinc-950 text-emerald-50 rounded-2xl overflow-hidden border border-white/5 shadow-xl"
+        className="flex flex-col w-full max-w-2xl bg-zinc-950 text-emerald-50 rounded-2xl overflow-hidden border border-white/5 shadow-xl max-h-[90vh]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -77,14 +77,14 @@ export function MCQAssessment({ email, questions, onComplete }: MCQAssessmentPro
           </div>
         </header>
 
-        <main className="w-full p-4 sm:p-6 bg-zinc-900 flex flex-col gap-4">
+        <main className="w-full p-4 sm:p-6 bg-zinc-900 flex flex-col gap-4 overflow-y-auto flex-1">
           <div className="flex items-center">
              <h2 className="text-sm sm:text-base md:text-lg font-serif text-white leading-tight">
                {currentQuestion.text}
              </h2>
           </div>
           
-          <div className="flex flex-col gap-2 sm:gap-3 overflow-y-auto">
+          <div className="flex flex-col gap-2 sm:gap-3 shrink-0">
             {currentQuestion.options.map((option, idx) => {
               const isSelected = state.answers[currentQuestion.id] === idx;
               return (

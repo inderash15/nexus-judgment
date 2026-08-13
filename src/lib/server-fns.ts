@@ -228,19 +228,19 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
         };
         await logsColl.insertOne(log);
 
-        let assignedMCQIds = updatedStudent.assignedMCQs || [];
-        if (assignedMCQIds.length < 4) {
-          const randomMCQs = await mcqColl.aggregate([
-            { $match: { active: true } },
-            { $sample: { size: 4 } }
-          ]).toArray();
-          if (randomMCQs.length < 4) {
-            return { student: null, questions: [], error: "System configuration error: At least 4 active MCQs are required. Contact administrator." };
-          }
-          assignedMCQIds = randomMCQs.map(q => q.id);
-          await studentsColl.updateOne({ email }, { $set: { assignedMCQs: assignedMCQIds } });
-          updatedStudent.assignedMCQs = assignedMCQIds;
+      let assignedMCQIds = updatedStudent.assignedMCQs || [];
+      if (assignedMCQIds.length < 2) {
+        const randomMCQs = await mcqColl.aggregate([
+          { $match: { active: true } },
+          { $sample: { size: 2 } }
+        ]).toArray();
+        if (randomMCQs.length < 2) {
+          return { student: null, questions: [], error: "System configuration error: At least 2 active MCQs are required. Contact administrator." };
         }
+        assignedMCQIds = randomMCQs.map(q => q.id);
+        await studentsColl.updateOne({ email }, { $set: { assignedMCQs: assignedMCQIds } });
+        updatedStudent.assignedMCQs = assignedMCQIds;
+      }
 
         const mcqDocs = await mcqColl.find({ id: { $in: assignedMCQIds } }).toArray();
         const sanitizedMCQs = shuffleArray(mcqDocs).map((q: any) => ({
@@ -263,11 +263,11 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
       const department = (data.department || "").trim();
       const macAddress = (data.macAddress || "").trim().toUpperCase();
 
-      if (!name || !department || !macAddress) {
+      if (!name || !department) {
         return {
           student: null,
           questions: [],
-          error: "Full Name, Department, and Laptop MAC Address are required to register",
+          error: "Full Name and Department are required to register",
         };
       }
 
@@ -278,7 +278,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
       }
       
       const macRegex = /^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$/;
-      if (!macRegex.test(macAddress)) {
+      if (macAddress && !macRegex.test(macAddress)) {
         return { student: null, questions: [], error: "Invalid MAC Address format (e.g. 00:1A:2B:3C:4D:5E)" };
       }
 
@@ -298,7 +298,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
       }
 
       const shuffled = shuffleArray(activeQuestions);
-      const assigned = shuffled.slice(0, 3).map((q) => q.id);
+      const assigned = shuffled.slice(0, 1).map((q) => q.id);
 
       // Generate random 6-character Pin
       const allowedChars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // exclude confusing characters (0, 1, I, O)
@@ -334,10 +334,10 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
       let assignedMCQIds: string[] = [];
       const randomMCQs = await mcqColl.aggregate([
         { $match: { active: true } },
-        { $sample: { size: 4 } }
+        { $sample: { size: 2 } }
       ]).toArray();
-      if (randomMCQs.length < 4) {
-        return { student: null, questions: [], error: "System configuration error: At least 4 active MCQs are required to start the assessment. Contact administrator." };
+      if (randomMCQs.length < 2) {
+        return { student: null, questions: [], error: "System configuration error: At least 2 active MCQs are required to start the assessment. Contact administrator." };
       }
       assignedMCQIds = randomMCQs.map(q => q.id);
       newStudent.assignedMCQs = assignedMCQIds;
