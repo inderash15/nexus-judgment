@@ -53,15 +53,15 @@ export function TopHud({
       animate={{ opacity: 1, y: 0 }}
       className="fixed top-0 left-0 right-0 z-40 px-4 pt-4 sm:px-8 sm:pt-6 pointer-events-none"
     >
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 sm:gap-4 rounded-2xl border border-emerald-500/20 bg-black/70 px-3 sm:px-4 py-2 backdrop-blur-xl pointer-events-auto shadow-[0_8px_32px_rgba(0,0,0,0.8)]">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <img src={logo} alt="NexusPro" className="h-5 w-5 rounded object-contain shrink-0" />
-          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)] shrink-0" />
-          <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-emerald-400/80 sm:text-xs shrink-0">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 sm:gap-3 rounded-2xl border border-emerald-500/20 bg-black/70 px-2.5 sm:px-3 py-1.5 backdrop-blur-xl pointer-events-auto shadow-[0_8px_32px_rgba(0,0,0,0.8)]">
+        <div className="flex items-center gap-2 min-w-0">
+          <img src={logo} alt="NexusPro" className="h-4 w-4 rounded object-contain shrink-0" />
+          <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)] shrink-0" />
+          <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-emerald-400/80 sm:text-[10px] shrink-0">
             Guardian Trial
           </div>
           {student && (
-            <div className="text-xs font-semibold tracking-wide text-emerald-100 hidden sm:block truncate">
+            <div className="text-[10px] font-semibold tracking-wide text-emerald-100 hidden sm:block truncate">
               {student.name}
             </div>
           )}

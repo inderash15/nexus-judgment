@@ -25,7 +25,9 @@ import {
 import type { Scene } from "@/components/game";
 import { InstructionsScene } from "@/components/game/InstructionsScene";
 import { MCQAssessment } from "@/components/game/MCQAssessment";
+import type { Question, PuzzleQuestion } from "@/hooks/useMCQAssessment";
 import bgImage from "@/assets/background.png";
+import logoImage from "@/assets/images.png";
 import { useResponsive } from "@/hooks/useResponsive";
 import { MobileEntryGate } from "@/components/MobileEntryGate";
 
@@ -59,6 +61,23 @@ function LastCandidate() {
   const [assignedQuestions, setAssignedQuestions] = useState<DBQuestion[]>([]);
   const [mcqQuestions, setMcqQuestions] = useState<any[]>([]);
   const [verdictCorrect, setVerdictCorrect] = useState(true);
+
+  // The 3-question technical trial: Q1 = MCQ, Q2 = technical logo joining image puzzle, Q3 = MCQ
+  const testQuestions = useMemo<Question[]>(() => {
+    const mcqs = Array.isArray(mcqQuestions) ? mcqQuestions : [];
+    const puzzle: PuzzleQuestion = {
+      id: "logo-joining-puzzle",
+      type: "puzzle",
+      category: "Technical Logo",
+      text: "Join the shuffled tiles in the correct order (left-to-right, top-to-bottom) to rebuild the technical logo.",
+      imageUrl: logoImage,
+      rows: 2,
+      cols: 3,
+    };
+    const first = mcqs[0];
+    const last = mcqs[1];
+    return [first, puzzle, last].filter(Boolean) as Question[];
+  }, [mcqQuestions]);
 
   const [deathTriggered, setDeathTriggered] = useState(false);
   const [deathPhase, setDeathPhase] = useState(0);
@@ -320,16 +339,16 @@ function LastCandidate() {
         />
       )}
       {scene === "mcq" && student && (
-        (!mcqQuestions || mcqQuestions.length === 0) ? (
+        (testQuestions.length < 3) ? (
           <div className="flex flex-col items-center justify-center w-full h-full text-center space-y-4">
             <h2 className="text-red-500 font-mono text-xl sm:text-3xl tracking-widest uppercase">System Error</h2>
-            <p className="text-red-400/80 font-mono text-xs sm:text-sm">NO MCQ DATA FOUND. PLEASE CONTACT ADMINISTRATOR.</p>
+            <p className="text-red-400/80 font-mono text-xs sm:text-sm">INSUFFICIENT ASSESSMENT DATA. PLEASE CONTACT ADMINISTRATOR.</p>
           </div>
         ) : (
           <MCQAssessment 
             key="mcq"
             email={student.email}
-            questions={mcqQuestions} 
+            questions={testQuestions} 
             onComplete={async (answers, timeRemaining) => {
               try {
                 const res = await submitMCQResults({ data: { email: student.email, answers, timeTaken: timeRemaining } });

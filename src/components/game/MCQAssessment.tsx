@@ -1,15 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useMCQAssessment, Question } from "@/hooks/useMCQAssessment";
 import { SceneWrap } from "./SceneWrap";
+import { LogoPuzzle } from "./LogoPuzzle";
 
 interface MCQAssessmentProps {
   email: string;
   questions: Question[];
-  onComplete: (answers: Record<string, number>, timeRemaining: number) => void;
+  onComplete: (answers: Record<string, number | string>, timeRemaining: number) => void;
 }
 
-const DEFAULT_TIME = 15; // 15 seconds
+const DEFAULT_TIME = 30; // 30 seconds per question
 
 export function MCQAssessment({ email, questions, onComplete }: MCQAssessmentProps) {
   const {
@@ -22,23 +23,41 @@ export function MCQAssessment({ email, questions, onComplete }: MCQAssessmentPro
     currentQuestion
   } = useMCQAssessment(questions, email);
 
+  // Puzzle placements live here (not in the hook) so progress survives navigation
+  const [puzzlePlacements, setPuzzlePlacements] = useState<Record<string, (number | null)[]>>({});
+
   const isLastQuestion = state.currentQuestionIndex === questions.length - 1;
   const isFirstQuestion = state.currentQuestionIndex === 0;
+
+  const isPuzzle = (q: Question): q is Extract<Question, { type: "puzzle" }> =>
+    (q as { type?: string }).type === "puzzle";
+
+  const finalizeAnswers = (base: Record<string, number | string>) => {
+    const merged = { ...base };
+    for (const q of questions) {
+      if (!isPuzzle(q)) continue;
+      const placement = puzzlePlacements[q.id];
+      const complete = !!placement && placement.every((p) => p !== null);
+      merged[q.id] = complete ? placement!.join(",") : "incomplete";
+    }
+    return merged;
+  };
 
   // Auto-submit or auto-advance if time runs out
   useEffect(() => {
     if (state.timeRemaining <= 0) {
       if (isLastQuestion) {
-        onComplete(state.answers, 0);
+        onComplete(finalizeAnswers(state.answers), 0);
       } else {
         goToNext();
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.timeRemaining, onComplete, state.answers, isLastQuestion, goToNext]);
 
   const handleNext = () => {
     if (isLastQuestion) {
-      onComplete(state.answers, DEFAULT_TIME - state.timeRemaining);
+      onComplete(finalizeAnswers(state.answers), DEFAULT_TIME - state.timeRemaining);
     } else {
       goToNext();
     }
@@ -63,7 +82,7 @@ export function MCQAssessment({ email, questions, onComplete }: MCQAssessmentPro
         <header className="p-3 sm:p-4 border-b border-white/10 bg-zinc-900/50 backdrop-blur-md">
           <div className="flex items-center justify-between mb-2 px-2">
             <div className="font-mono text-[10px] sm:text-xs uppercase tracking-widest text-emerald-400">
-              Question {state.currentQuestionIndex + 1} / {questions.length}
+              Question {state.currentQuestionIndex + 1} / {questions.length} · {currentQuestion.category}
             </div>
             <div className="font-mono text-xs sm:text-sm font-bold text-red-400">
               {formatTime(state.timeRemaining)}
@@ -83,34 +102,50 @@ export function MCQAssessment({ email, questions, onComplete }: MCQAssessmentPro
                {currentQuestion.text}
              </h2>
           </div>
-          
-          <div className="flex flex-col gap-2 sm:gap-3 shrink-0">
-            {currentQuestion.options.map((option, idx) => {
-              const isSelected = state.answers[currentQuestion.id] === idx;
-              return (
-                <button
-                  key={idx}
-                  onClick={() => answerQuestion(currentQuestion.id, idx)}
-                  className={`text-left p-3 sm:p-4 rounded-xl border transition-all duration-200 flex items-center min-h-[44px] sm:min-h-[60px] ${
-                    isSelected 
-                      ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300' 
-                      : 'border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:border-white/20'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 w-full">
-                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                      isSelected ? 'border-emerald-500' : 'border-white/20'
-                    }`}>
-                      {isSelected && <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-500 rounded-full" />}
+
+          {isPuzzle(currentQuestion) ? (
+            <LogoPuzzle
+              key={currentQuestion.id}
+              imageUrl={currentQuestion.imageUrl}
+              rows={currentQuestion.rows}
+              cols={currentQuestion.cols}
+              placement={
+                puzzlePlacements[currentQuestion.id] ??
+                Array(currentQuestion.rows * currentQuestion.cols).fill(null)
+              }
+              onChange={(p) =>
+                setPuzzlePlacements((prev) => ({ ...prev, [currentQuestion.id]: p }))
+              }
+            />
+          ) : (
+            <div className="flex flex-col gap-2 sm:gap-3 shrink-0">
+              {currentQuestion.options.map((option, idx) => {
+                const isSelected = state.answers[currentQuestion.id] === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => answerQuestion(currentQuestion.id, idx)}
+                    className={`text-left p-3 sm:p-4 rounded-xl border transition-all duration-200 flex items-center min-h-[44px] sm:min-h-[60px] ${
+                      isSelected 
+                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300' 
+                        : 'border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                        isSelected ? 'border-emerald-500' : 'border-white/20'
+                      }`}>
+                        {isSelected && <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-500 rounded-full" />}
+                      </div>
+                      <span className="text-xs sm:text-sm leading-snug">
+                        {option}
+                      </span>
                     </div>
-                    <span className="text-xs sm:text-sm leading-snug">
-                      {option}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </main>
 
         <footer className="p-3 sm:p-4 border-t border-white/10 bg-zinc-950">

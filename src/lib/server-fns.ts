@@ -17,6 +17,12 @@ function serializeDoc<T>(doc: T): T {
   return JSON.parse(JSON.stringify(doc));
 }
 
+// Question 2 of the 3-question trial: the technical logo joining image puzzle.
+// The candidate must tap the shuffled tiles in the original reading order
+// (top-left → bottom-right), i.e. original piece indices 0,1,2,3,4,5 for a 2×3 grid.
+const LOGO_PUZZLE_ID = "logo-joining-puzzle";
+const LOGO_PUZZLE_CORRECT_ORDER = "0,1,2,3,4,5";
+
 export const adminCheckSession = createServerFn({ method: "GET" }).handler(async () => {
   const { verifyAdminSession } = await import("./server-helpers.server");
   const isValid = await verifyAdminSession();
@@ -443,7 +449,6 @@ export const submitMCQResults = createServerFn({ method: "POST" }).handler(async
     // Backend Scoring Validation
     let score = 0;
     const assignedMCQIds = student.assignedMCQs || [];
-    const totalQuestions = assignedMCQIds.length > 0 ? assignedMCQIds.length : 4;
     const assignedQuestions = await mcqColl.find({ id: { $in: assignedMCQIds } }).toArray();
 
     for (const [qId, optionIdx] of Object.entries(data.answers)) {
@@ -456,7 +461,17 @@ export const submitMCQResults = createServerFn({ method: "POST" }).handler(async
       }
     }
 
+    // Logo joining image puzzle (Question 2 of the 3-question trial)
+    let puzzleSolved = false;
+    if (typeof data.answers?.[LOGO_PUZZLE_ID] === "string") {
+      puzzleSolved = data.answers[LOGO_PUZZLE_ID] === LOGO_PUZZLE_CORRECT_ORDER;
+    }
+    if (puzzleSolved) score++;
+
     const config = await getSystemConfig();
+
+    // Total trial = assigned MCQs (Q1 + Q3) + the logo joining puzzle (Q2)
+    const totalQuestions = assignedMCQIds.length + 1;
     
     // Calculate percentage against TOTAL ASSIGNED QUESTIONS, not just answered ones
     const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;

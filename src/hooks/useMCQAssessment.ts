@@ -1,23 +1,35 @@
 import { useState, useEffect, useRef } from 'react';
 
-export interface Question {
+export interface MCQQuestion {
   id: string;
   category: string;
   text: string;
   options: string[];
 }
 
+export interface PuzzleQuestion {
+  id: string;
+  type: 'puzzle';
+  category: string;
+  text: string;
+  imageUrl: string;
+  rows: number;
+  cols: number;
+}
+
+export type Question = MCQQuestion | PuzzleQuestion;
+
 export type QuestionStatus = 'unanswered' | 'answered' | 'skipped' | 'marked';
 
 export interface AssessmentState {
-  answers: Record<string, number>;
+  answers: Record<string, number | string>;
   statuses: Record<string, QuestionStatus>;
   timeRemaining: number;
   currentQuestionIndex: number;
 }
 
 const STORAGE_KEY = 'nexus_mcq_session';
-const DEFAULT_TIME = 15; // 15 seconds per question
+const DEFAULT_TIME = 30; // 30 seconds per question
 
 export function useMCQAssessment(questions: Question[], email: string) {
   const STORAGE_KEY = `nexus_mcq_session_${email}`;
@@ -75,6 +87,14 @@ export function useMCQAssessment(questions: Question[], email: string) {
     }));
   };
 
+  const setAnswer = (questionId: string, value: number | string) => {
+    setState(s => ({
+      ...s,
+      answers: { ...s.answers, [questionId]: value },
+      statuses: { ...s.statuses, [questionId]: 'answered' }
+    }));
+  };
+
   const markQuestion = (questionId: string) => {
     setState(s => ({
       ...s,
@@ -120,6 +140,7 @@ export function useMCQAssessment(questions: Question[], email: string) {
   return {
     state,
     answerQuestion,
+    setAnswer,
     markQuestion,
     skipQuestion,
     goToNext,

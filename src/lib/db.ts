@@ -67,11 +67,11 @@ export type DBStudent = {
   round1CompletionTime?: string | null;
 
   // Round 2 (MCQ Assessment)
-  assignedMCQs?: string[]; // Array of exactly 4 assigned MCQ IDs
+  assignedMCQs?: string[]; // Array of exactly 2 assigned MCQ IDs (Q1 and Q3 of the trial)
   mcqCompleted?: boolean;
   mcqScore?: number;
   mcqPercentage?: number;
-  mcqAnswers?: Record<string, number>;
+  mcqAnswers?: Record<string, number | string>; // option index for MCQs, tile order for the logo puzzle
   mcqTimeTaken?: number;
   mcqCompletionTime?: string | null;
 
