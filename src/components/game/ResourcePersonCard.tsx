@@ -8,6 +8,30 @@ export interface ResourcePerson {
   specialization: string;
   photoUrl: string;
   details?: string[];
+  inlineExpansion?: boolean;
+}
+
+function ExpandedContent({ person }: { person: ResourcePerson }) {
+  return (
+    <>
+      <p className="font-mono text-[9px] sm:text-[10px] text-emerald-300 tracking-widest uppercase mb-1">
+        {person.company}
+      </p>
+      <p className="text-[10px] sm:text-xs text-emerald-100 font-medium mb-2">
+        {person.specialization}
+      </p>
+      {person.details && person.details.length > 0 && (
+        <ul className="mt-2 space-y-1.5">
+          {person.details.map((detail, idx) => (
+            <li key={idx} className="flex items-start gap-1.5 text-[10px] sm:text-[11px] text-emerald-200">
+              <span className="text-emerald-400 mt-[3px] text-[8px]">▶</span>
+              <span>{detail}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
 }
 
 export function ResourcePersonCard({ person, index }: { person: ResourcePerson; index: number }) {
@@ -71,27 +95,18 @@ export function ResourcePersonCard({ person, index }: { person: ResourcePerson; 
       <AnimatePresence>
         {expanded && (
           <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            transition={{ duration: 0.25 }}
-            className="absolute left-0 right-0 z-20 mt-1 rounded-xl border border-emerald-500/40 bg-black p-4 shadow-[0_0_40px_rgba(0,0,0,0.9)]"
+            initial={person.inlineExpansion ? { height: 0, opacity: 0, marginTop: 0 } : { opacity: 0, y: -5 }}
+            animate={person.inlineExpansion ? { height: "auto", opacity: 1, marginTop: 8 } : { opacity: 1, y: 0 }}
+            exit={person.inlineExpansion ? { height: 0, opacity: 0, marginTop: 0 } : { opacity: 0, y: -5 }}
+            transition={{ duration: person.inlineExpansion ? 0.3 : 0.25 }}
+            className={person.inlineExpansion ? "overflow-hidden" : "absolute left-0 right-0 z-20 mt-1 rounded-xl border border-emerald-500/40 bg-black p-4 shadow-[0_0_40px_rgba(0,0,0,0.9)]"}
           >
-            <p className="font-mono text-[9px] sm:text-[10px] text-emerald-300 tracking-widest uppercase mb-1">
-              {person.company}
-            </p>
-            <p className="text-[10px] sm:text-xs text-emerald-100 font-medium mb-2">
-              {person.specialization}
-            </p>
-            {person.details && person.details.length > 0 && (
-              <ul className="mt-2 space-y-1.5">
-                {person.details.map((detail, idx) => (
-                  <li key={idx} className="flex items-start gap-1.5 text-[10px] sm:text-[11px] text-emerald-200">
-                    <span className="text-emerald-400 mt-[3px] text-[8px]">▶</span>
-                    <span>{detail}</span>
-                  </li>
-                ))}
-              </ul>
+            {person.inlineExpansion ? (
+              <div className="rounded-xl border border-emerald-500/40 bg-black p-4 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)]">
+                <ExpandedContent person={person} />
+              </div>
+            ) : (
+              <ExpandedContent person={person} />
             )}
           </motion.div>
         )}

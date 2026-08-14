@@ -26,10 +26,10 @@ const RESOURCE_PERSONS: ResourcePerson[] = [
     ]
   },
   {
-    name: "Dr. pra",
+    name: "Dr. Pradeepa K",
     designation: "Dean",
     company: "KPR College Of Arts Science and Research",
-    specialization: "Academics & Innovation",
+    specialization: "Dean, School of Artificial Intelligence and Data Science PhD in Artificial Intelligence",
     photoUrl: deanImg,
   },
   {
@@ -38,6 +38,7 @@ const RESOURCE_PERSONS: ResourcePerson[] = [
     company: "KovanLabs",
     specialization: "AI Engineer and SaaS product builder with 3 years of experience, passionate about building practical AI solutions.",
     photoUrl: jeeththentarImg,
+    inlineExpansion: true,
     details: [
       "Creator of AnalyzeDB, LearnVisually & PromptPilot.",
       "Passionate about practical AI solutions.",

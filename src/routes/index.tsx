@@ -367,7 +367,6 @@ function LastCandidate() {
                 });
                 if (res.error) {
                   console.error("MCQ Submission Error", res.error);
-                  alert(res.error);
                 } else {
                   localStorage.removeItem(`nexus_mcq_session_${student.email}`);
                   setStudent((prev) =>
@@ -432,7 +431,6 @@ function LastCandidate() {
                 });
                 if (res.error) {
                   console.error("MCQ Submission Error", res.error);
-                  alert(res.error);
                 } else {
                   localStorage.removeItem(`nexus_mcq_session_${student.email}`);
                   setStudent((prev) =>
