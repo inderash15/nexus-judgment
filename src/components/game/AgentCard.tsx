@@ -10,6 +10,7 @@ export interface Agent {
   skills: string[];
   quote: string;
   initials: string;
+  photoUrl?: string;
 }
 
 export function AgentCard({ agent }: { agent: Agent }) {
@@ -50,18 +51,24 @@ export function AgentCard({ agent }: { agent: Agent }) {
 
         {/* Portrait container */}
         <div className="relative h-20 w-20 xs:h-28 xs:w-28 sm:h-32 sm:w-32 md:h-36 md:w-36 rounded-full border-2 border-emerald-400/50 bg-gradient-to-b from-emerald-900/60 to-black/60 flex items-center justify-center shadow-[0_0_40px_rgba(52,211,153,0.3)] overflow-hidden">
-          {/* Scanline overlay */}
-          <div
-            className="absolute inset-0 opacity-10 pointer-events-none"
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(0deg, rgba(52,211,153,0.4) 0px, rgba(52,211,153,0.4) 1px, transparent 1px, transparent 3px)",
-            }}
-          />
+          {agent.photoUrl ? (
+            <img src={agent.photoUrl} alt={agent.name} className="h-full w-full object-cover" />
+          ) : (
+            <>
+              {/* Scanline overlay */}
+              <div
+                className="absolute inset-0 opacity-10 pointer-events-none"
+                style={{
+                  backgroundImage:
+                    "repeating-linear-gradient(0deg, rgba(52,211,153,0.4) 0px, rgba(52,211,153,0.4) 1px, transparent 1px, transparent 3px)",
+                }}
+              />
 
-          <span className="text-xl xs:text-3xl sm:text-4xl font-serif text-emerald-300/80 select-none">
-            {agent.initials}
-          </span>
+              <span className="text-xl xs:text-3xl sm:text-4xl font-serif text-emerald-300/80 select-none">
+                {agent.initials}
+              </span>
+            </>
+          )}
         </div>
 
         {/* Status indicator */}

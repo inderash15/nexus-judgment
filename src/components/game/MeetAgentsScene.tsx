@@ -6,6 +6,10 @@ import { AgentCard, type Agent } from "./AgentCard";
 import type { GuardianEmotion } from "@/hooks/useGuardianVoice";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import manojImg from "@/assets/manoj.jpeg";
+import indrashImg from "@/assets/inderash.jpeg";
+import pughalImg from "@/assets/pughal.jpeg";
+
 const AGENTS: Agent[] = [
   {
     name: "Dr. Manoj M",
@@ -15,6 +19,7 @@ const AGENTS: Agent[] = [
     skills: ["Logistics", "Coordination", "Data Analytics", "Problem Solving"],
     quote: "Every great trial succeeds because of flawless organization.",
     initials: "MM",
+    photoUrl: manojImg,
   },
   {
     name: "Inderash.M",
@@ -24,6 +29,7 @@ const AGENTS: Agent[] = [
     skills: ["React", "Node.js", "MongoDB", "TanStack Start"],
     quote: "A digital ledger should record the truth without compromise.",
     initials: "IM",
+    photoUrl: indrashImg,
   },
   {
     name: "Pughal Vanan C",
@@ -33,6 +39,7 @@ const AGENTS: Agent[] = [
     skills: ["UI/UX Design", "Figma", "Framer Motion", "Tailwind CSS"],
     quote: "Visual immersion is the bridge to human focus.",
     initials: "PV",
+    photoUrl: pughalImg,
   },
 ];
 
@@ -131,11 +138,10 @@ export function MeetAgentsScene({
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3 }}
-                    className={`text-xs sm:text-sm tracking-widest ${
-                      i === SEARCH_LINES.length - 1
+                    className={`text-xs sm:text-sm tracking-widest ${i === SEARCH_LINES.length - 1
                         ? "text-emerald-300 font-bold"
                         : "text-emerald-400/70"
-                    }`}
+                      }`}
                   >
                     {line}
                   </motion.p>

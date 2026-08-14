@@ -7,27 +7,37 @@ import { MissionTimeline } from "./MissionTimeline";
 import type { GuardianEmotion } from "@/hooks/useGuardianVoice";
 import { Award, Target, Rocket, Gift } from "lucide-react";
 
+import principalImg from "@/assets/pricipal.jpeg";
+import deanImg from "@/assets/dean.jpeg";
+import jeeththentarImg from "@/assets/jeeththentar.jpeg";
+
 const RESOURCE_PERSONS: ResourcePerson[] = [
   {
     name: "Dr. Geetha P",
     designation: "Principal",
     company: "KPR College Of Arts Science and Research",
-    specialization: "Academic Leader & Institution Builder",
-    photoUrl: "",
+    specialization: "Driving Innovation in Higher Education",
+    photoUrl: principalImg,
+    details: [
+      "Ph.D. in Science and Humanities",
+      "Academic Leader",
+      "Institution Builder",
+      "Driving Innovation in Higher Education"
+    ]
   },
   {
-    name: "Dr. [Dean Name]",
+    name: "Dr. pra",
     designation: "Dean",
     company: "KPR College Of Arts Science and Research",
     specialization: "Academics & Innovation",
-    photoUrl: "",
+    photoUrl: deanImg,
   },
   {
     name: "Jeeththenthar LA",
     designation: "AI Engineer",
     company: "KovanLabs",
     specialization: "AI Engineer and SaaS product builder with 3 years of experience, passionate about building practical AI solutions.",
-    photoUrl: "",
+    photoUrl: jeeththentarImg,
     details: [
       "Creator of AnalyzeDB, LearnVisually & PromptPilot.",
       "Passionate about practical AI solutions.",
