@@ -201,8 +201,8 @@ function LastCandidate() {
       setStudent(res.student);
       setAssignedQuestions(res.questions);
 
-      if (res.error) {
-        alert(res.error);
+      if ((res as any).error) {
+        alert((res as any).error);
         return;
       }
 

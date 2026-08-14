@@ -31,9 +31,9 @@ export function MobileEntryGate({ onUnlocked }: MobileEntryGateProps) {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Request Orientation Lock to Landscape
-      if (screen.orientation && screen.orientation.lock) {
+      if (screen.orientation && (screen.orientation as any).lock) {
         try {
-          await screen.orientation.lock("landscape");
+          await (screen.orientation as any).lock("landscape");
         } catch (e) {
           // If browser doesn't support locking, check physical orientation fallback
           const isLandscape = window.innerWidth > window.innerHeight;

@@ -80,6 +80,10 @@ export async function getSystemConfig(): Promise<SystemConfig> {
     sessionTimeout: 45,
     maxWrongAttempts: 4,
     mode: "workshop",
+    round1PassingScore: 60,
+    round2PassingScore: 60,
+    round1TimeLimit: 300,
+    round2TimeLimit: 600,
   };
 }
 

@@ -83,7 +83,7 @@ export const adminLogout = createServerFn({ method: "POST" }).handler(async () =
   return { success: true };
 });
 
-export const adminAuthenticate = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+export const adminAuthenticate = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async (ctx: any) => {
   const { checkRateLimit } = await import("./server-helpers.server");
   const data = ctx?.data;
   if (!data || !data.password) {
@@ -154,7 +154,7 @@ export const adminAuthenticate = createServerFn({ method: "POST" }).handler(asyn
 });
 
 // 1. Student Registration, Resume, or Login
-export const registerOrResumeStudent = createServerFn({ method: "POST" }).handler(
+export const registerOrResumeStudent = createServerFn({ method: "POST" }).validator((d: any) => d).handler(
   async (ctx: any) => {
     const { checkRateLimit, getCached, setCached, clearCachePrefix, getSystemConfig } = await import("./server-helpers.server");
     const data = ctx?.data;
@@ -452,7 +452,7 @@ export const registerOrResumeStudent = createServerFn({ method: "POST" }).handle
 );
 
 // 1.5 Submit MCQ Assessment Results (SECURE)
-export const submitMCQResults = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+export const submitMCQResults = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async (ctx: any) => {
   const { checkRateLimit, verifyStudentSession, getSystemConfig } = await import("./server-helpers.server");
   const data = ctx?.data;
   
@@ -583,7 +583,7 @@ export const submitMCQResults = createServerFn({ method: "POST" }).handler(async
 });
 
 // 2. Submit Letter or Full Word Guess
-export const submitGuess = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+export const submitGuess = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async (ctx: any) => {
   const { checkRateLimit, verifyStudentSession, clearCachePrefix } = await import("./server-helpers.server");
   const data = ctx?.data;
   if (!data || !data.email || !data.guess) {
@@ -826,7 +826,7 @@ export const adminGetDashboardData = createServerFn({ method: "GET" }).handler(a
 });
 
 // 4. Admin CRUD Question
-export const adminUpdateQuestion = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+export const adminUpdateQuestion = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async (ctx: any) => {
   const { verifyAdminSession } = await import("./server-helpers.server");
   if (!(await verifyAdminSession())) {
     return { success: false, questions: [], error: "Unauthorized" };
@@ -873,14 +873,15 @@ export const adminUpdateQuestion = createServerFn({ method: "POST" }).handler(as
     clearCachePrefix("active_questions");
 
     const allQuestions = await questionsColl.find().toArray();
-    return serializeDoc({ success: true, questions: allQuestions, error: null });
+    const sanitized = allQuestions.map(q => { const { _id, ...rest } = q as any; return rest; });
+    return serializeDoc({ success: true, questions: sanitized, error: null });
   } catch (error: any) {
     console.error("[SERVER_FN:adminUpdateQuestion] Error:", error.message);
     return { success: false, questions: [], error: `Update Question failed: ${error.message}` };
   }
 });
 
-export const adminUpdateMCQQuestion = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+export const adminUpdateMCQQuestion = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async (ctx: any) => {
   const { verifyAdminSession } = await import("./server-helpers.server");
   if (!(await verifyAdminSession())) {
     return { success: false, mcqQuestions: [], error: "Unauthorized" };
@@ -924,7 +925,8 @@ export const adminUpdateMCQQuestion = createServerFn({ method: "POST" }).handler
     clearCachePrefix("admin_dashboard");
 
     const allQuestions = await mcqColl.find().toArray();
-    return serializeDoc({ success: true, mcqQuestions: allQuestions, error: null });
+    const sanitized = allQuestions.map(q => { const { _id, ...rest } = q as any; return rest; });
+    return serializeDoc({ success: true, mcqQuestions: sanitized, error: null });
   } catch (error: any) {
     console.error("[SERVER_FN:adminUpdateMCQQuestion] Error:", error.message);
     return { success: false, mcqQuestions: [], error: `Update MCQ failed: ${error.message}` };
@@ -932,7 +934,7 @@ export const adminUpdateMCQQuestion = createServerFn({ method: "POST" }).handler
 });
 
 // 5. Admin Bulk Upload
-export const adminBulkUploadQuestions = createServerFn({ method: "POST" }).handler(
+export const adminBulkUploadQuestions = createServerFn({ method: "POST" }).validator((d: any) => d).handler(
   async (ctx: any) => {
     const { verifyAdminSession } = await import("./server-helpers.server");
     if (!(await verifyAdminSession())) {
@@ -967,16 +969,17 @@ export const adminBulkUploadQuestions = createServerFn({ method: "POST" }).handl
       clearCachePrefix("active_questions");
 
       const allQuestions = await questionsColl.find().toArray();
-      return serializeDoc({ success: true, questions: allQuestions, error: null });
+      const sanitized = allQuestions.map(q => { const { _id, ...rest } = q as any; return rest; });
+      return serializeDoc({ success: true, questions: sanitized, error: null });
     } catch (error: any) {
       console.error("[SERVER_FN:adminBulkUploadQuestions] Error:", error.message);
-      return { success: false, questions: [], error: `Bulk Upload failed: ${error.message}` };
+      return { success: false, questions: [], error: `Bulk upload failed: ${error.message}` };
     }
   },
 );
 
 // 6. Admin Unlock or Lock Student Account
-export const adminUpdateStudentLock = createServerFn({ method: "POST" }).handler(
+export const adminUpdateStudentLock = createServerFn({ method: "POST" }).validator((d: any) => d).handler(
   async (ctx: any) => {
     const { verifyAdminSession, clearCachePrefix } = await import("./server-helpers.server");
     if (!(await verifyAdminSession())) {
@@ -1034,7 +1037,7 @@ export const adminUpdateStudentLock = createServerFn({ method: "POST" }).handler
 );
 
 // 7. Public Paginated Leaderboard Data (Secure)
-export const getLeaderboardData = createServerFn({ method: "GET" }).handler(async (ctx: any) => {
+export const getLeaderboardData = createServerFn({ method: "GET" }).validator((d: any) => d).handler(async (ctx: any) => {
   const { checkRateLimit, getCached, setCached } = await import("./server-helpers.server");
   const data = ctx?.data || {};
   const page = Math.max(1, parseInt(data.page || "1", 10));
@@ -1124,7 +1127,7 @@ export const getSystemConfigData = createServerFn({ method: "GET" }).handler(asy
 });
 
 // 9. Admin System Config Update
-export const adminUpdateSystemConfig = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+export const adminUpdateSystemConfig = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async (ctx: any) => {
   const { verifyAdminSession } = await import("./server-helpers.server");
   if (!(await verifyAdminSession())) {
     return { success: false, error: "Unauthorized" };
@@ -1142,6 +1145,10 @@ export const adminUpdateSystemConfig = createServerFn({ method: "POST" }).handle
           sessionTimeout: Math.max(10, parseInt(data.sessionTimeout, 10) || 45),
           maxWrongAttempts: Math.max(1, parseInt(data.maxWrongAttempts, 10) || 4),
           mode: data.mode || "workshop",
+          round1PassingScore: Math.max(0, parseInt(data.round1PassingScore, 10) || 60),
+          round2PassingScore: Math.max(0, parseInt(data.round2PassingScore, 10) || 60),
+          round1TimeLimit: Math.max(0, parseInt(data.round1TimeLimit, 10) || 300),
+          round2TimeLimit: Math.max(0, parseInt(data.round2TimeLimit, 10) || 600),
         }
       },
       { upsert: true }

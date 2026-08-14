@@ -83,13 +83,13 @@ export function RegisterScene({
           }
         });
 
-        if (res.error) {
-          setError(res.error);
+        if ((res as any).error) {
+          setError((res as any).error);
         } else if (res.student) {
-          setGeneratedPin(res.loginPin || "");
+          setGeneratedPin((res as any).loginPin || "");
           setRegisteredStudent(res.student);
           setRegisteredQuestions(res.questions);
-          setRegisteredMcq(res.mcqQuestions || []);
+          setRegisteredMcq((res as any).mcqQuestions || []);
           setPhase("pin-display");
           speak("Your unique identity is bound. Secure your access key before entering the shadow realm.", "success");
         }
@@ -342,7 +342,7 @@ export function RegisterScene({
       <VirtualKeyboard 
         isOpen={activeField !== null}
         onClose={() => setActiveField(null)}
-        type={activeField || "text"}
+        type={activeField === "name" ? "text" : (activeField || "text")}
         value={
           activeField === "name" ? name :
           activeField === "email" ? email :

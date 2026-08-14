@@ -10,3 +10,4 @@ export { QuestionModal } from "./QuestionModal";
 export { BulkImportModal } from "./BulkImportModal";
 export { MCQTab } from "./MCQTab";
 export { MCQModal } from "./MCQModal";
+export type { Tab, DataState, Metrics } from "./types";

@@ -238,6 +238,7 @@ export const EXTENDED_MCQ_QUESTIONS = [
     options: ["Large Language Model", "Local Logic Machine", "Linear Learning Matrix", "Long-term Logic Memory"],
     correctAnswer: 0,
     active: true,
+  },
   { id: "mcq31", category: "Web Development", text: "What does HTML stand for?", options: ["Hyper Text Markup Language", "High Tech Multi Language", "Hyperlink Text Module Language", "Home Tool Markup Language"], correctAnswer: 0, active: true },
   { id: "mcq32", category: "Programming", text: "Which language is used for styling web pages?", options: ["HTML", "JQuery", "CSS", "XML"], correctAnswer: 2, active: true },
   { id: "mcq33", category: "Web Development", text: "Which tag is used to create a numbered list in HTML?", options: ["<ul>", "<nl>", "<list>", "<ol>"], correctAnswer: 3, active: true },

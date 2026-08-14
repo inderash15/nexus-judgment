@@ -251,8 +251,8 @@ function AdminDashboard() {
   const sortedStudents = useMemo(() => {
     const sorted = [...filteredStudents];
     sorted.sort((a: DBStudent, b: DBStudent) => {
-      let valA = a[studentSortField];
-      let valB = b[studentSortField];
+      let valA = (a as any)[studentSortField];
+      let valB = (b as any)[studentSortField];
       if (typeof valA === "string") {
         valA = valA.toLowerCase();
         valB = valB.toLowerCase();
@@ -666,7 +666,7 @@ function AdminDashboard() {
           </header>
 
           {activeTab === "overview" && (
-            <OverviewTab metrics={metrics} data={data} setActiveTab={setActiveTab} />
+            <OverviewTab metrics={metrics} data={data} setActiveTab={setActiveTab} questionsCount={data.questions.length} />
           )}
 
           {activeTab === "students" && (
