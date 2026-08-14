@@ -1,19 +1,19 @@
 import { MongoClient, Db } from "mongodb";
 // Override local DNS resolution to resolve MongoDB Atlas SRV records successfully in Node environments
-if (typeof window === "undefined") {
-  import("dns")
-    .then((dnsModule) => {
-      try {
-        dnsModule.setServers(["8.8.8.8", "1.1.1.1"]);
-        console.log("[DB] Custom DNS servers set successfully.");
-      } catch (e) {
-        console.warn("[DB] Could not set custom DNS servers", e);
-      }
-    })
-    .catch((err) => {
-      console.warn("[DB] dns module not available in this runtime environment.", err.message);
-    });
-}
+// if (typeof window === "undefined") {
+//   import("dns")
+//     .then((dnsModule) => {
+//       try {
+//         dnsModule.setServers(["8.8.8.8", "1.1.1.1"]);
+//         console.log("[DB] Custom DNS servers set successfully.");
+//       } catch (e) {
+//         console.warn("[DB] Could not set custom DNS servers", e);
+//       }
+//     })
+//     .catch((err) => {
+//       console.warn("[DB] dns module not available in this runtime environment.", err.message);
+//     });
+// }
 
 // Define Types
 export type DBQuestion = {
@@ -71,9 +71,14 @@ export type DBStudent = {
   mcqCompleted?: boolean;
   mcqScore?: number;
   mcqPercentage?: number;
-  mcqAnswers?: Record<string, number | string>; // option index for MCQs, tile order for the logo puzzle
+  mcqAnswers?: Record<string, number | string>; // option index for MCQs, prompt text for Q2
   mcqTimeTaken?: number;
   mcqCompletionTime?: string | null;
+
+  // AI Prompt Strength (Question 2 of the trial) - visible to admin, and to the user on results page
+  promptTitle?: string;
+  promptText?: string;
+  promptStrength?: number;
 
   // Final Results & Selection
   finalScore?: number;
@@ -410,11 +415,13 @@ async function initializeDB(client: MongoClient): Promise<Db> {
     await questionsColl.insertMany(DEFAULT_QUESTIONS);
   }
 
-  // Seed default MCQ questions if empty
+  // Seed default MCQ questions if empty or using old default list
   const mcqColl = dbInstance.collection("mcqQuestions");
   const mcqCount = await mcqColl.countDocuments();
-  if (mcqCount === 0) {
-    await mcqColl.insertMany(DEFAULT_MCQ_QUESTIONS);
+  if (mcqCount < 10) {
+    if (mcqCount > 0) await mcqColl.deleteMany({}); // clear old defaults
+    const { EXTENDED_MCQ_QUESTIONS } = await import("./mcq-data");
+    await mcqColl.insertMany(EXTENDED_MCQ_QUESTIONS);
   }
 
   // Seed default configuration if empty

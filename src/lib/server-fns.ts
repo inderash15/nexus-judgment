@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getDB, DBQuestion, SecurityLog, DBMCQQuestion } from "./db";
+import { FILLBLANK_QUESTIONS } from "./fillblank-data";
 
 // Helper to shuffle questions
 function shuffleArray<T>(array: T[]): T[] {
@@ -17,11 +18,49 @@ function serializeDoc<T>(doc: T): T {
   return JSON.parse(JSON.stringify(doc));
 }
 
-// Question 2 of the 3-question trial: the technical logo joining image puzzle.
-// The candidate must tap the shuffled tiles in the original reading order
-// (top-left → bottom-right), i.e. original piece indices 0,1,2,3,4,5 for a 2×3 grid.
-const LOGO_PUZZLE_ID = "logo-joining-puzzle";
-const LOGO_PUZZLE_CORRECT_ORDER = "0,1,2,3,4,5";
+// Question 2 of the 3-question trial: the AI prompt strength question.
+// The candidate is given an AI topic and must write a strong prompt for it.
+// Strength is computed server-side (never trusted from the client) and stored
+// so admins can review it; candidates see it on their results page only.
+const PROMPT_QUESTION_ID = "prompt-strength-question";
+
+// Question 3 of the 3-question trial: fill in the blanks.
+// Answers live server-side only; the client sends the submitted text keyed by question id.
+
+// Heuristic "prompt strength" score (0-100) based on characteristics of a
+// strong prompt: substance, role/persona, a clear task verb, context,
+// output constraints and basic clarity.
+function computePromptStrength(prompt: string): number {
+  const p = (prompt || "").trim();
+  if (!p) return 0;
+
+  const words = p.split(/\s+/).filter(Boolean);
+  let score = 0;
+
+  // Substance: a strong prompt has meaningful length (target ~40+ words)
+  score += Math.min(35, (words.length / 40) * 35);
+
+  // Role / persona framing
+  if (/\b(act as|you are|as a|assume the role|your role|imagine you)\b/i.test(p)) score += 15;
+
+  // Clear task verb
+  if (/\b(write|create|generate|draft|produce|build|design|code|implement|analyze|explain|describe|list|summarize|solve|answer|translate|review|evaluate|outline|compare|train)\b/i.test(p)) score += 15;
+
+  // Context / reasoning words
+  if (/\b(because|for|given|based on|context|in order to|so that|such as)\b/i.test(p)) score += 10;
+
+  // Output constraints / format expectations
+  if (/\b(format|list|bullet|table|json|csv|code|steps|words|concise|detailed|tone|style|paragraph|example)\b/i.test(p)) score += 10;
+
+  // Specificity: numbers, colons or named detail
+  if (/\d/.test(p)) score += 5;
+
+  // Clarity: starts with a capital letter and ends with sentence punctuation
+  if (/^[A-Z]/.test(p)) score += 5;
+  if (/[.!?]$/.test(p)) score += 5;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
 
 export const adminCheckSession = createServerFn({ method: "GET" }).handler(async () => {
   const { verifyAdminSession } = await import("./server-helpers.server");
@@ -461,17 +500,36 @@ export const submitMCQResults = createServerFn({ method: "POST" }).handler(async
       }
     }
 
-    // Logo joining image puzzle (Question 2 of the 3-question trial)
-    let puzzleSolved = false;
-    if (typeof data.answers?.[LOGO_PUZZLE_ID] === "string") {
-      puzzleSolved = data.answers[LOGO_PUZZLE_ID] === LOGO_PUZZLE_CORRECT_ORDER;
+    // AI prompt strength question (Question 2 of the 3-question trial).
+    // Strength is computed on the server; never trusted from the client.
+    const promptText =
+      typeof data.answers?.[PROMPT_QUESTION_ID] === "string"
+        ? data.answers[PROMPT_QUESTION_ID].trim()
+        : "";
+    const promptStrength = computePromptStrength(promptText);
+    const promptTitle = data.promptTitle || "";
+
+    // Partial credit: a fully strong prompt (100) is worth a full correct answer
+    score += promptStrength / 100;
+
+    // Fill in the blanks question (Question 3 of the trial)
+    let fillBlankSolved = false;
+    for (const fb of FILLBLANK_QUESTIONS) {
+      const val =
+        typeof data.answers?.[fb.id] === "string"
+          ? data.answers[fb.id].trim().toLowerCase()
+          : "";
+      if (val && val === fb.answer.toLowerCase()) {
+        fillBlankSolved = true;
+        break;
+      }
     }
-    if (puzzleSolved) score++;
+    if (fillBlankSolved) score++;
 
     const config = await getSystemConfig();
 
-    // Total trial = assigned MCQs (Q1 + Q3) + the logo joining puzzle (Q2)
-    const totalQuestions = assignedMCQIds.length + 1;
+    // Total trial = 1 assigned MCQ (Q1) + prompt strength (Q2) + fill in the blanks (Q3)
+    const totalQuestions = 3;
     
     // Calculate percentage against TOTAL ASSIGNED QUESTIONS, not just answered ones
     const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
@@ -490,6 +548,9 @@ export const submitMCQResults = createServerFn({ method: "POST" }).handler(async
           mcqAnswers: data.answers,
           mcqTimeTaken: data.timeTaken || 0,
           mcqCompletionTime: new Date().toISOString(),
+          promptTitle,
+          promptText,
+          promptStrength,
           status: "Active",
           locked: false,
         },
@@ -502,14 +563,18 @@ export const submitMCQResults = createServerFn({ method: "POST" }).handler(async
       email,
       action: "MCQ_SUBMISSION",
       status: "success",
-      details: `Submitted MCQ with score ${score}/${totalQuestions} (${percentage.toFixed(1)}%)`,
+      details: `Submitted MCQ with score ${score.toFixed(2)}/${totalQuestions} (${percentage.toFixed(1)}%). Prompt strength: ${promptStrength}/100`,
     });
 
     return {
       success: true,
       score,
       percentage,
-      totalQuestions
+      totalQuestions,
+      promptStrength,
+      promptTitle,
+      promptText,
+      fillBlankSolved,
     };
   } catch (error: any) {
     console.error("[SERVER_FN:submitMCQResults] Error:", error.message);

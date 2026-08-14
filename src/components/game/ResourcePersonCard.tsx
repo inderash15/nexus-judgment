@@ -7,6 +7,7 @@ export interface ResourcePerson {
   company: string;
   specialization: string;
   photoUrl: string;
+  details?: string[];
 }
 
 export function ResourcePersonCard({ person, index }: { person: ResourcePerson; index: number }) {
@@ -18,7 +19,7 @@ export function ResourcePersonCard({ person, index }: { person: ResourcePerson; 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 * index, duration: 0.5, ease: "easeOut" }}
-        className="group relative rounded-xl border border-emerald-500/20 bg-black/50 backdrop-blur-md p-4 sm:p-5 shadow-[0_0_25px_rgba(16,185,129,0.1)] hover:border-emerald-400/40 hover:shadow-[0_0_40px_rgba(52,211,153,0.25)] transition-all duration-500"
+        className="group relative rounded-xl border border-emerald-500/30 bg-black p-4 sm:p-5 shadow-[0_0_25px_rgba(16,185,129,0.15)] hover:border-emerald-400/50 hover:shadow-[0_0_40px_rgba(52,211,153,0.3)] transition-all duration-500"
       >
         <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
@@ -74,14 +75,24 @@ export function ResourcePersonCard({ person, index }: { person: ResourcePerson; 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
             transition={{ duration: 0.25 }}
-            className="absolute left-0 right-0 z-20 mt-1 rounded-xl border border-emerald-500/20 bg-black/80 backdrop-blur-md p-4 shadow-[0_0_30px_rgba(16,185,129,0.15)]"
+            className="absolute left-0 right-0 z-20 mt-1 rounded-xl border border-emerald-500/40 bg-black p-4 shadow-[0_0_40px_rgba(0,0,0,0.9)]"
           >
-            <p className="font-mono text-[9px] sm:text-[10px] text-emerald-400/50 tracking-widest uppercase">
+            <p className="font-mono text-[9px] sm:text-[10px] text-emerald-300 tracking-widest uppercase mb-1">
               {person.company}
             </p>
-            <p className="mt-1 text-[10px] sm:text-xs text-emerald-200/60 italic">
+            <p className="text-[10px] sm:text-xs text-emerald-100 font-medium mb-2">
               {person.specialization}
             </p>
+            {person.details && person.details.length > 0 && (
+              <ul className="mt-2 space-y-1.5">
+                {person.details.map((detail, idx) => (
+                  <li key={idx} className="flex items-start gap-1.5 text-[10px] sm:text-[11px] text-emerald-200">
+                    <span className="text-emerald-400 mt-[3px] text-[8px]">▶</span>
+                    <span>{detail}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

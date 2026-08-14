@@ -23,12 +23,12 @@ export function FinalScene({
   useEffect(() => {
     if (!hasSpoken.current) {
       speak(
-        `You have finished all chambers. Your final score is ${student.score}. Your attempt is locked.`,
+        `Assessment complete. Your final score is ${student.mcqScore ?? student.score}. Your attempt is locked.`,
         "final",
       );
       hasSpoken.current = true;
     }
-  }, [speak, student.score]);
+  }, [speak, student.score, student.mcqScore]);
 
   return (
     <SceneWrap>
@@ -49,7 +49,7 @@ export function FinalScene({
             <div className="text-[9px] uppercase tracking-wider text-emerald-400/60">
               Total Score
             </div>
-            <div className="text-lg font-black text-emerald-100">{student.score}</div>
+            <div className="text-lg font-black text-emerald-100">{student.mcqScore ?? student.score}</div>
           </div>
           <div className="bg-black/70 border border-emerald-500/25 rounded-xl p-3">
             <div className="text-[9px] uppercase tracking-wider text-emerald-400/60">

@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Guardian } from "@/components/Guardian";
 import { Atmosphere } from "@/components/Atmosphere";
 import { useGuardianVoice } from "@/hooks/useGuardianVoice";
-import { registerOrResumeStudent, submitGuess, getLeaderboardData, submitMCQResults } from "@/lib/server-fns";
+import {
+  registerOrResumeStudent,
+  submitGuess,
+  getLeaderboardData,
+  submitMCQResults,
+} from "@/lib/server-fns";
 import { DBStudent, DBQuestion } from "@/lib/db";
 import {
   BootScene,
@@ -14,7 +19,6 @@ import {
   MeetAgentsScene,
   RegisterScene,
   BriefingScene,
-  ChamberScene,
   VerdictScene,
   FinalScene,
   GameOverScene,
@@ -23,13 +27,14 @@ import {
   ProfileModal,
 } from "@/components/game";
 import type { Scene } from "@/components/game";
-import { InstructionsScene } from "@/components/game/InstructionsScene";
 import { MCQAssessment } from "@/components/game/MCQAssessment";
-import type { Question, PuzzleQuestion } from "@/hooks/useMCQAssessment";
+import { McqResultScene, McqResultData } from "@/components/game/McqResultScene";
+import type { Question, PromptQuestion, FillBlankQuestion } from "@/hooks/useMCQAssessment";
 import bgImage from "@/assets/background.png";
-import logoImage from "@/assets/images.png";
 import { useResponsive } from "@/hooks/useResponsive";
 import { MobileEntryGate } from "@/components/MobileEntryGate";
+import { PROMPT_TITLES } from "@/lib/prompt-data";
+import { FILLBLANK_QUESTIONS } from "@/lib/fillblank-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,23 +66,34 @@ function LastCandidate() {
   const [assignedQuestions, setAssignedQuestions] = useState<DBQuestion[]>([]);
   const [mcqQuestions, setMcqQuestions] = useState<any[]>([]);
   const [verdictCorrect, setVerdictCorrect] = useState(true);
+  const [mcqResult, setMcqResult] = useState<McqResultData | null>(null);
+  const [chamberRoundActive, setChamberRoundActive] = useState(false);
 
-  // The 3-question technical trial: Q1 = MCQ, Q2 = technical logo joining image puzzle, Q3 = MCQ
+  // The 3-question technical trial: Q1 = MCQ, Q2 = AI prompt strength, Q3 = fill in the blanks
   const testQuestions = useMemo<Question[]>(() => {
     const mcqs = Array.isArray(mcqQuestions) ? mcqQuestions : [];
-    const puzzle: PuzzleQuestion = {
-      id: "logo-joining-puzzle",
-      type: "puzzle",
-      category: "Technical Logo",
-      text: "Join the shuffled tiles in the correct order (left-to-right, top-to-bottom) to rebuild the technical logo.",
-      imageUrl: logoImage,
-      rows: 2,
-      cols: 3,
+    const emailKey = student?.email || "";
+    let hash = 0;
+    for (let i = 0; i < emailKey.length; i++) hash = (hash * 31 + emailKey.charCodeAt(i)) >>> 0;
+    const title = PROMPT_TITLES[hash % PROMPT_TITLES.length];
+
+    const prompt: PromptQuestion = {
+      id: "prompt-strength-question",
+      type: "prompt",
+      category: "Prompt Engineering",
+      text: "Write a strong AI prompt for the topic below. Be specific — include a role, context, and clear output expectations so an AI could act on it immediately.",
+      title,
+    };
+    const fb = FILLBLANK_QUESTIONS[hash % FILLBLANK_QUESTIONS.length];
+    const fillBlank: FillBlankQuestion = {
+      id: fb.id,
+      type: "fillblank",
+      category: fb.category,
+      text: fb.text,
     };
     const first = mcqs[0];
-    const last = mcqs[1];
-    return [first, puzzle, last].filter(Boolean) as Question[];
-  }, [mcqQuestions]);
+    return [first, prompt, fillBlank].filter(Boolean) as Question[];
+  }, [mcqQuestions, student?.email]);
 
   const [deathTriggered, setDeathTriggered] = useState(false);
   const [deathPhase, setDeathPhase] = useState(0);
@@ -126,11 +142,7 @@ function LastCandidate() {
         } else if (!res.student.mcqCompleted) {
           setScene("mcq");
         } else {
-          if (res.student.locked) {
-            setScene("final");
-          } else {
-            setScene("instructions");
-          }
+          setScene("final");
         }
       }
     } catch (err) {
@@ -147,16 +159,12 @@ function LastCandidate() {
 
     if (student.status === "Eliminated" || student.status === "Disqualified") {
       setScene("gameover");
-    } else if (student.round1Completed) {
+    } else if (student.round1Completed || student.locked) {
       setScene("final");
     } else if (!student.mcqCompleted) {
       setScene("mcq");
     } else {
-      if (student.locked) {
-        setScene("final");
-      } else {
-        setScene("instructions");
-      }
+      setScene("final");
     }
   };
 
@@ -251,8 +259,8 @@ function LastCandidate() {
     if (scene === "gameover") return "death";
     if (scene === "final") return "selected";
     if (scene === "verdict") return "success";
-    if (scene === "briefing" || scene === "instructions") return "idle";
-    if (scene === "chamber" || scene === "mcq") {
+    if (scene === "briefing") return "idle";
+    if (scene === "mcq") {
       if (student && student.wrongAnswersCount >= 3) return "angry";
       if (student && student.wrongAnswersCount >= 1) return "warning";
       return "floating";
@@ -327,55 +335,149 @@ function LastCandidate() {
         <BriefingScene
           key="briefing"
           student={student}
-          onEnter={() => setScene("chamber")}
+          onEnter={() => {
+            if (!student.mcqCompleted) {
+              setChamberRoundActive(false);
+              setScene("mcq");
+            } else {
+              setScene("final");
+            }
+          }}
           speak={speak}
           isSpeaking={isSpeaking}
         />
       )}
-      {scene === "instructions" && student && (
-        <InstructionsScene 
-          key="instructions"
-          onStart={() => setScene("chamber")} 
-        />
-      )}
-      {scene === "mcq" && student && (
-        (testQuestions.length < 3) ? (
-          <div className="flex flex-col items-center justify-center w-full h-full text-center space-y-4">
-            <h2 className="text-red-500 font-mono text-xl sm:text-3xl tracking-widest uppercase">System Error</h2>
-            <p className="text-red-400/80 font-mono text-xs sm:text-sm">INSUFFICIENT ASSESSMENT DATA. PLEASE CONTACT ADMINISTRATOR.</p>
-          </div>
-        ) : (
-          <MCQAssessment 
-            key="mcq"
+      {scene === "mcq" &&
+        student &&
+        (chamberRoundActive ? (
+          <MCQAssessment
+            key="mcq-chamber"
             email={student.email}
-            questions={testQuestions} 
+            questions={testQuestions}
             onComplete={async (answers, timeRemaining) => {
               try {
-                const res = await submitMCQResults({ data: { email: student.email, answers, timeTaken: timeRemaining } });
+                const promptQ = testQuestions[1] as PromptQuestion | undefined;
+                const res = await submitMCQResults({
+                  data: {
+                    email: student.email,
+                    answers,
+                    timeTaken: timeRemaining,
+                    promptTitle: promptQ?.title || "",
+                  },
+                });
                 if (res.error) {
                   console.error("MCQ Submission Error", res.error);
                   alert(res.error);
                 } else {
                   localStorage.removeItem(`nexus_mcq_session_${student.email}`);
-                  setStudent((prev) => prev ? { ...prev, mcqCompleted: true, mcqScore: res.score, mcqPercentage: res.percentage, status: "Active", locked: false } : prev);
-                  setScene("instructions");
+                  setStudent((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          mcqCompleted: true,
+                          mcqScore: res.score,
+                          mcqPercentage: res.percentage,
+                          status: "Active",
+                          locked: false,
+                        }
+                      : prev,
+                  );
+                  setMcqResult({
+                    score: res.score,
+                    percentage: res.percentage,
+                    totalQuestions: res.totalQuestions,
+                    promptStrength: res.promptStrength || 0,
+                    promptTitle: res.promptTitle || "",
+                    promptText: res.promptText || "",
+                    fillBlankSolved: !!res.fillBlankSolved,
+                  });
+                  setScene("mcq-result");
                 }
               } catch (err) {
                 console.error(err);
               }
-            }} 
+            }}
+            chamberRound
+            chamberStudent={student}
+            chamberQuestion={currentQuestion}
+            onGuessLetter={handleGuessLetter}
+            chamberSubmitting={submittingGuess}
+            speak={speak}
+            isSpeaking={isSpeaking}
           />
-        )
-      )}
-      {scene === "chamber" && student && currentQuestion && (
-        <ChamberScene
-          key={`chamber-${student.currentLevel}`}
+        ) : testQuestions.length < 3 ? (
+          <div className="flex flex-col items-center justify-center w-full h-full text-center space-y-4">
+            <h2 className="text-red-500 font-mono text-xl sm:text-3xl tracking-widest uppercase">
+              System Error
+            </h2>
+            <p className="text-red-400/80 font-mono text-xs sm:text-sm">
+              INSUFFICIENT ASSESSMENT DATA. PLEASE CONTACT ADMINISTRATOR.
+            </p>
+          </div>
+        ) : (
+          <MCQAssessment
+            key="mcq"
+            email={student.email}
+            questions={testQuestions}
+            onComplete={async (answers, timeRemaining) => {
+              try {
+                const promptQ = testQuestions[1] as PromptQuestion | undefined;
+                const res = await submitMCQResults({
+                  data: {
+                    email: student.email,
+                    answers,
+                    timeTaken: timeRemaining,
+                    promptTitle: promptQ?.title || "",
+                  },
+                });
+                if (res.error) {
+                  console.error("MCQ Submission Error", res.error);
+                  alert(res.error);
+                } else {
+                  localStorage.removeItem(`nexus_mcq_session_${student.email}`);
+                  setStudent((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          mcqCompleted: true,
+                          mcqScore: res.score,
+                          mcqPercentage: res.percentage,
+                          status: "Active",
+                          locked: false,
+                        }
+                      : prev,
+                  );
+                  setMcqResult({
+                    score: res.score,
+                    percentage: res.percentage,
+                    totalQuestions: res.totalQuestions,
+                    promptStrength: res.promptStrength || 0,
+                    promptTitle: res.promptTitle || "",
+                    promptText: res.promptText || "",
+                    fillBlankSolved: !!res.fillBlankSolved,
+                  });
+                  setScene("mcq-result");
+                }
+              } catch (err) {
+                console.error(err);
+              }
+            }}
+          />
+        ))}
+      {scene === "mcq-result" && student && mcqResult && (
+        <McqResultScene
+          key="mcq-result"
           student={student}
-          question={currentQuestion}
-          onGuessLetter={handleGuessLetter}
+          results={mcqResult}
+          onContinue={() => {
+            setScene("final");
+          }}
+          onReturnHome={() => {
+            localStorage.removeItem(LOCAL_EMAIL_KEY);
+            setStudent(null);
+            setScene("intro");
+          }}
           speak={speak}
-          isSpeaking={isSpeaking}
-          submitting={submittingGuess}
         />
       )}
       {scene === "verdict" && student && (
@@ -383,12 +485,10 @@ function LastCandidate() {
           key={`verdict-${student.levelsCompleted}`}
           student={student}
           onContinue={() => {
-            if (student.round1Completed) {
-              setScene("final");
-            } else if (student.locked) {
+            if (student.round1Completed || student.locked) {
               setScene("final");
             } else {
-              setScene("chamber");
+              setScene("final");
             }
           }}
           speak={speak}
@@ -529,12 +629,11 @@ function LastCandidate() {
 
       {/* Unified Layout Shell */}
       <div className="absolute inset-0 flex flex-row overflow-hidden pointer-events-none">
-        
         {/* Guardian Layer */}
         {!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) && (
           <div className="absolute right-0 bottom-0 w-[45%] md:w-[40%] lg:w-[45%] h-[90svh] md:h-[95vh] flex items-end justify-center z-0 opacity-40 md:opacity-100 transition-opacity duration-700 pb-2 md:pb-8 pr-2 md:pr-8">
             <Guardian
-              scale={isTablet ? 0.35 : (isDesktop ? 0.3 : 0.25)}
+              scale={isTablet ? 0.35 : isDesktop ? 0.3 : 0.25}
               speaking={isSpeaking}
               state={guardianState}
             />
@@ -542,17 +641,17 @@ function LastCandidate() {
         )}
 
         {/* Scene Content Container */}
-        <div 
+        <div
           className={`relative z-20 h-full w-full flex items-center transition-all duration-700 pointer-events-auto
-            ${!["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene) 
-              ? "justify-start pl-6 sm:pl-10 md:pl-16 lg:pl-24 w-full md:w-[60%] lg:w-[55%]"
-              : "justify-center px-4 w-full"
+            ${
+              !["boot", "mission-dossier", "cinematic", "meet-the-agents"].includes(scene)
+                ? "justify-start pl-6 sm:pl-10 md:pl-16 lg:pl-24 w-full md:w-[60%] lg:w-[55%]"
+                : "justify-center px-4 w-full"
             }
           `}
         >
           {activeSceneContent}
         </div>
-        
       </div>
 
       {/* Global Modals */}

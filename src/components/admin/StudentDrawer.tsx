@@ -64,6 +64,66 @@ export function StudentDrawer({
               </div>
             </div>
 
+            {/* AI Prompt Strength - admin-only review */}
+            {selectedStudent.promptStrength !== undefined && (
+              <div className="bg-slate-50/50 p-4 border border-slate-150 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">
+                      Prompt Strength
+                    </p>
+                    <p className="text-2xl font-black text-slate-850 mt-0.5">
+                      {selectedStudent.promptStrength}
+                      <span className="text-xs text-slate-400 font-bold">/100</span>
+                    </p>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                      (selectedStudent.promptStrength || 0) >= 70
+                        ? "text-emerald-700 border-emerald-500/30 bg-emerald-500/10"
+                        : (selectedStudent.promptStrength || 0) >= 40
+                          ? "text-amber-700 border-amber-500/30 bg-amber-500/10"
+                          : "text-rose-700 border-rose-500/30 bg-rose-500/10"
+                    }`}
+                  >
+                    {(selectedStudent.promptStrength || 0) >= 70
+                      ? "Strong"
+                      : (selectedStudent.promptStrength || 0) >= 40
+                        ? "Moderate"
+                        : "Weak"}
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${
+                      (selectedStudent.promptStrength || 0) >= 70
+                        ? "bg-emerald-500"
+                        : (selectedStudent.promptStrength || 0) >= 40
+                          ? "bg-amber-500"
+                          : "bg-rose-500"
+                    }`}
+                    style={{ width: `${Math.max(0, Math.min(100, selectedStudent.promptStrength || 0))}%` }}
+                  />
+                </div>
+                {selectedStudent.promptTitle && (
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-bold">Given Topic</p>
+                    <p className="text-xs text-slate-700 font-semibold leading-relaxed">
+                      {selectedStudent.promptTitle}
+                    </p>
+                  </div>
+                )}
+                {selectedStudent.promptText && (
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-bold">Submitted Prompt</p>
+                    <p className="text-xs text-slate-600 font-semibold leading-relaxed bg-white/70 border border-slate-100 rounded-xl p-2.5">
+                      {selectedStudent.promptText}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="space-y-2">
               <h4 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">
                 Candidate Action History

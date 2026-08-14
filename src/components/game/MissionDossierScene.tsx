@@ -9,11 +9,31 @@ import { Award, Target, Rocket, Gift } from "lucide-react";
 
 const RESOURCE_PERSONS: ResourcePerson[] = [
   {
-    name: "Jeeththenthar LA",
-    designation: "Full Stack Developer & Product Development Engineer",
-    company: "Kovan Labs, Coimbatore",
-    specialization: "Full Stack Development & Product Engineering",
+    name: "Dr. Geetha P",
+    designation: "Principal",
+    company: "KPR College Of Arts Science and Research",
+    specialization: "Academic Leader & Institution Builder",
     photoUrl: "",
+  },
+  {
+    name: "Dr. [Dean Name]",
+    designation: "Dean",
+    company: "KPR College Of Arts Science and Research",
+    specialization: "Academics & Innovation",
+    photoUrl: "",
+  },
+  {
+    name: "Jeeththenthar LA",
+    designation: "AI Engineer",
+    company: "KovanLabs",
+    specialization: "AI Engineer and SaaS product builder with 3 years of experience, passionate about building practical AI solutions.",
+    photoUrl: "",
+    details: [
+      "Creator of AnalyzeDB, LearnVisually & PromptPilot.",
+      "Passionate about practical AI solutions.",
+      "Active in Coimbatore’s tech community.",
+      "Mentor to aspiring developers."
+    ]
   },
 ];
 
@@ -246,11 +266,23 @@ export function MissionDossierScene({
                 {revealedCards.includes(4) && (
                   <DossierCard title="Resource Persons">
                     <div className={RESOURCE_PERSONS.length === 1 ? "flex justify-center" : "grid grid-cols-1 sm:grid-cols-2 gap-3"}>
-                      {RESOURCE_PERSONS.map((p, i) => (
-                        <div key={i} className={RESOURCE_PERSONS.length === 1 ? "w-full max-w-sm" : ""}>
-                          <ResourcePersonCard person={p} index={i} />
-                        </div>
-                      ))}
+                      {RESOURCE_PERSONS.map((p, i) => {
+                        const isLastOdd = RESOURCE_PERSONS.length % 2 !== 0 && i === RESOURCE_PERSONS.length - 1;
+                        return (
+                          <div 
+                            key={i} 
+                            className={
+                              RESOURCE_PERSONS.length === 1 
+                                ? "w-full max-w-sm" 
+                                : isLastOdd 
+                                  ? "sm:col-span-2" 
+                                  : ""
+                            }
+                          >
+                            <ResourcePersonCard person={p} index={i} />
+                          </div>
+                        );
+                      })}
                     </div>
                   </DossierCard>
                 )}

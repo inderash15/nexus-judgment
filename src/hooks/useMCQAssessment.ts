@@ -7,17 +7,22 @@ export interface MCQQuestion {
   options: string[];
 }
 
-export interface PuzzleQuestion {
+export interface PromptQuestion {
   id: string;
-  type: 'puzzle';
+  type: "prompt";
   category: string;
   text: string;
-  imageUrl: string;
-  rows: number;
-  cols: number;
+  title: string;
 }
 
-export type Question = MCQQuestion | PuzzleQuestion;
+export interface FillBlankQuestion {
+  id: string;
+  type: "fillblank";
+  category: string;
+  text: string;
+}
+
+export type Question = MCQQuestion | PromptQuestion | FillBlankQuestion;
 
 export type QuestionStatus = 'unanswered' | 'answered' | 'skipped' | 'marked';
 
@@ -29,7 +34,7 @@ export interface AssessmentState {
 }
 
 const STORAGE_KEY = 'nexus_mcq_session';
-const DEFAULT_TIME = 30; // 30 seconds per question
+const DEFAULT_TIME = 60; // 60 seconds per question
 
 export function useMCQAssessment(questions: Question[], email: string) {
   const STORAGE_KEY = `nexus_mcq_session_${email}`;

@@ -10,6 +10,7 @@ export type Scene =
   | "briefing"
   | "instructions"
   | "mcq"
+  | "mcq-result"
   | "chamber"
   | "verdict"
   | "final"
