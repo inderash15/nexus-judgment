@@ -183,7 +183,7 @@ function KeyButton({
   return (
     <button
       type="button"
-      onClick={(e) => {
+      onPointerDown={(e) => {
         e.preventDefault();
         onClick();
       }}

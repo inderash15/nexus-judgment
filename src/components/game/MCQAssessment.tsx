@@ -1,10 +1,11 @@
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useMCQAssessment, Question } from "@/hooks/useMCQAssessment";
 import { SceneWrap } from "./SceneWrap";
 import { ChamberScene } from "./ChamberScene";
 import { DBStudent, DBQuestion } from "@/lib/db";
 import type { GuardianEmotion } from "@/hooks/useGuardianVoice";
+import { VirtualKeyboard } from "./VirtualKeyboard";
 
 interface MCQAssessmentProps {
   email: string;
@@ -43,6 +44,8 @@ export function MCQAssessment({
     goToPrevious,
     currentQuestion,
   } = useMCQAssessment(questions, email);
+
+  const [activeField, setActiveField] = useState<"fillblank" | "prompt" | null>(null);
 
   const isLastQuestion = state.currentQuestionIndex === questions.length - 1;
   const isFirstQuestion = state.currentQuestionIndex === 0;
@@ -189,6 +192,7 @@ export function MCQAssessment({
 
               <textarea
                 value={promptValue}
+                onFocus={() => setActiveField("prompt")}
                 onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
                 placeholder="Write your AI prompt here..."
                 rows={7}
@@ -215,6 +219,7 @@ export function MCQAssessment({
                       <input
                         type="text"
                         value={fillValue}
+                        onFocus={() => setActiveField("fillblank")}
                         onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
                         placeholder="type your answer"
                         autoComplete="off"
@@ -308,6 +313,13 @@ export function MCQAssessment({
           </div>
         </footer>
       </motion.div>
+      <VirtualKeyboard
+        isOpen={activeField !== null}
+        onClose={() => setActiveField(null)}
+        type="text"
+        value={activeField === "prompt" ? promptValue : fillValue}
+        onChange={(val) => setAnswer(currentQuestion.id, val)}
+      />
     </SceneWrap>
   );
 }
