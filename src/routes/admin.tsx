@@ -95,6 +95,7 @@ function AdminDashboard() {
   const [round1TimeLimit, setRound1TimeLimit] = useState(300);
   const [round2TimeLimit, setRound2TimeLimit] = useState(600);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -485,6 +486,8 @@ function AdminDashboard() {
           <form
             onSubmit={async (e) => {
               e.preventDefault();
+              if (isAuthenticating) return;
+              setIsAuthenticating(true);
               try {
                 const res = await adminAuthenticate({
                   data: { password: adminPasswordInput, rememberMe },
@@ -498,6 +501,8 @@ function AdminDashboard() {
                 }
               } catch {
                 setAuthError("Authentication service unavailable.");
+              } finally {
+                setIsAuthenticating(false);
               }
             }}
             className="space-y-4"
@@ -509,7 +514,8 @@ function AdminDashboard() {
                 placeholder="Enter Admin Password"
                 value={adminPasswordInput}
                 onChange={(e) => setAdminPasswordInput(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white/70 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 text-center font-mono tracking-widest placeholder:font-sans placeholder:tracking-normal placeholder:text-slate-400"
+                disabled={isAuthenticating}
+                className="w-full px-4 py-2.5 bg-white/70 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 text-center font-mono tracking-widest placeholder:font-sans placeholder:tracking-normal placeholder:text-slate-400 disabled:opacity-50"
               />
             </div>
             <div className="flex items-center px-1">
@@ -518,7 +524,8 @@ function AdminDashboard() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 w-3.5 h-3.5"
+                  disabled={isAuthenticating}
+                  className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 w-3.5 h-3.5 disabled:opacity-50"
                 />
                 Remember me (7 days)
               </label>
@@ -530,9 +537,10 @@ function AdminDashboard() {
             )}
             <button
               type="submit"
-              className="w-full py-2.5 bg-slate-950 hover:bg-black text-white rounded-xl text-xs font-black tracking-wide transition-all shadow-md cursor-pointer"
+              disabled={isAuthenticating}
+              className="w-full py-2.5 bg-slate-950 hover:bg-black text-white rounded-xl text-xs font-black tracking-wide transition-all shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Access Terminal
+              {isAuthenticating ? "Authenticating..." : "Access Terminal"}
             </button>
           </form>
         </div>
