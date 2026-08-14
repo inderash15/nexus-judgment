@@ -5,6 +5,7 @@ import { routeTree } from "./routeTree.gen";
 export const getRouter = () => {
   const queryClient = new QueryClient();
 
+  // Initialize a new Router instance with the generated route tree
   const router = createRouter({
     routeTree,
     context: { queryClient },
