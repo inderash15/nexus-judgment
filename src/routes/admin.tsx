@@ -40,6 +40,10 @@ import {
   BulkImportModal,
   MCQTab,
   MCQModal,
+  TopNavigation,
+  CommandPalette,
+  RiskCenterTab,
+  AnalyticsTab,
 } from "@/components/admin";
 import type { Tab, DataState } from "@/components/admin";
 
@@ -98,8 +102,7 @@ function AdminDashboard() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState("");
   const [authError, setAuthError] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   const refreshData = async () => {
     setLoading(true);
@@ -175,7 +178,7 @@ function AdminDashboard() {
     return (
       <span
         className={`px-2.5 py-1 text-xs rounded-full font-bold border ${
-          config[status] || "bg-slate-500/10 text-slate-500 border-slate-500/20"
+          config[status] || "bg-slate-500/10 text-black border-slate-500/20"
         }`}
       >
         {status}
@@ -317,19 +320,14 @@ function AdminDashboard() {
     document.body.removeChild(link);
   };
 
-  const handleToggleLock = async (student: DBStudent) => {
-    const nextLockedState = !student.locked;
-    const nextStatus = nextLockedState ? "Disqualified" : "Active";
-
+  const handleToggleLock = async (email: string, locked: boolean) => {
     try {
-      const res = await adminUpdateStudentLock({
-        data: { email: student.email, locked: nextLockedState, status: nextStatus },
-      });
+      const res = await adminUpdateStudentLock({ data: { email, locked, status: locked ? "Disqualified" : "Active" } });
       if (res.success) {
         setData((prev) => ({ ...prev, students: res.students }));
-        if (selectedStudent && selectedStudent.email === student.email) {
+        if (selectedStudent && selectedStudent.email === email) {
           setSelectedStudent((prev) =>
-            prev ? { ...prev, locked: nextLockedState, status: nextStatus } : null,
+            prev ? { ...prev, locked: locked, status: locked ? "Disqualified" : "Active" } : null,
           );
         }
       }
@@ -389,7 +387,7 @@ function AdminDashboard() {
     }
   };
 
-  const handleDeleteQuestion = async (id: number) => {
+  const handleDeleteQuestion = async (id: string) => {
     if (!confirm("Remove this question from the active pool?")) return;
     try {
       const res = await adminUpdateQuestion({
@@ -471,15 +469,15 @@ function AdminDashboard() {
   if (!isAuthenticated) {
     return (
       <div className="h-[100dvh] overflow-hidden w-full bg-gradient-to-br from-[#E2F0ED] via-[#E6E6FA] to-[#FFE4E1] p-4 sm:p-6 font-sans flex items-center justify-center">
-        <div className="w-full max-w-md bg-white/30 backdrop-blur-2xl border border-white/50 shadow-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 space-y-5 sm:space-y-6 text-slate-805">
-          <div className="w-12 h-12 rounded-full bg-slate-950 text-white flex items-center justify-center mx-auto shadow-lg shadow-black/10 border border-white/20">
+        <div className="w-full max-w-md bg-white/30 backdrop-blur-2xl border border-black/[0.04]0 shadow-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 space-y-5 sm:space-y-6 text-black">
+          <div className="w-12 h-12 rounded-full bg-slate-950 text-black flex items-center justify-center mx-auto shadow-lg shadow-black/10 border border-black/[0.08]">
             <Lock className="w-5 h-5" />
           </div>
           <div className="text-center space-y-2">
-            <h1 className="text-lg font-black text-slate-800 tracking-tight">
+            <h1 className="text-lg font-black text-black tracking-tight">
               NexusPro Operations
             </h1>
-            <p className="text-xs text-slate-500 font-semibold">
+            <p className="text-xs text-black font-semibold">
               Enter security code to authenticate terminal node.
             </p>
           </div>
@@ -490,7 +488,7 @@ function AdminDashboard() {
               setIsAuthenticating(true);
               try {
                 const res = await adminAuthenticate({
-                  data: { password: adminPasswordInput, rememberMe },
+                  data: { password: adminPasswordInput },
                 });
                 if (res.success) {
                   setIsAuthenticated(true);
@@ -515,20 +513,8 @@ function AdminDashboard() {
                 value={adminPasswordInput}
                 onChange={(e) => setAdminPasswordInput(e.target.value)}
                 disabled={isAuthenticating}
-                className="w-full px-4 py-2.5 bg-white/70 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 text-center font-mono tracking-widest placeholder:font-sans placeholder:tracking-normal placeholder:text-slate-400 disabled:opacity-50"
+                className="w-full px-4 py-2.5 bg-white/70 border border-slate-200 rounded-xl text-sm font-semibold text-black focus:outline-none focus:ring-1 focus:ring-slate-900 text-center font-mono tracking-widest placeholder:font-sans placeholder:tracking-normal placeholder:text-black disabled:opacity-50"
               />
-            </div>
-            <div className="flex items-center px-1">
-              <label className="flex items-center gap-2 text-xs font-semibold text-slate-500 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  disabled={isAuthenticating}
-                  className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 w-3.5 h-3.5 disabled:opacity-50"
-                />
-                Remember me (7 days)
-              </label>
             </div>
             {authError && (
               <p className="text-[10px] text-rose-500 font-bold text-center uppercase tracking-wider">
@@ -538,7 +524,7 @@ function AdminDashboard() {
             <button
               type="submit"
               disabled={isAuthenticating}
-              className="w-full py-2.5 bg-slate-950 hover:bg-black text-white rounded-xl text-xs font-black tracking-wide transition-all shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2.5 bg-slate-950 hover:bg-black text-black rounded-xl text-xs font-black tracking-wide transition-all shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isAuthenticating ? "Authenticating..." : "Access Terminal"}
             </button>
@@ -548,130 +534,28 @@ function AdminDashboard() {
     );
   }
   return (
-    <div className="h-[100dvh] overflow-hidden bg-gradient-to-br from-[#E2F0ED] via-[#E6E6FA] to-[#FFE4E1] p-3 sm:p-4 md:p-6 lg:p-10 font-sans flex items-center justify-center">
-      <div className="w-full max-w-7xl min-h-[85vh] bg-white/35 backdrop-blur-2xl border border-white/60 shadow-2xl rounded-2xl sm:rounded-[32px] overflow-hidden flex flex-col md:flex-row">
-        {/* Mobile overlay backdrop */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 z-40 bg-black/40 md:hidden"
-            onClick={() => setSidebarOpen(false)}
+    <>
+      <div className="fixed inset-0 w-full h-full -z-10 spatial-bg pointer-events-none" />
+      <div className="min-h-[100dvh] w-full text-black font-sans flex flex-col items-center selection:bg-indigo-500/30 p-4 md:p-6 lg:p-8">
+        {/* Floating Workspace Shell */}
+        <div className="w-full max-w-[1600px] rounded-[2rem] glass-shell flex flex-col relative my-auto min-h-[92vh]">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/[0.02] to-transparent pointer-events-none rounded-[2rem]" />
+          
+          <div className="flex-1 flex flex-col relative z-10 p-4 md:p-6 lg:p-8">
+          <TopNavigation
+            activeTab={activeTab}
+            setActiveTab={setActiveTab as any}
+            setCommandPaletteOpen={setCommandPaletteOpen}
+            systemMode={systemMode}
+            handleLogout={async () => {
+              if (confirm("Disconnect and lock terminal node?")) {
+                await adminLogout();
+                setIsAuthenticated(false);
+              }
+            }}
           />
-        )}
 
-        <aside
-          className={`fixed md:relative inset-y-0 left-0 z-50 w-64 bg-white/40 p-6 flex flex-col justify-between border-r border-[#E5EAE9]/80 shrink-0 transform transition-transform duration-300 ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-          }`}
-        >
-          <div className="space-y-8">
-            <div className="flex items-center justify-between px-2">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/src/assets/images.png"
-                  alt="NexusPro"
-                  className="w-7 h-7 rounded object-contain bg-slate-950"
-                />
-                <h1 className="font-extrabold text-slate-800 text-base tracking-tight leading-none">
-                  NexusPro
-                </h1>
-              </div>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="md:hidden p-1 rounded-lg hover:bg-slate-200/40 text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <nav className="space-y-1">
-              {(
-                [
-                  { id: "overview", label: "Dashboard", icon: BarChart2 },
-                  { id: "students", label: "Candidates", icon: Users },
-                  { id: "live", label: "Live Room", icon: Radio },
-                  { id: "questions", label: "Round 1 Puzzles", icon: BookOpen },
-                  { id: "mcq", label: "Round 2 MCQs", icon: BookOpen },
-                  { id: "leaderboard", label: "Standings", icon: TrendingUp },
-                  { id: "audit", label: "Security Logs", icon: History },
-                  { id: "settings", label: "System Rules", icon: Settings },
-                ] as const
-              ).map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setStudentPage(1);
-                      setSidebarOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-extrabold tracking-wide transition-all cursor-pointer ${
-                      isActive
-                        ? "bg-gradient-to-r from-teal-700 to-teal-800 text-white shadow-lg shadow-teal-700/20"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/40"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-
-          <div className="space-y-4">
-            <button
-              onClick={async () => {
-                if (confirm("Disconnect and lock terminal node?")) {
-                  await adminLogout();
-                  setIsAuthenticated(false);
-                }
-              }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-extrabold tracking-wide text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-all cursor-pointer"
-            >
-              <Lock className="w-4 h-4" />
-              <span>Lock Terminal</span>
-            </button>
-            <div className="text-[10px] font-bold text-slate-400/80 px-2 tracking-wider">
-              SYSTEM ENGINE v1.2
-            </div>
-          </div>
-        </aside>
-
-        <main className="flex-1 p-4 sm:p-6 md:p-8 flex flex-col justify-between overflow-x-hidden">
-          <header className="flex justify-between items-center mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="md:hidden p-2 rounded-xl bg-white/70 border border-slate-200 hover:bg-white text-slate-600 shadow-sm transition-all"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-              <div>
-                <p className="text-[11px] font-extrabold text-teal-800 tracking-wider">
-                  Welcome back, Admin 👋
-                </p>
-                <h2 className="text-lg sm:text-2xl font-extrabold text-slate-800 capitalize leading-tight">
-                  {activeTab}
-                </h2>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-slate-950 flex items-center justify-center font-bold text-white text-xs border border-white/10">
-                  AD
-                </div>
-                <div className="hidden lg:block text-left">
-                  <p className="text-xs font-extrabold text-slate-800 leading-none">Andrea Admin</p>
-                  <span className="text-[9px] font-bold text-slate-400">System Node</span>
-                </div>
-              </div>
-            </div>
-          </header>
+          <main className="flex-1 pt-2 pb-8">
 
           {activeTab === "overview" && (
             <OverviewTab metrics={metrics} data={data} setActiveTab={setActiveTab} questionsCount={data.questions.length} />
@@ -693,11 +577,15 @@ function AdminDashboard() {
               handleExportCSV={handleExportCSV}
               handleToggleLock={handleToggleLock}
               setSelectedStudent={setSelectedStudent}
-              renderStatusBadge={renderStatusBadge}
             />
           )}
 
-          {activeTab === "live" && <LiveRoomTab students={data.students} />}
+          {activeTab === "live" && (
+            <LiveRoomTab 
+              students={data.students} 
+              handleToggleLock={handleToggleLock} 
+            />
+          )}
 
           {activeTab === "questions" && (
             <QuestionsTab
@@ -705,9 +593,8 @@ function AdminDashboard() {
               setQuestionSearch={setQuestionSearch}
               questionCatFilter={questionCatFilter}
               setQuestionCatFilter={setQuestionCatFilter}
-              categories={categories}
               filteredQuestions={filteredQuestions}
-              setIsBulkModalOpen={setIsBulkModalOpen}
+              handleBulkImportClick={() => setIsBulkModalOpen(true)}
               handleAddQuestionClick={handleAddQuestionClick}
               handleEditQuestionClick={handleEditQuestionClick}
               handleDeleteQuestion={handleDeleteQuestion}
@@ -729,6 +616,18 @@ function AdminDashboard() {
 
           {activeTab === "audit" && <AuditLogsTab securityLogs={data.securityLogs} />}
 
+          {activeTab === "risk" && (
+            <RiskCenterTab 
+              securityLogs={data.securityLogs} 
+              students={data.students} 
+              handleToggleLock={handleToggleLock} 
+            />
+          )}
+
+          {activeTab === "analytics" && (
+            <AnalyticsTab students={data.students} metrics={metrics} />
+          )}
+
           {activeTab === "settings" && (
             <SystemRulesTab
               sessionTimeout={sessionTimeout}
@@ -748,7 +647,8 @@ function AdminDashboard() {
               onSave={handleSaveSettings}
             />
           )}
-        </main>
+          </main>
+        </div>
       </div>
 
       {selectedStudent && (
@@ -790,15 +690,24 @@ function AdminDashboard() {
         />
       )}
 
-      {isBulkModalOpen && (
-        <BulkImportModal
-          isBulkModalOpen={isBulkModalOpen}
-          setIsBulkModalOpen={setIsBulkModalOpen}
-          bulkJsonText={bulkJsonText}
-          setBulkJsonText={setBulkJsonText}
-          handleBulkUpload={handleBulkUpload}
+        {isBulkModalOpen && (
+          <BulkImportModal
+            isBulkModalOpen={isBulkModalOpen}
+            setIsBulkModalOpen={setIsBulkModalOpen}
+            bulkJsonText={bulkJsonText}
+            setBulkJsonText={setBulkJsonText}
+            handleBulkUpload={handleBulkUpload}
+          />
+        )}
+
+        <CommandPalette
+          open={commandPaletteOpen}
+          setOpen={setCommandPaletteOpen}
+          setActiveTab={setActiveTab}
+          handleExportCSV={handleExportCSV}
+          refreshData={refreshData}
         />
-      )}
     </div>
+    </>
   );
 }

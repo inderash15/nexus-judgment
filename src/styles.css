@@ -63,6 +63,10 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
 }
 
 :root {
@@ -99,6 +103,10 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  --success: oklch(0.627 0.194 149.214);
+  --warning: oklch(0.769 0.188 70.08);
+  --danger: oklch(0.577 0.245 27.325);
+  --info: oklch(0.6 0.118 184.704);
 }
 
 .dark {
@@ -134,6 +142,10 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --success: oklch(0.627 0.194 149.214);
+  --warning: oklch(0.769 0.188 70.08);
+  --danger: oklch(0.704 0.191 22.216);
+  --info: oklch(0.6 0.118 184.704);
 }
 
 @layer base {
@@ -206,29 +218,50 @@
     touch-action: manipulation;
   }
 
-  @media (max-width: 1024px) {
-    html, body {
-      height: 100vh;
-      height: 100dvh;
-      overflow: hidden;
-      position: fixed;
-      width: 100%;
-      margin: 0;
-      padding: 0;
-    }
-    
-    #root {
-      height: 100%;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      padding-left: env(safe-area-inset-left);
-      padding-right: env(safe-area-inset-right);
-      padding-bottom: env(safe-area-inset-bottom);
-      
-      /* Global Mobile Keyboard offset logic */
-      transform: translateY(var(--keyboard-offset, 0px));
-      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-    }
+}
+
+@layer utilities {
+  /* Typography System */
+  .text-display { @apply text-4xl md:text-5xl font-semibold tracking-tight text-black leading-none; }
+  .text-h1 { @apply text-3xl font-medium tracking-tight text-black leading-tight; }
+  .text-h2 { @apply text-2xl font-medium tracking-tight text-black; }
+  .text-h3 { @apply text-lg font-medium tracking-tight text-black; }
+  .text-metric { @apply text-4xl font-semibold tracking-tight text-black; }
+  .text-label { @apply text-[11px] font-semibold tracking-wider text-black uppercase; }
+  .text-body { @apply text-[14px] text-black font-normal; }
+  .text-small { @apply text-[12px] text-black font-medium; }
+
+  /* Button System */
+  .btn-primary { @apply flex items-center justify-center gap-2 bg-[#6D5DFB] hover:bg-[#5b4df2] text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-md; }
+  .btn-secondary { @apply flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 text-slate-900 px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] border border-white/30 backdrop-blur-md; }
+  .btn-icon { @apply flex items-center justify-center w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 text-slate-700 transition-all border border-white/20; }
+
+  /* Status System */
+  .status-emerald { @apply bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase; }
+  .status-amber { @apply bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase; }
+  .status-red { @apply bg-red-500/10 text-red-600 border border-red-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase; }
+  .status-indigo { @apply bg-[#6D5DFB]/10 text-[#6D5DFB] border border-[#6D5DFB]/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase; }
+  .status-gray { @apply bg-slate-500/10 text-slate-600 border border-slate-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase; }
+
+  .glass-shell {
+    @apply bg-white/[0.28] backdrop-blur-[24px] backdrop-saturate-[1.4] border border-white/[0.28] shadow-[0_30px_100px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.5)];
+  }
+  
+  .glass-panel {
+    @apply bg-white/[0.20] backdrop-blur-[18px] border border-white/[0.22] shadow-[inset_0_1px_0_rgba(255,255,255,0.3)];
+  }
+
+  .glass-panel-inner {
+    @apply bg-white/[0.16] border border-white/[0.18];
+  }
+  
+  .spatial-bg {
+    background-color: #0A0A0C;
+    background-image: 
+      url('/warrior-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-blend-mode: normal;
   }
 }

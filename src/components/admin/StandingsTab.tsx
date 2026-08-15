@@ -11,7 +11,7 @@ export function StandingsTab({ students }: StandingsTabProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="text-slate-400 font-bold border-b border-slate-100 bg-slate-50/20">
+              <tr className="text-black font-bold border-b border-slate-100 bg-slate-50/20">
                 <th className="p-4">Rank</th>
                 <th className="p-4">Candidate</th>
                 <th className="p-4">Department</th>
@@ -19,10 +19,10 @@ export function StandingsTab({ students }: StandingsTabProps) {
                 <th className="p-4 text-right">Trial Score</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100/50 text-slate-700 font-bold">
+            <tbody className="divide-y divide-slate-100/50 text-black font-bold">
               {students.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-400">
+                  <td colSpan={5} className="p-8 text-center text-black">
                     No candidates recorded.
                   </td>
                 </tr>
@@ -31,14 +31,14 @@ export function StandingsTab({ students }: StandingsTabProps) {
                   .sort((a, b) => b.score - a.score)
                   .map((student, idx) => (
                     <tr key={student.email} className="hover:bg-slate-50/40 transition-colors">
-                      <td className="p-4 font-black text-slate-400">#{idx + 1}</td>
+                      <td className="p-4 font-black text-black">#{idx + 1}</td>
                       <td className="p-4">
                         <div>
-                          <p className="font-extrabold text-slate-800">{student.name}</p>
-                          <p className="text-[9px] text-slate-400 font-semibold">{student.email}</p>
+                          <p className="font-extrabold text-black">{student.name}</p>
+                          <p className="text-[9px] text-black font-semibold">{student.email}</p>
                         </div>
                       </td>
-                      <td className="p-4 text-slate-500 font-semibold">{student.department}</td>
+                      <td className="p-4 text-black font-semibold">{student.department}</td>
                       <td className="p-4 text-emerald-600">
                         {student.attempts > 0
                           ? Math.round(

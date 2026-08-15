@@ -1,4 +1,5 @@
 import { DBQuestion } from "@/lib/db";
+import { Database, X } from "lucide-react";
 
 type QuestionModalProps = {
   isQuestionModalOpen: boolean;
@@ -36,41 +37,45 @@ export function QuestionModal({
   if (!isQuestionModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="font-bold text-sm text-slate-800">
-            {editingQuestion ? "Edit Trial Word" : "Inject Trial Word"}
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+      <div 
+        className="fixed inset-0" 
+        onClick={() => setIsQuestionModalOpen(false)}
+      />
+      <div className="bg-[#0C0C0C]/80 backdrop-blur-[40px] border border-black/[0.04] shadow-2xl rounded-[2rem] w-full max-w-3xl p-8 relative flex flex-col max-h-[90vh] overflow-hidden z-[101]">
+        <div className="flex justify-between items-center mb-8 border-b border-black/[0.03] pb-4">
+          <h3 className="font-bold text-sm text-black uppercase tracking-wide flex items-center gap-2">
+            <Database className="w-4 h-4 text-teal-500" />
+            {editingQuestion ? "Edit Question" : "New Question"}
           </h3>
           <button
             onClick={() => setIsQuestionModalOpen(false)}
-            className="text-slate-400 hover:text-slate-650 font-bold text-sm"
+            className="w-8 h-8 rounded-full bg-black/[0.02] flex items-center justify-center hover:bg-black/[0.04] transition-colors"
           >
-            ✕
+            <X className="w-4 h-4 text-black" />
           </button>
         </div>
         <form
           onSubmit={handleSaveQuestion}
-          className="p-5 space-y-4 text-xs font-bold text-slate-700"
+          className="flex-1 overflow-y-auto space-y-8 pr-2 scrollbar-hide"
         >
-          <div>
-            <label className="block text-slate-500 mb-1.5">Target Word (Hangman Answer)</label>
-            <input
-              type="text"
+          <div className="space-y-4">
+            <label className="text-[10px] font-medium tracking-widest text-black uppercase">Question Text</label>
+            <textarea
               required
               placeholder="e.g. TRANSFORMER"
               value={wordForm}
               onChange={(e) => setWordForm(e.target.value)}
-              className="w-full p-2.5 border border-slate-200 rounded-xl uppercase tracking-widest font-mono text-sm focus:outline-none focus:ring-1 focus:ring-teal-700"
+              className="w-full bg-black/[0.03] hover:bg-black/[0.06] focus:bg-black/[0.06] border border-black/[0.04] focus:border-black/[0.08] rounded-2xl p-4 text-sm text-black placeholder:text-black outline-none transition-all resize-none font-mono"
             />
           </div>
 
           <div>
-            <label className="block text-slate-500 mb-1.5">Category</label>
+            <label className="block text-[10px] font-medium tracking-widest text-black uppercase mb-3">Category</label>
             <select
               value={categoryForm}
               onChange={(e) => setCategoryForm(e.target.value)}
-              className="w-full p-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-teal-700"
+              className="w-full p-4 bg-black/[0.03] border border-black/[0.04] rounded-2xl focus:outline-none focus:border-black/[0.08] text-black appearance-none text-sm"
             >
               <option value="Artificial Intelligence">Artificial Intelligence</option>
               <option value="Machine Learning">Machine Learning</option>
@@ -92,61 +97,68 @@ export function QuestionModal({
           </div>
 
           <div>
-            <label className="block text-slate-500 mb-1.5">Difficulty</label>
-            <div className="flex gap-4">
+            <label className="block text-[10px] font-medium tracking-widest text-black uppercase mb-3">Difficulty Classification</label>
+            <div className="flex gap-3">
               {["easy", "medium", "hard"].map((diff) => (
-                <label key={diff} className="flex items-center gap-1.5 font-bold cursor-pointer">
+                <label key={diff} className={`flex-1 flex items-center justify-center gap-1.5 font-medium cursor-pointer px-3 py-3 rounded-2xl transition-colors text-[10px] uppercase tracking-widest ${
+                  difficultyForm === diff 
+                    ? "bg-black/[0.04] text-black border border-black/[0.08]" 
+                    : "bg-black/[0.03] text-black border border-black/[0.04] hover:bg-black/[0.06] hover:text-black"
+                }`}>
                   <input
                     type="radio"
                     name="difficulty"
                     checked={difficultyForm === diff}
                     onChange={() => setDifficultyForm(diff as "easy" | "medium" | "hard")}
-                    className="text-teal-750 focus:ring-teal-700"
+                    className="sr-only"
                   />
-                  <span className="capitalize">{diff}</span>
+                  <span>{diff}</span>
                 </label>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-slate-500 mb-1.5">Guardian Clue / Hint Text</label>
+            <label className="block text-[10px] font-medium tracking-widest text-black uppercase mb-3">Guardian Clue / Hint Text</label>
             <textarea
               required
               rows={3}
               placeholder="Explain details of this technology or clue."
               value={hintForm}
               onChange={(e) => setHintForm(e.target.value)}
-              className="w-full p-2.5 border border-slate-200 rounded-xl leading-relaxed text-slate-800 focus:outline-none"
+              className="w-full p-4 bg-black/[0.03] border border-black/[0.04] rounded-2xl text-sm text-black placeholder:text-black focus:outline-none focus:border-black/[0.08] resize-none transition-all"
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="activeForm"
-              checked={activeForm}
-              onChange={(e) => setActiveForm(e.target.checked)}
-              className="rounded border-slate-300 text-teal-700 focus:ring-teal-700 h-4 w-4"
-            />
-            <label htmlFor="activeForm" className="text-slate-500 select-none cursor-pointer">
-              Enable immediately in question pool
-            </label>
-          </div>
+          <label className="flex items-center gap-3 p-4 rounded-2xl border border-black/[0.04] bg-black/[0.03] cursor-pointer hover:bg-black/[0.06] transition-colors">
+            <div className="relative flex items-center justify-center">
+              <input
+                type="checkbox"
+                checked={activeForm}
+                onChange={(e) => setActiveForm(e.target.checked)}
+                className="peer appearance-none w-4 h-4 rounded-sm border border-black/[0.08] bg-transparent checked:bg-[#6D5DFB] checked:border-[#FDFBF7] focus:outline-none transition-colors"
+              />
+              <svg className="absolute w-2.5 h-2.5 text-black pointer-events-none opacity-0 peer-checked:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span className="text-black font-medium text-[10px] uppercase tracking-widest">Enable immediately in active pool</span>
+          </label>
 
-          <div className="pt-2 border-t border-slate-100 flex justify-end gap-3">
+          <div className="mt-8 pt-6 border-t border-black/[0.03] flex justify-end gap-3">
             <button
               type="button"
               onClick={() => setIsQuestionModalOpen(false)}
-              className="px-4 py-2 border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50"
+              className="px-6 py-2.5 rounded-full border border-black/[0.06] text-black hover:text-black hover:bg-black/[0.02] transition-colors text-[10px] font-bold uppercase tracking-widest"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-teal-800 hover:bg-teal-900 text-white rounded-xl font-black"
+              disabled={!wordForm.trim() || !categoryForm.trim()}
+              className="px-6 py-2.5 rounded-full bg-[#6D5DFB] text-black hover:bg-white transition-colors text-[10px] font-bold uppercase tracking-widest shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save Changes
+              {editingQuestion ? "Save Changes" : "Create Question"}
             </button>
           </div>
         </form>

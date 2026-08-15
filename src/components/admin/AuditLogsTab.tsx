@@ -1,53 +1,116 @@
-import { SecurityLog } from "@/lib/db";
+import { Activity, Download, Search } from "lucide-react";
+import { useState } from "react";
 
-type AuditLogsTabProps = {
-  securityLogs: SecurityLog[];
-};
+export function AuditLogsTab({ securityLogs }: { securityLogs: any[] }) {
+  const [logSearch, setLogSearch] = useState("");
+  const [filterSeverity, setFilterSeverity] = useState("all");
 
-export function AuditLogsTab({ securityLogs }: AuditLogsTabProps) {
+  const filteredLogs = securityLogs.filter((log) => {
+    if (logSearch && !log.action.toLowerCase().includes(logSearch.toLowerCase()) && !log.email?.toLowerCase().includes(logSearch.toLowerCase())) {
+      return false;
+    }
+    if (filterSeverity !== "all") {
+      if (filterSeverity === "suspicious" && log.status !== "suspicious") return false;
+      if (filterSeverity === "failed" && log.status !== "failed") return false;
+      if (filterSeverity === "normal" && log.status !== "success" && log.status !== "warning") return false;
+    }
+    return true;
+  }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
   return (
-    <div className="space-y-6 flex-1 animate-in fade-in duration-300">
-      <div className="bg-white/80 border border-white/50 shadow-sm rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+    <div className="flex flex-col gap-6 w-full h-full animate-in fade-in duration-500">
+      <div className="flex flex-col gap-6">
+        <div className="flex justify-between items-end">
+          <div className="flex flex-col">
+            <h2 className="text-3xl font-light tracking-tight text-black leading-tight">Security</h2>
+            <h2 className="text-[10px] font-medium tracking-widest text-black uppercase mt-2">
+              Audit Logs • {filteredLogs.length} Events
+            </h2>
+          </div>
+          
+          <button
+            onClick={() => {/* CSV Export logic */}}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/[0.02] border border-black/[0.06] hover:bg-black/[0.04] text-black transition-colors text-xs font-bold uppercase tracking-wider"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export Audit
+          </button>
+        </div>
+
+        <div className="glass-panel rounded-full p-2 flex flex-col md:flex-row gap-2 items-center">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
+            <input
+              type="text"
+              placeholder="Search event or target ID..."
+              value={logSearch}
+              onChange={(e) => setLogSearch(e.target.value)}
+              className="w-full bg-black/[0.03] hover:bg-black/[0.06] focus:bg-black/[0.06] border border-black/[0.04] focus:border-black/[0.08] rounded-full pl-10 pr-4 py-2.5 text-sm text-black placeholder:text-black transition-all outline-none font-mono"
+            />
+          </div>
+          
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <select
+              value={filterSeverity}
+              onChange={(e) => setFilterSeverity(e.target.value)}
+              className="w-full md:w-48 bg-black/[0.03] hover:bg-black/[0.06] border border-black/[0.04] rounded-full px-4 py-2.5 text-sm text-black appearance-none outline-none cursor-pointer"
+            >
+              <option value="all" className="bg-white">All Severities</option>
+              <option value="suspicious" className="bg-white">High Risk</option>
+              <option value="failed" className="bg-white">Warnings</option>
+              <option value="normal" className="bg-white">Information</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="glass-panel rounded-3xl flex flex-col flex-1 min-h-0 relative overflow-hidden">
+        <div className="flex-1 overflow-auto scrollbar-hide relative z-10 p-2">
+          <table className="w-full text-left text-xs whitespace-nowrap border-separate border-spacing-y-[3px]">
             <thead>
-              <tr className="text-slate-400 font-bold border-b border-slate-100 bg-slate-50/20">
-                <th className="p-4">Timestamp</th>
-                <th className="p-4">Action</th>
-                <th className="p-4">Candidate Target</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Details Summary</th>
+              <tr className="text-[10px] font-medium tracking-widest text-black uppercase">
+                <th className="px-5 py-4 w-32">Time</th>
+                <th className="px-5 py-4">Event Code</th>
+                <th className="px-5 py-4">Target ID</th>
+                <th className="px-5 py-4">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100/50 text-slate-700 font-bold">
-              {securityLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-slate-50/40 transition-colors">
-                  <td className="p-4 font-mono text-slate-400 text-[10px]">
-                    {new Date(log.timestamp).toLocaleString()}
-                  </td>
-                  <td className="p-4 text-slate-700">{log.action}</td>
-                  <td className="p-4 text-slate-500 font-semibold">{log.email}</td>
-                  <td className="p-4">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold border uppercase ${
-                        log.status === "success"
-                          ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                          : log.status === "suspicious"
-                            ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                            : "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                      }`}
-                    >
-                      {log.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-slate-450 font-medium max-w-xs truncate">
-                    {log.details}
+            <tbody>
+              {filteredLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-5 py-12 text-center text-black text-sm">
+                    No security events found matching criteria.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredLogs.map((log, i) => {
+                  const isHigh = log.status === "suspicious";
+                  const isWarn = log.status === "failed";
+                  return (
+                    <tr key={i} className="group transition-colors">
+                      <td className="px-5 py-3 rounded-l-xl glass-panel-inner bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors">
+                        <span className="font-mono text-black">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                      </td>
+                      <td className="px-5 py-3 glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors">
+                        <span className="font-mono text-black uppercase tracking-widest text-[10px]">{log.action}</span>
+                      </td>
+                      <td className="px-5 py-3 glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors">
+                        <span className="font-mono text-black">NXP-{log.email?.substring(0, 6) || '??'}</span>
+                      </td>
+                      <td className="px-5 py-3 rounded-r-xl glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors">
+                        <span className={`text-[10px] uppercase font-bold tracking-wider flex items-center gap-1.5 ${isHigh ? "text-rose-400" : isWarn ? "text-amber-400" : "text-emerald-400"}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${isHigh ? "bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.8)]" : isWarn ? "bg-amber-400" : "bg-emerald-400"}`}></span>
+                          {isHigh ? "CRITICAL" : isWarn ? "WARNING" : "SUCCESS"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
+        <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-black/40 to-transparent pointer-events-none rounded-b-3xl" />
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
-import { Search, Edit, Trash2, Plus } from "lucide-react";
 import { DBMCQQuestion } from "@/lib/db";
-import { useState } from "react";
+import { Plus, Search, Trash2, Edit2, ShieldAlert } from "lucide-react";
 
 type MCQTabProps = {
   mcqSearch: string;
@@ -8,7 +7,7 @@ type MCQTabProps = {
   filteredMCQs: DBMCQQuestion[];
   handleAddMCQClick: () => void;
   handleEditMCQClick: (q: DBMCQQuestion) => void;
-  handleDeleteMCQ: (id: string) => void;
+  handleDeleteMCQ: (id: string) => Promise<void>;
 };
 
 export function MCQTab({
@@ -20,84 +19,100 @@ export function MCQTab({
   handleDeleteMCQ,
 }: MCQTabProps) {
   return (
-    <div className="space-y-6 flex-1 animate-in fade-in duration-300">
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search MCQ text..."
-            value={mcqSearch}
-            onChange={(e) => setMcqSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white/70 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-teal-700 focus:bg-white transition-all text-slate-800"
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-2 sm:gap-2.5 w-full sm:w-auto">
+    <div className="flex flex-col gap-6 w-full h-full animate-in fade-in duration-500">
+      
+      {/* Header & Controls */}
+      <div className="flex flex-col gap-6">
+        <div className="flex justify-between items-end">
+          <div className="flex flex-col">
+            <h2 className="text-display leading-tight">Round 02</h2>
+            <h2 className="text-label mt-2">
+              MCQ Pool • {filteredMCQs.length} Items
+            </h2>
+          </div>
+          
           <button
             onClick={handleAddMCQClick}
-            className="px-4 py-2 bg-gradient-to-r from-teal-700 to-teal-800 text-white rounded-xl text-xs font-extrabold tracking-wide hover:shadow-lg transition-all flex items-center gap-2"
+            className="btn-primary"
           >
             <Plus className="w-4 h-4" />
-            Add MCQ
+            New MCQ
           </button>
+        </div>
+
+        {/* Filters Panel */}
+        <div className="glass-panel rounded-full p-2 flex flex-col md:flex-row gap-2 items-center">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
+            <input
+              type="text"
+              placeholder="Search MCQ questions or options..."
+              value={mcqSearch}
+              onChange={(e) => setMcqSearch(e.target.value)}
+              className="w-full bg-black/[0.03] hover:bg-black/[0.06] focus:bg-black/[0.06] border border-black/[0.04] focus:border-black/[0.08] rounded-full pl-10 pr-4 py-2.5 text-sm text-black placeholder:text-black transition-all outline-none"
+            />
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-        {filteredMCQs.map((q) => (
-          <div
-            key={q.id}
-            className="bg-white/80 border border-white/50 shadow-sm rounded-2xl p-5 flex flex-col justify-between space-y-4"
-          >
-            <div className="space-y-2">
-              <div className="flex justify-between items-start">
-                <div className="flex gap-2">
-                  <span className="px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-800 text-[9px] font-extrabold border border-teal-500/20">
-                    {q.category}
-                  </span>
-                  {!q.active && (
-                    <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-[9px] font-extrabold border border-rose-500/20 uppercase">
-                      Draft
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => handleEditMCQClick(q)}
-                    className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-650 transition-colors"
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteMCQ(q.id)}
-                    className="p-1 rounded hover:bg-rose-50 text-rose-500 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              <h4 className="font-sans text-sm font-black tracking-tight text-slate-800">
-                {q.text}
-              </h4>
-              <div className="space-y-1.5 mt-3">
-                {q.options.map((opt, i) => (
-                  <div key={i} className={`text-xs font-semibold px-3 py-1.5 rounded-lg border ${q.correctAnswer === i ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-700" : "bg-slate-50 border-slate-100 text-slate-500"}`}>
-                    {String.fromCharCode(65 + i)}. {opt}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
-        
-        {filteredMCQs.length === 0 && (
-          <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white/40">
-            <p className="text-sm font-bold text-slate-400">No MCQ questions found.</p>
-          </div>
-        )}
+      {/* Main Table */}
+      <div className="glass-panel rounded-3xl flex flex-col flex-1 min-h-0 relative overflow-hidden">
+        <div className="flex-1 overflow-auto scrollbar-hide relative z-10 p-2">
+          <table className="w-full text-left whitespace-nowrap border-separate border-spacing-y-[3px]">
+            <thead>
+              <tr className="text-label text-black">
+                <th className="px-5 py-4 w-16">ID</th>
+                <th className="px-5 py-4">Question Text</th>
+                <th className="px-5 py-4">Options</th>
+                <th className="px-5 py-4">Correct</th>
+                <th className="px-5 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMCQs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-12 text-center text-black text-sm">
+                    No multiple choice questions found.
+                  </td>
+                </tr>
+              ) : (
+                filteredMCQs.map((q) => (
+                  <tr key={q.id} className="group transition-colors">
+                    <td className="px-5 py-3 rounded-l-xl glass-panel-inner transition-colors">
+                      <span className="text-small font-mono uppercase text-black">#{q.id.substring(0, 4)}</span>
+                    </td>
+                    <td className="px-5 py-3 glass-panel-inner border-l-0 transition-colors max-w-[300px] truncate">
+                      <span className="text-body font-medium text-black">{q.text}</span>
+                    </td>
+                    <td className="px-5 py-3 glass-panel-inner border-l-0 transition-colors">
+                      <span className="text-label text-black bg-white/30 px-2 py-1 rounded-md">{q.options.length} Options</span>
+                    </td>
+                    <td className="px-5 py-3 glass-panel-inner border-l-0 transition-colors max-w-[150px] truncate">
+                      <span className="text-body font-mono text-emerald-600">{q.options[q.correctAnswer]}</span>
+                    </td>
+                    <td className="px-5 py-3 rounded-r-xl glass-panel-inner border-l-0 transition-colors text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEditMCQClick(q)}
+                          className="btn-icon"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMCQ(q.id)}
+                          className="btn-icon text-rose-500 hover:text-rose-600"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-black/40 to-transparent pointer-events-none rounded-b-3xl" />
       </div>
     </div>
   );

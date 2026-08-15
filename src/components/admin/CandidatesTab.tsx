@@ -1,5 +1,6 @@
-import { Search, Lock, Unlock, ChevronLeft, ChevronRight, FileDown } from "lucide-react";
 import { DBStudent } from "@/lib/db";
+import { Download, Search, SlidersHorizontal, Lock, Unlock, Clock, ShieldAlert } from "lucide-react";
+import { useMemo } from "react";
 
 type CandidatesTabProps = {
   studentSearch: string;
@@ -12,11 +13,10 @@ type CandidatesTabProps = {
   sortedStudents: DBStudent[];
   paginatedStudents: DBStudent[];
   studentPage: number;
-  setStudentPage: (val: number | ((prev: number) => number)) => void;
+  setStudentPage: (val: number) => void;
   handleExportCSV: () => void;
-  handleToggleLock: (student: DBStudent) => void;
+  handleToggleLock: (email: string, locked: boolean) => Promise<void>;
   setSelectedStudent: (student: DBStudent | null) => void;
-  renderStatusBadge: (status: DBStudent["status"]) => React.ReactNode;
 };
 
 export function CandidatesTab({
@@ -34,122 +34,157 @@ export function CandidatesTab({
   handleExportCSV,
   handleToggleLock,
   setSelectedStudent,
-  renderStatusBadge,
 }: CandidatesTabProps) {
+  const totalPages = Math.ceil(sortedStudents.length / 50);
+
   return (
-    <div className="space-y-6 flex-1 animate-in fade-in duration-300">
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search candidate name or email..."
-            value={studentSearch}
-            onChange={(e) => {
-              setStudentSearch(e.target.value);
-              setStudentPage(1);
-            }}
-            className="w-full pl-9 pr-4 py-2 min-h-[44px] bg-white/70 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-teal-700 focus:bg-white transition-all text-slate-800"
-          />
-        </div>
-
-        <div className="flex gap-2 sm:gap-2.5 w-full sm:w-auto">
-          <select
-            value={studentDeptFilter}
-            onChange={(e) => {
-              setStudentDeptFilter(e.target.value);
-              setStudentPage(1);
-            }}
-            className="px-3 py-2 min-h-[44px] bg-white/70 border border-slate-200 rounded-xl text-xs font-extrabold text-slate-650 focus:outline-none"
-          >
-            <option value="all">All Departments</option>
-            {departments.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={studentStatusFilter}
-            onChange={(e) => {
-              setStudentStatusFilter(e.target.value);
-              setStudentPage(1);
-            }}
-            className="px-3 py-2 min-h-[44px] bg-white/70 border border-slate-200 rounded-xl text-xs font-extrabold text-slate-650 focus:outline-none"
-          >
-            <option value="all">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Qualified">Qualified</option>
-            <option value="Completed">Completed</option>
-            <option value="Eliminated">Eliminated</option>
-            <option value="Disqualified">Disqualified</option>
-          </select>
-
+    <div className="flex flex-col gap-6 w-full h-full animate-in fade-in duration-500">
+      
+      {/* Header & Controls */}
+      <div className="flex flex-col gap-6">
+        <div className="flex justify-between items-end">
+          <div className="flex flex-col">
+            <h2 className="text-display leading-tight">Candidates</h2>
+            <h2 className="text-label mt-2">
+              {sortedStudents.length} Registered
+            </h2>
+          </div>
+          
           <button
             onClick={handleExportCSV}
-            className="p-2.5 min-h-[44px] min-w-[44px] rounded-xl border border-slate-200/50 bg-white/70 hover:bg-white text-slate-600 shadow-sm transition-all flex items-center justify-center"
+            className="btn-primary"
           >
-            <FileDown className="w-4 h-4" />
+            <Download className="w-4 h-4" />
+            Export CSV
           </button>
+        </div>
+
+        {/* Filters Panel */}
+        <div className="glass-panel rounded-full p-2 flex flex-col md:flex-row gap-2 items-center">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
+            <input
+              type="text"
+              placeholder="Search candidate name or ID..."
+              value={studentSearch}
+              onChange={(e) => setStudentSearch(e.target.value)}
+              className="w-full bg-black/[0.03] hover:bg-black/[0.06] focus:bg-black/[0.06] border border-black/[0.04] focus:border-black/[0.08] rounded-full pl-10 pr-4 py-2.5 text-sm text-black placeholder:text-black transition-all outline-none"
+            />
+          </div>
+          
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="relative w-full md:w-48">
+              <select
+                value={studentDeptFilter}
+                onChange={(e) => setStudentDeptFilter(e.target.value)}
+                className="w-full bg-black/[0.03] hover:bg-black/[0.06] border border-black/[0.04] rounded-full px-4 py-2.5 text-sm text-black appearance-none outline-none cursor-pointer"
+              >
+                <option value="all" className="bg-white">All Departments</option>
+                {departments.map((dept) => (
+                  <option key={dept} value={dept} className="bg-white">{dept}</option>
+                ))}
+              </select>
+              <SlidersHorizontal className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black pointer-events-none" />
+            </div>
+
+            <div className="relative w-full md:w-48">
+              <select
+                value={studentStatusFilter}
+                onChange={(e) => setStudentStatusFilter(e.target.value)}
+                className="w-full bg-black/[0.03] hover:bg-black/[0.06] border border-black/[0.04] rounded-full px-4 py-2.5 text-sm text-black appearance-none outline-none cursor-pointer"
+              >
+                <option value="all" className="bg-white">All Statuses</option>
+                <option value="Active" className="bg-white">Active</option>
+                <option value="Qualified" className="bg-white">Qualified</option>
+                <option value="Eliminated" className="bg-white">Eliminated</option>
+                <option value="Completed" className="bg-white">Completed</option>
+              </select>
+              <SlidersHorizontal className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-black pointer-events-none" />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Data Table */}
-      <div className="bg-white/80 border border-white/50 shadow-sm rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+      {/* Main Table */}
+      <div className="glass-panel rounded-3xl flex flex-col flex-1 min-h-0 relative overflow-hidden">
+        <div className="flex-1 overflow-auto scrollbar-hide relative z-10 p-2">
+          <table className="w-full text-left whitespace-nowrap border-separate border-spacing-y-[3px]">
             <thead>
-              <tr className="text-slate-400 font-bold border-b border-slate-100 bg-slate-50/20">
-                <th className="p-4">Name</th>
-                <th className="p-4">Department</th>
-                <th className="p-4">Completed</th>
-                <th className="p-4">Score</th>
-                <th className="p-4">Attempts</th>
-                <th className="p-4">Status</th>
-                <th className="p-4 text-right">Access Controls</th>
+              <tr className="text-label text-black">
+                <th className="px-5 py-4">Candidate</th>
+                <th className="px-5 py-4">Department</th>
+                <th className="px-5 py-4 text-center">Round</th>
+                <th className="px-5 py-4 text-right">Score</th>
+                <th className="px-5 py-4">Status</th>
+                <th className="px-5 py-4">Activity</th>
+                <th className="px-5 py-4 text-center">Risk</th>
+                <th className="px-5 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100/50 text-slate-700 font-bold">
+            <tbody>
               {paginatedStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400">
-                    No records found.
+                  <td colSpan={8} className="px-5 py-12 text-center text-black text-sm">
+                    No candidates found.
                   </td>
                 </tr>
               ) : (
-                paginatedStudents.map((student) => (
-                  <tr
-                    key={student.email}
-                    onClick={() => setSelectedStudent(student)}
-                    className="cursor-pointer hover:bg-slate-50/40 transition-colors"
+                paginatedStudents.map((s) => (
+                  <tr 
+                    key={s.email} 
+                    className="group cursor-pointer transition-colors"
+                    onClick={() => setSelectedStudent(s)}
                   >
-                    <td className="p-4">
-                      <div>
-                        <p className="font-extrabold text-slate-800">{student.name}</p>
-                        <p className="text-[10px] text-slate-400 font-semibold">{student.email}</p>
+                    <td className="px-5 py-3 rounded-l-xl glass-panel-inner bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-full bg-black/[0.02] flex items-center justify-center text-[9px] font-bold text-black shrink-0 border border-black/[0.04]">
+                          {s.name.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-black">{s.name}</span>
+                          <span className="text-[9px] text-black font-mono tracking-widest uppercase">{s.email.split('@')[0]}</span>
+                        </div>
                       </div>
                     </td>
-                    <td className="p-4 font-semibold text-slate-500">{student.department}</td>
-                    <td className="p-4 font-semibold">{student.levelsCompleted} / 3</td>
-                    <td className="p-4 text-teal-800 font-black">{student.score}</td>
-                    <td className="p-4 font-mono font-semibold">{student.attempts}</td>
-                    <td className="p-4">{renderStatusBadge(student.status)}</td>
-                    <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-5 py-3 glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors">
+                      <span className="text-black">{s.department || "—"}</span>
+                    </td>
+                    <td className="px-5 py-3 glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors text-center">
+                      <span className="font-mono text-black">0{s.levelsCompleted + 1}</span>
+                    </td>
+                    <td className="px-5 py-3 glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors text-right">
+                      <span className="font-mono font-bold text-[#6D5DFB]">{s.score}</span>
+                    </td>
+                    <td className="px-5 py-3 glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors">
+                      <StatusBadge status={s.status} locked={s.locked} />
+                    </td>
+                    <td className="px-5 py-3 glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors">
+                      <div className="flex items-center gap-1.5 text-black">
+                        <Clock className="w-3 h-3" />
+                        <span className="text-[10px] tracking-wider uppercase">{getTimeAgo(s.lastActiveTime)}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors text-center">
+                      {s.locked ? (
+                        <ShieldAlert className="w-4 h-4 text-rose-500 mx-auto" />
+                      ) : (
+                        <span className="w-1.5 h-1.5 rounded-full bg-black/[0.06] inline-block"></span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3 rounded-r-xl glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors text-right">
                       <button
-                        onClick={() => handleToggleLock(student)}
-                        className={`px-3 py-1.5 rounded-lg border text-[10px] font-black flex items-center gap-1.5 ml-auto transition-all ${
-                          student.locked
-                            ? "bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500/20"
-                            : "bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleLock(s.email, !s.locked);
+                        }}
+                        className={`p-2 rounded-full transition-colors border ${
+                          s.locked 
+                            ? "bg-rose-500/10 border-rose-500/20 text-rose-400 hover:bg-rose-500/20" 
+                            : "bg-black/[0.02] border-black/[0.06] text-black hover:text-black hover:bg-black/[0.04]"
                         }`}
+                        title={s.locked ? "Unlock Candidate" : "Lock Candidate"}
                       >
-                        {student.locked ? (
-                          <Lock className="w-3 h-3" />
-                        ) : (
-                          <Unlock className="w-3 h-3" />
-                        )}
-                        {student.locked ? "UNLOCK" : "DISQUALIFY"}
+                        {s.locked ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
                       </button>
                     </td>
                   </tr>
@@ -158,33 +193,62 @@ export function CandidatesTab({
             </tbody>
           </table>
         </div>
-
+        
         {/* Pagination */}
-        {sortedStudents.length > 8 && (
-          <div className="p-4 flex justify-between items-center border-t border-slate-100 text-xs font-bold text-slate-500 bg-slate-50/10">
-            <p>
-              Showing {(studentPage - 1) * 8 + 1}-{Math.min(studentPage * 8, sortedStudents.length)}{" "}
-              of {sortedStudents.length} candidates
-            </p>
-            <div className="flex gap-2">
-              <button
-                disabled={studentPage === 1}
-                onClick={() => setStudentPage((prev) => Math.max(1, prev - 1))}
-                className="p-1 rounded border border-slate-200 hover:bg-slate-100 disabled:opacity-40 transition-all"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                disabled={studentPage * 8 >= sortedStudents.length}
-                onClick={() => setStudentPage((prev) => prev + 1)}
-                className="p-1 rounded border border-slate-200 hover:bg-slate-100 disabled:opacity-40 transition-all"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+        <div className="px-6 py-4 border-t border-white/10 bg-white/5 flex items-center justify-between relative z-10 rounded-b-3xl backdrop-blur-md">
+          <span className="text-label">
+            Page {studentPage} of {totalPages || 1}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setStudentPage(Math.max(1, studentPage - 1))}
+              disabled={studentPage === 1}
+              className="btn-secondary py-1.5 px-3 rounded-lg text-xs"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => setStudentPage(Math.min(totalPages, studentPage + 1))}
+              disabled={studentPage === totalPages || totalPages === 0}
+              className="btn-secondary py-1.5 px-3 rounded-lg text-xs"
+            >
+              Next
+            </button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
+}
+
+function StatusBadge({ status, locked }: { status: string, locked?: boolean }) {
+  if (locked) return <span className="status-red">LOCKED</span>;
+  
+  const map: Record<string, string> = {
+    Active: "status-emerald",
+    Qualified: "status-indigo",
+    Completed: "status-gray",
+    Eliminated: "status-amber",
+    Disqualified: "status-red",
+  };
+
+  const className = map[status] || "status-gray";
+
+  return (
+    <span className={className}>
+      {status}
+    </span>
+  );
+}
+
+function getTimeAgo(dateString: string) {
+  if (!dateString) return "Never";
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  return `${Math.floor(diffInSeconds / 86400)}d ago`;
 }

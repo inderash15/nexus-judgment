@@ -1,169 +1,194 @@
-import { Lock, Unlock } from "lucide-react";
+import { X, Lock, Unlock, ShieldAlert, Activity, Award, User, Target } from "lucide-react";
 import { DBStudent } from "@/lib/db";
 import { DataState } from "./types";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useMemo } from "react";
 
 type StudentDrawerProps = {
   selectedStudent: DBStudent;
-  setSelectedStudent: (student: DBStudent | null) => void;
+  setSelectedStudent: (val: DBStudent | null) => void;
   data: DataState;
-  handleToggleLock: (student: DBStudent) => void;
+  handleToggleLock: (id: string, lock: boolean) => Promise<void>;
 };
 
-export function StudentDrawer({
-  selectedStudent,
-  setSelectedStudent,
-  data,
-  handleToggleLock,
-}: StudentDrawerProps) {
+export function StudentDrawer({ selectedStudent, setSelectedStudent, data, handleToggleLock }: StudentDrawerProps) {
+  const studentLogs = useMemo(() => {
+    return [...data.securityLogs]
+      .filter((l) => l.email === selectedStudent.email)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [data.securityLogs, selectedStudent.email]);
+
+  const hasAlerts = studentLogs.some((l) => l.status === "suspicious" || l.status === "failed");
+
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md h-[100dvh] overflow-y-auto bg-[#FCFDFD]/95 backdrop-blur-xl border-l border-slate-200/80 p-6 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-350 text-slate-800">
-        <div className="space-y-6">
-          <div className="flex justify-between items-center border-b border-slate-100 pb-4">
-            <h3 className="font-extrabold text-sm text-slate-400 uppercase tracking-wider">
-              Candidate File
-            </h3>
-            <button
-              onClick={() => setSelectedStudent(null)}
-              className="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-[10px] font-black text-slate-600 transition-all"
-            >
-              ✕ CLOSE
-            </button>
-          </div>
-
-          <div className="space-y-5">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-teal-800 flex items-center justify-center font-bold text-white text-base">
-                {selectedStudent.name.slice(0, 2).toUpperCase()}
-              </div>
-              <div>
-                <h4 className="font-extrabold text-base text-slate-850 leading-tight">
-                  {selectedStudent.name}
-                </h4>
-                <p className="text-xs text-slate-400 font-semibold">{selectedStudent.email}</p>
-              </div>
+    <>
+      <div 
+        className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-40 animate-in fade-in"
+        onClick={() => setSelectedStudent(null)}
+      />
+      <div className="fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white/80 backdrop-blur-[32px] border-l border-white/50 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right-full duration-300">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between p-8 pb-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-[14px] glass-panel-inner flex items-center justify-center text-black font-bold text-lg shadow-sm border border-white/40">
+              {selectedStudent.name.substring(0, 2).toUpperCase()}
             </div>
-
-            <div className="bg-slate-50/50 p-4 border border-slate-150 rounded-2xl grid grid-cols-2 gap-4 text-xs font-bold leading-relaxed">
-              <div>
-                <p className="text-[10px] text-slate-400">Department</p>
-                <p className="text-slate-850">{selectedStudent.department}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-400">Trial Score</p>
-                <p className="text-teal-700 font-black">{selectedStudent.score} pts</p>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Levels Cleared</p>
-                <p className="text-slate-800">{selectedStudent.levelsCompleted} of 3</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-400">Status</p>
-                <p className="text-slate-800">{selectedStudent.status}</p>
-              </div>
-            </div>
-
-            {/* AI Prompt Strength - admin-only review */}
-            {selectedStudent.promptStrength !== undefined && (
-              <div className="bg-slate-50/50 p-4 border border-slate-150 rounded-2xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">
-                      Prompt Strength
-                    </p>
-                    <p className="text-2xl font-black text-slate-850 mt-0.5">
-                      {selectedStudent.promptStrength}
-                      <span className="text-xs text-slate-400 font-bold">/100</span>
-                    </p>
-                  </div>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
-                      (selectedStudent.promptStrength || 0) >= 70
-                        ? "text-emerald-700 border-emerald-500/30 bg-emerald-500/10"
-                        : (selectedStudent.promptStrength || 0) >= 40
-                          ? "text-amber-700 border-amber-500/30 bg-amber-500/10"
-                          : "text-rose-700 border-rose-500/30 bg-rose-500/10"
-                    }`}
-                  >
-                    {(selectedStudent.promptStrength || 0) >= 70
-                      ? "Strong"
-                      : (selectedStudent.promptStrength || 0) >= 40
-                        ? "Moderate"
-                        : "Weak"}
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${
-                      (selectedStudent.promptStrength || 0) >= 70
-                        ? "bg-emerald-500"
-                        : (selectedStudent.promptStrength || 0) >= 40
-                          ? "bg-amber-500"
-                          : "bg-rose-500"
-                    }`}
-                    style={{ width: `${Math.max(0, Math.min(100, selectedStudent.promptStrength || 0))}%` }}
-                  />
-                </div>
-                {selectedStudent.promptTitle && (
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-bold">Given Topic</p>
-                    <p className="text-xs text-slate-700 font-semibold leading-relaxed">
-                      {selectedStudent.promptTitle}
-                    </p>
-                  </div>
-                )}
-                {selectedStudent.promptText && (
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-bold">Submitted Prompt</p>
-                    <p className="text-xs text-slate-600 font-semibold leading-relaxed bg-white/70 border border-slate-100 rounded-xl p-2.5">
-                      {selectedStudent.promptText}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">
-                Candidate Action History
-              </h4>
-              <ScrollArea className="h-56 pr-3">
-                <div className="space-y-2">
-                  {data.securityLogs
-                    .filter((log) => log.email === selectedStudent.email)
-                    .map((log) => (
-                      <div
-                        key={log.id}
-                        className="p-3 border border-slate-100 bg-white/60 rounded-xl text-xs leading-relaxed font-semibold"
-                      >
-                        <div className="flex justify-between items-center text-[9px] text-slate-400 mb-1">
-                          <span>{log.action}</span>
-                          <span className="font-mono">
-                            {new Date(log.timestamp).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <p className="text-slate-600 font-semibold">{log.details}</p>
-                      </div>
-                    ))}
-                </div>
-              </ScrollArea>
+            <div className="flex flex-col">
+              <h2 className="text-h2 leading-none">{selectedStudent.name}</h2>
+              <span className="text-small font-mono tracking-widest uppercase">NXP-{selectedStudent.email.substring(0, 6)}</span>
             </div>
           </div>
+          <button 
+            onClick={() => setSelectedStudent(null)}
+            className="btn-icon"
+          >
+            <X className="w-4 h-4 text-black" />
+          </button>
         </div>
 
-        <button
-          onClick={() => handleToggleLock(selectedStudent)}
-          className={`w-full py-2.5 rounded-xl border text-xs font-black flex items-center justify-center gap-1.5 transition-all ${
-            selectedStudent.locked
-              ? "bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500/20"
-              : "bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200"
-          }`}
-        >
-          {selectedStudent.locked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-          {selectedStudent.locked ? "RELEASE LOCK" : "DISQUALIFY"}
-        </button>
+        <div className="px-8 pb-8 border-b border-black/[0.03] flex items-center gap-2">
+          <StatusBadge status={selectedStudent.status} locked={selectedStudent.locked} />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+          
+          {/* Performance Overview */}
+          <div className="flex flex-col gap-4">
+            <h3 className="text-label flex items-center gap-2">
+              <Activity className="w-3.5 h-3.5" /> Performance
+            </h3>
+            <div className="flex items-center justify-between p-5 rounded-3xl glass-panel-inner">
+              <div className="flex flex-col">
+                <span className="text-metric leading-none">{selectedStudent.score}</span>
+                <span className="text-label mt-2">Overall Score</span>
+              </div>
+              <Award className="w-8 h-8 text-[#6D5DFB]/50" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+               <div className="p-4 rounded-2xl glass-panel-inner flex flex-col justify-between h-24 relative overflow-hidden">
+                 <span className="text-[10px] tracking-widest text-black uppercase relative z-10">Round 01</span>
+                 <span className="text-2xl font-mono text-black relative z-10">{selectedStudent.round1Completed ? "Pass" : "—"}</span>
+                 {selectedStudent.round1Completed && <div className="absolute bottom-0 left-0 w-full h-1 bg-emerald-400/20" />}
+               </div>
+               <div className="p-4 rounded-2xl glass-panel-inner flex flex-col justify-between h-24 relative overflow-hidden">
+                 <span className="text-[10px] tracking-widest text-black uppercase relative z-10">Round 02</span>
+                 <span className="text-2xl font-mono text-black relative z-10">{selectedStudent.status === "Completed" || selectedStudent.status === "Qualified" ? "Pass" : "—"}</span>
+                 {(selectedStudent.status === "Completed" || selectedStudent.status === "Qualified") && <div className="absolute bottom-0 left-0 w-full h-1 bg-[#6D5DFB]/20" />}
+               </div>
+            </div>
+          </div>
+
+          {/* Activity Timeline */}
+          <div className="flex flex-col gap-4">
+             <h3 className="text-label flex items-center gap-2">
+              <Target className="w-3.5 h-3.5" /> Activity
+            </h3>
+            <div className="p-5 rounded-3xl glass-panel-inner flex flex-col gap-4 relative">
+              <div className="absolute left-[31px] top-[30px] bottom-[30px] w-px bg-slate-200" />
+              {/* Mocking timeline visually for the effect */}
+              <TimelineItem time="14:57" title="MCQ submitted" active />
+              <TimelineItem time="14:42" title="Round 02 started" />
+              <TimelineItem time="14:38" title="Puzzle completed" />
+              <TimelineItem time="14:31" title="Started Round 01" />
+            </div>
+          </div>
+
+          {/* Security */}
+          <div className="flex flex-col gap-4">
+             <h3 className="text-[10px] font-medium tracking-widest text-black uppercase flex items-center gap-2">
+              <ShieldAlert className="w-3.5 h-3.5" /> Security
+            </h3>
+            
+            <div className={`p-5 rounded-2xl border ${hasAlerts ? 'bg-rose-500/5 border-rose-500/10' : 'glass-panel-inner'}`}>
+              <div className="flex items-center gap-3 mb-4">
+                 <span className={`w-2.5 h-2.5 rounded-full ${hasAlerts ? 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.8)] animate-pulse' : 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]'}`} />
+                 <span className="text-xs font-semibold text-black uppercase tracking-wide">
+                   {hasAlerts ? 'Suspicious Activity Detected' : 'No Suspicious Activity'}
+                 </span>
+              </div>
+              
+              {hasAlerts && (
+                <div className="flex flex-col gap-3 mt-4 border-t border-black/[0.04] pt-4">
+                  {studentLogs.slice(0, 3).map((l, i) => (
+                    <div key={i} className="flex justify-between items-start">
+                      <div className="flex flex-col">
+                        <span className="text-xs text-rose-400">{l.action}</span>
+                        <span className="text-[10px] text-black font-mono mt-0.5">{new Date(l.timestamp).toLocaleTimeString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-8 pt-4 border-t border-black/[0.03] flex items-center gap-4">
+          <button
+            onClick={() => handleToggleLock(selectedStudent.email, !selectedStudent.locked)}
+            className={`flex-1 py-3.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
+              selectedStudent.locked 
+                ? "bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30" 
+                : "bg-black/[0.02] text-black border border-black/[0.06] hover:bg-black/[0.04]"
+            }`}
+          >
+            {selectedStudent.locked ? (
+              <><Unlock className="w-3.5 h-3.5" /> Unlock Candidate</>
+            ) : (
+              <><Lock className="w-3.5 h-3.5" /> Lock Candidate</>
+            )}
+          </button>
+        </div>
+
+      </div>
+    </>
+  );
+}
+
+function TimelineItem({ time, title, active }: { time: string, title: string, active?: boolean }) {
+  return (
+    <div className="flex items-start gap-4 relative z-10">
+      <div className="w-10 text-right shrink-0 pt-0.5">
+        <span className="text-[10px] font-mono text-black">{time}</span>
+      </div>
+      <div className={`w-2.5 h-2.5 rounded-full mt-1 shrink-0 ${active ? 'bg-[#6D5DFB] shadow-[0_0_8px_rgba(109,93,251,0.5)]' : 'bg-black/[0.06]'}`} />
+      <div className="flex flex-col pb-2">
+        <span className={`text-xs ${active ? 'text-black font-medium' : 'text-black'}`}>{title}</span>
       </div>
     </div>
+  );
+}
+
+function StatusBadge({ status, locked }: { status: string, locked?: boolean }) {
+  if (locked) return <span className="text-[10px] uppercase font-bold tracking-wider text-rose-400 flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-400"></span>LOCKED</span>;
+  
+  const config: Record<string, string> = {
+    Active: "text-emerald-400",
+    Qualified: "text-[#6D5DFB]",
+    Completed: "text-blue-400",
+    Eliminated: "text-amber-400",
+    Disqualified: "text-rose-400",
+  };
+
+  const bgConfig: Record<string, string> = {
+    Active: "bg-emerald-400",
+    Qualified: "bg-[#6D5DFB]",
+    Completed: "bg-blue-400",
+    Eliminated: "bg-amber-400",
+    Disqualified: "bg-rose-400",
+  };
+
+  const color = config[status] || "text-black";
+  const bg = bgConfig[status] || "bg-white/40";
+
+  return (
+    <span className={`text-[10px] uppercase font-bold tracking-wider flex items-center gap-1.5 ${color}`}>
+      <span className={`w-2 h-2 rounded-full ${bg} shadow-[0_0_8px_currentColor]`}></span>
+      {status}
+    </span>
   );
 }

@@ -4,10 +4,15 @@ export { LiveRoomTab } from "./LiveRoomTab";
 export { QuestionsTab } from "./QuestionsTab";
 export { StandingsTab } from "./StandingsTab";
 export { AuditLogsTab } from "./AuditLogsTab";
+
 export { SystemRulesTab } from "./SystemRulesTab";
 export { StudentDrawer } from "./StudentDrawer";
 export { QuestionModal } from "./QuestionModal";
 export { BulkImportModal } from "./BulkImportModal";
 export { MCQTab } from "./MCQTab";
 export { MCQModal } from "./MCQModal";
+export { TopNavigation } from "./TopNavigation";
+export { CommandPalette } from "./CommandPalette";
+export { RiskCenterTab } from "./RiskCenterTab";
+export { AnalyticsTab } from "./AnalyticsTab";
 export type { Tab, DataState, Metrics } from "./types";
