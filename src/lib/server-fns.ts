@@ -1193,176 +1193,106 @@ export const adminUpdateSystemConfig = createServerFn({ method: "POST" }).valida
   }
 });
 
-// Finalize Top 125 Selection
+
+
+// Finalize Top 125 Selection API
 export const finalizeTop125 = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
-  const { verifyAdminSession, getSystemConfig } = await import("./server-helpers.server");
+  const { verifyAdminSession } = await import("./server-helpers.server");
   const auth = await verifyAdminSession();
-  if (!auth) return { success: false, error: "Unauthorized" };
+  if (!auth) return { success: false as const, error: "Unauthorized" };
 
   try {
-    const db = await getDB();
-    const studentsColl = db.collection<any>("students");
-    const config = await getSystemConfig();
-    const shortlistSize = config.shortlistSize || 125;
+    const { performTopNSelection } = await import("./selection.server");
+    const res = await performTopNSelection("admin");
+    
+    // Clear cache so UI updates immediately
+    const { clearCachePrefix } = await import("./server-helpers.server");
+    clearCachePrefix("admin_dashboard");
 
-    // Get all completed students
-    const candidates = await studentsColl.find({ status: "Completed" }).toArray();
+    return res;
+  } catch (err: any) {
+    return { success: false as const, error: err.message };
+  }
+});
 
-    // Sort deterministically:
-    // 1. Total Score (DESC)
-    // 2. Prompt Score (DESC)
-    // 3. MCQ Score (DESC)
-    // 4. Completion Time (ASC)
-    candidates.sort((a, b) => {
-      const scoreDiff = (b.totalScore || 0) - (a.totalScore || 0);
-      if (scoreDiff !== 0) return scoreDiff;
-      
-      const promptDiff = (b.promptScore || 0) - (a.promptScore || 0);
-      if (promptDiff !== 0) return promptDiff;
+async function processEmailBatch(db: any, studentsColl: any, candidates: any[], config: any) {
+  const { sendEmail } = await import("./email");
+  let successCount = 0;
+  let failCount = 0;
 
-      const mcqDiff = (b.mcqScore || 0) - (a.mcqScore || 0);
-      if (mcqDiff !== 0) return mcqDiff;
-
-      const timeA = new Date(a.finalSubmissionTime || 0).getTime();
-      const timeB = new Date(b.finalSubmissionTime || 0).getTime();
-      return timeA - timeB;
+  for (let i = 0; i < candidates.length; i++) {
+    const candidate = candidates[i];
+    
+    const result = await sendEmail({
+      to: candidate.email,
+      subject: "NEXUSPRO — YOU'RE SELECTED | EVENT ENTRY TICKET",
+      candidateName: candidate.name,
+      ticketId: candidate.ticketId,
+      eventDate: config.eventDate || "TBD",
+      eventName: config.eventName || "NexusPro",
+      eventTime: config.eventTime || "TBD",
+      venue: config.venue || "Nexus Headquarters, Main Auditorium",
+      department: candidate.department,
+      className: candidate.className || "",
+      rank: candidate.rank || 0,
+      score: candidate.finalScore || 0,
+      percentage: candidate.finalPercentage || 0,
     });
 
-    const version = new Date().toISOString().replace(/[:.]/g, "-");
-    const snapshotCandidates: any[] = [];
-    let selectedCount = 0;
-
-    for (let i = 0; i < candidates.length; i++) {
-      const candidate = candidates[i];
-      const rank = i + 1;
-      const isSelected = rank <= shortlistSize;
-      
-      const selectionStatus = isSelected ? "SELECTED" : "NOT_SELECTED";
-      const ticketId = isSelected ? `NXP-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}` : "";
-
+    if (result.success) {
+      successCount++;
       await studentsColl.updateOne(
         { email: candidate.email },
         { 
           $set: { 
-            rank, 
-            selectionStatus, 
-            ticketId,
-            selectionVersion: version,
-            emailStatus: isSelected ? "PENDING" : undefined
+            emailStatus: "SENT", 
+            lastEmailAttempt: new Date().toISOString(),
+            emailFailureReason: null
           } 
         }
       );
-
-      if (isSelected) selectedCount++;
-
-      snapshotCandidates.push({
-        email: candidate.email,
-        rank,
-        score: candidate.totalScore || 0,
-        percentage: candidate.finalPercentage || 0,
-        department: candidate.department || "Unknown",
-        selectionStatus,
-        ticketId
-      });
+    } else {
+      failCount++;
+      await studentsColl.updateOne(
+        { email: candidate.email },
+        { 
+          $set: { 
+            emailStatus: "FAILED", 
+            lastEmailAttempt: new Date().toISOString(),
+            emailFailureReason: result.error || "Unknown error"
+          } 
+        }
+      );
     }
 
-    const snapshot = {
-      id: version,
-      timestamp: new Date().toISOString(),
-      adminId: "admin",
-      selectedCount,
-      candidates: snapshotCandidates
-    };
-
-    await db.collection("selectionSnapshots").insertOne(snapshot);
-    await db.collection("securityLogs").insertOne({
-      id: Math.random().toString(36).substring(7),
-      timestamp: new Date().toISOString(),
-      email: "system",
-      action: "TOP_125_SELECTION_FINALIZED",
-      status: "success",
-      details: `Admin finalized selection version ${version}. Selected: ${selectedCount}`
-    });
-
-    return { success: true, version, selectedCount };
-  } catch (err: any) {
-    return { success: false, error: err.message };
+    // Delay between emails to respect rate limits (chunking strategy inside the loop)
+    if (i < candidates.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 200)); // 5 emails per second max
+    }
   }
-});
 
-// Trigger Emails for Selection
-export const sendSelectionEmails = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+  return { successCount, failCount };
+}
+
+// Send Pending Tickets
+export const sendPendingTickets = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
   const { verifyAdminSession, getSystemConfig } = await import("./server-helpers.server");
-  const auth = await verifyAdminSession();
-  if (!auth) return { success: false, error: "Unauthorized" };
+  if (!(await verifyAdminSession())) return { success: false, error: "Unauthorized" };
 
   try {
     const db = await getDB();
     const studentsColl = db.collection<any>("students");
-    const { sendEmail } = await import("./email");
-
-    // Find candidates pending email
+    
+    // Only fetch PENDING or missing emailStatus
     const pendingCandidates = await studentsColl.find({ 
       selectionStatus: "SELECTED", 
-      emailStatus: { $in: ["PENDING", "FAILED"] } 
+      $or: [{ emailStatus: "PENDING" }, { emailStatus: { $exists: false } }]
     }).toArray();
 
-    if (pendingCandidates.length === 0) {
-      return { success: true, message: "No pending emails" };
-    }
+    if (pendingCandidates.length === 0) return { success: true, message: "No pending emails" };
 
     const config = await getSystemConfig();
-    const eventDate = config.eventDate || "TBD";
-
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const candidate of pendingCandidates) {
-      const emailContent = `
-        <h1>Congratulations ${candidate.name}!</h1>
-        <p>You have been officially selected for NexusPro!</p>
-        <ul>
-          <li><strong>Rank:</strong> ${candidate.rank}</li>
-          <li><strong>Score:</strong> ${candidate.totalScore}/25 (${candidate.finalPercentage}%)</li>
-          <li><strong>Department:</strong> ${candidate.department}</li>
-          <li><strong>Ticket ID:</strong> ${candidate.ticketId}</li>
-          <li><strong>Event Date:</strong> ${eventDate}</li>
-        </ul>
-        <p>Please keep this Ticket ID secure. You will need it for entry.</p>
-      `;
-
-      const result = await sendEmail({
-        to: candidate.email,
-        subject: "NEXUSPRO — YOU'RE SELECTED | EVENT ENTRY TICKET",
-        html: emailContent
-      });
-
-      if (result.success) {
-        successCount++;
-        await studentsColl.updateOne(
-          { email: candidate.email },
-          { 
-            $set: { 
-              emailStatus: "SENT", 
-              lastEmailAttempt: new Date().toISOString(),
-              emailFailureReason: null
-            } 
-          }
-        );
-      } else {
-        failCount++;
-        await studentsColl.updateOne(
-          { email: candidate.email },
-          { 
-            $set: { 
-              emailStatus: "FAILED", 
-              lastEmailAttempt: new Date().toISOString(),
-              emailFailureReason: result.error || "Unknown error"
-            } 
-          }
-        );
-      }
-    }
+    const { successCount, failCount } = await processEmailBatch(db, studentsColl, pendingCandidates, config);
 
     await db.collection("securityLogs").insertOne({
       id: Math.random().toString(36).substring(7),
@@ -1370,8 +1300,49 @@ export const sendSelectionEmails = createServerFn({ method: "POST" }).handler(as
       email: "system",
       action: "EMAILS_DISPATCHED",
       status: "success",
-      details: `Admin dispatched selection emails. Success: ${successCount}, Failed: ${failCount}`
+      details: `Admin dispatched pending tickets. Success: ${successCount}, Failed: ${failCount}`
     });
+
+    const { clearCachePrefix } = await import("./server-helpers.server");
+    clearCachePrefix("admin_dashboard");
+
+    return { success: true, successCount, failCount };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Resend Failed Tickets
+export const resendFailedTickets = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+  const { verifyAdminSession, getSystemConfig } = await import("./server-helpers.server");
+  if (!(await verifyAdminSession())) return { success: false, error: "Unauthorized" };
+
+  try {
+    const db = await getDB();
+    const studentsColl = db.collection<any>("students");
+    
+    // Only fetch FAILED
+    const failedCandidates = await studentsColl.find({ 
+      selectionStatus: "SELECTED", 
+      emailStatus: "FAILED" 
+    }).toArray();
+
+    if (failedCandidates.length === 0) return { success: true, message: "No failed emails" };
+
+    const config = await getSystemConfig();
+    const { successCount, failCount } = await processEmailBatch(db, studentsColl, failedCandidates, config);
+
+    await db.collection("securityLogs").insertOne({
+      id: Math.random().toString(36).substring(7),
+      timestamp: new Date().toISOString(),
+      email: "system",
+      action: "EMAILS_RESENT",
+      status: "success",
+      details: `Admin resent failed tickets. Success: ${successCount}, Failed: ${failCount}`
+    });
+
+    const { clearCachePrefix } = await import("./server-helpers.server");
+    clearCachePrefix("admin_dashboard");
 
     return { success: true, successCount, failCount };
   } catch (err: any) {

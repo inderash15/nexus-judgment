@@ -48,6 +48,10 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
+      
+      // Initialize background cron jobs after server entry is ready
+      import("./lib/cron").then((m) => m.initCronJobs()).catch(console.error);
+
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {

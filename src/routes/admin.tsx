@@ -619,7 +619,7 @@ function AdminDashboard() {
 
           {activeTab === "audit" && <AuditLogsTab securityLogs={data.securityLogs} />}
 
-          {activeTab === "selection" && <SelectionTab data={data} config={systemConfig} />}
+          {activeTab === "selection" && <SelectionTab data={data} config={systemConfig} refreshData={refreshData} />}
           {activeTab === "risk" && (
             <RiskCenterTab 
               securityLogs={data.securityLogs} 

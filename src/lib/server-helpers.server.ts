@@ -93,7 +93,7 @@ export async function getSystemConfig(): Promise<SystemConfig> {
     totalMaxScore: 25,
     selectionDeadline: new Date(Date.now() + 86400000).toISOString(),
     eventDate: "TBD",
-    shortlistSize: 125,
+    shortlistSize: 120,
   };
 }
 
