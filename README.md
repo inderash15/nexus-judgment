@@ -1,55 +1,90 @@
-# AI NEXT GEN RESEARCH WORKSHOP 2026
-**Guardian of Shadows — The Shadow Realm Trial**
+# NEXUSPRO
 
-An interactive, highly-secure, cinematic assessment platform designed for candidate evaluation. Candidates participate in a timed, multi-stage assessment consisting of a Multiple-Choice Question (MCQ) round followed by a dynamic Puzzle challenge.
+An interactive, highly-secure, cinematic assessment platform designed for enterprise candidate evaluation and selection.
+
+[![Build Status](https://img.shields.io/badge/build-passing-success)]()
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)]()
+[![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react)]()
+[![TanStack Start](https://img.shields.io/badge/TanStack_Start-1.168-ff4154)]()
+[![Database](https://img.shields.io/badge/MongoDB-7.5-47A248?logo=mongodb)]()
+[![Deployment](https://img.shields.io/badge/Deployment-Vite%20%7C%20Nitro-black)]()
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Feature Matrix](#feature-matrix)
+- [System Architecture](#system-architecture)
+- [Technology Stack](#technology-stack)
+- [Candidate Workflow](#candidate-workflow)
+- [Admin Control Center](#admin-control-center)
+- [Scoring & Selection System](#scoring--selection-system)
+- [Security Architecture](#security-architecture)
+- [Database Architecture](#database-architecture)
+- [Project Structure](#project-structure)
+- [Installation & Development](#installation--development)
+
+---
 
 ## Overview
 
-This project serves as the core evaluation platform for candidates. It features a robust frontend built with modern React and Framer Motion for cinematic animations, and a secure backend powered by TanStack Server Functions and MongoDB. 
+**NexusPro** is an advanced candidate evaluation platform designed to seamlessly integrate secure assessments with a premium, cinematic user experience. Built with React, Framer Motion, and TanStack Start, the platform delivers real-time evaluations across multiple technical and cognitive domains.
 
-The platform strictly enforces the assessment flow, actively guards against API manipulation, tracks all candidate progress via secure sessions, and provides a real-time admin dashboard for managing the trials.
-
----
-
-## Core Features
-
-### Candidate Experience
-* **Secure Registration & Resumption:** Candidates register using official credentials and are issued a unique 6-character Security PIN. This PIN allows them to resume their session dynamically across devices.
-* **MCQ Assessment (Round 1):** A timed multiple-choice questionnaire where validation and scoring are processed entirely server-side to prevent cheating.
-* **Puzzle Challenge (Round 2):** Candidates who pass the MCQ round unlock "The Shadow Realm", a cinematic puzzle trial featuring dynamic word-guessing mechanics and penalty scoring.
-* **Cinematic UI/UX:** Built with Framer Motion, dynamic backgrounds, and text-to-speech guardian voices.
-
-### Admin Experience
-* **Real-time Dashboard:** Track all candidates, scores, and active sessions.
-* **Question Management:** Full CRUD capabilities for managing both MCQ and Puzzle questions.
-* **Security Auditing:** Access to an immutable `securityLogs` ledger tracking failed auth attempts, rate limits, and abnormal candidate behavior.
+Designed for administrators and hiring teams, NexusPro offers a centralized control center to monitor live sessions, manage dynamic question pools, track security logs, and automate the final selection and email notification process for top candidates.
 
 ---
 
-## Assessment Flow
+## Feature Matrix
 
-The system strictly enforces the following state machine for every candidate:
-
-1. **Authentication:** Candidate registers or logs in with their unique PIN.
-2. **MCQ Round:** Candidate receives a dynamically assigned set of MCQ questions.
-3. **MCQ Submission:** Answers are securely transmitted to the server. The server calculates the score.
-4. **Puzzle Unlock:** If the candidate meets the configured passing threshold, the Puzzle Round is unlocked. (If they fail, they are permanently locked out).
-5. **Puzzle Round:** Candidates attempt assigned word puzzles. Incorrect guesses incur penalties and risk elimination.
-6. **Final Result:** Upon successful completion, the system computes the final aggregate score and generates a completion verdict.
+| Area | Feature | Status |
+|------|---------|--------|
+| Candidate | Secure Registration & Resumption | Implemented |
+| Assessment | Multiple-Choice (MCQ) Round | Implemented |
+| Assessment | Puzzle / Word Guessing Challenge | Implemented |
+| Assessment | AI Prompt Strength Evaluation | Implemented |
+| Assessment | Fill-in-the-blank Evaluation | Implemented |
+| Admin | Live Room & Candidate Management | Implemented |
+| Admin | Question Pool Management (MCQ & Puzzle) | Implemented |
+| Admin | Comprehensive Analytics & Dashboards | Implemented |
+| Admin | Security Audit Logging & Risk Center | Implemented |
+| Selection | Automated Ranking & Shortlisting | Implemented |
+| Email | Brevo SMTP Integration for Ticketing | Implemented |
 
 ---
 
 ## System Architecture
 
-The application operates on a full-stack RPC (Remote Procedure Call) model using TanStack Start.
-
 ```mermaid
-flowchart TD
-    A[Candidate Browser] -->|React 19 + Framer Motion| B[TanStack Router]
-    B <-->|Server Functions RPC| C[Backend Engine]
-    C -->|Session Verification| D[Auth / Rate Limiting]
-    C -->|Score Calculation| E[Assessment Engine]
-    C <-->|Mongoose / Driver| F[(MongoDB)]
+flowchart TB
+
+    Candidate["Candidate"]
+    Admin["Administrator"]
+
+    Frontend["NexusPro Web Application"]
+
+    Auth["Authentication & Session Layer"]
+
+    Server["TanStack Start Server Functions (RPC)"]
+
+    DB[("MongoDB Database")]
+
+    Scoring["Scoring & Assessment Engine"]
+
+    Selection["Selection & Ranking System"]
+
+    Brevo["Brevo Email Service"]
+
+    Candidate --> Frontend
+    Admin --> Frontend
+
+    Frontend <--> Auth
+    Frontend <--> Server
+
+    Server <--> DB
+    Server --> Scoring
+    Scoring --> Selection
+    Selection --> Brevo
 ```
 
 ---
@@ -58,13 +93,72 @@ flowchart TD
 
 | Layer | Technology |
 | :--- | :--- |
-| **Frontend Framework** | React 19, TanStack Start (Vite) |
+| **Frontend Framework** | React 19.2 |
+| **Meta Framework** | TanStack Start (Vite) |
 | **Routing** | TanStack Router |
 | **Styling** | Tailwind CSS v4, Radix UI Primitives |
 | **Animations** | Framer Motion |
-| **Backend** | Node.js (TanStack Server Functions) |
+| **Backend Engine** | Node.js (TanStack Server Functions / Nitro) |
 | **Database** | MongoDB |
 | **Language** | TypeScript |
+
+---
+
+## Candidate Workflow
+
+1. **Authentication:** Candidates register or resume their session securely.
+2. **Assessment Phases:**
+   - **MCQ Assessment:** Candidates answer timed multiple-choice questions. Validation and correct answers are strictly processed server-side.
+   - **Puzzle Challenge:** A dynamic word-guessing trial with hints and difficulty levels. Incorrect guesses incur penalties.
+   - **AI Prompt Assessment:** Evaluates prompt construction capabilities.
+   - **Fill-in-the-blank Assessment:** Additional technical evaluation.
+3. **Scoring:** The system computes an aggregate score across all rounds.
+4. **Conclusion:** Candidates who qualify are ranked on the global leaderboard.
+
+---
+
+## Admin Control Center
+
+The Glassmorphic corporate dashboard provides administrators with complete control over the assessment environment:
+
+- **Live Room:** Monitor active candidate sessions, completion times, and statuses in real-time. Lock or disqualify candidates instantly.
+- **Question Management:** Full CRUD capabilities and bulk JSON import for both MCQ and Puzzle question banks.
+- **System Rules:** Configure global settings such as session timeouts, max wrong attempts, passing scores, and time limits dynamically.
+- **Risk Center & Audit Logs:** Review immutable security logs for suspicious activities, failed authentications, and system anomalies.
+
+---
+
+## Scoring & Selection System
+
+NexusPro includes an automated selection pipeline:
+
+1. **Aggregation:** Combines scores from MCQ, Puzzle, Prompt, and Fill-in-the-blank rounds (Max 25 points).
+2. **Ranking:** Candidates are ranked based on total score and completion time.
+3. **Snapshot Generation:** Administrators generate selection snapshots based on a predefined shortlist size.
+4. **Automated Ticketing:** Selected candidates are automatically assigned unique Ticket IDs.
+5. **Email Notification:** The system integrates with the Brevo SMTP API to dispatch formatted HTML selection emails and event instructions to qualified candidates.
+
+---
+
+## Security Architecture
+
+- **Server-Side Validation:** All assessment answers are validated exclusively on the backend. No correct answers are exposed to the client.
+- **Session Management:** Secure token-based authentication for both admins and candidates.
+- **Immutability:** Security events, state transitions, and anomalies are logged to a dedicated `securityLogs` collection.
+- **Action Enforcement:** RPC endpoints rigorously verify candidate state (e.g., locking out users who fail earlier rounds or exceed attempt limits) before processing updates.
+
+---
+
+## Database Architecture
+
+The application relies on MongoDB with optimized collections:
+
+- `students`: Candidate profiles, scores, session states, and selection statuses.
+- `questions`: Puzzle/Word challenge question bank.
+- `mcqQuestions`: Multiple-choice question bank.
+- `securityLogs`: Immutable ledger of security events.
+- `systemConfig`: Global assessment rules and parameters.
+- `adminSessions` / `studentSessions`: Active authentication tokens.
 
 ---
 
@@ -72,143 +166,54 @@ flowchart TD
 
 ```text
 nexus-judgment/
-├── public/                 # Static assets and images
+├── public/                 # Static assets
 ├── src/
-│   ├── components/         # Reusable UI primitives and Radix components
-│   │   ├── game/           # Complex cinematic assessment scenes
-│   │   └── ui/             # Standard UI components
-│   ├── hooks/              # Custom React hooks (e.g., useMCQAssessment)
+│   ├── components/         # Reusable UI, Admin Tabs, and Assessment Views
+│   ├── hooks/              # Custom React hooks
 │   ├── lib/
-│   │   ├── db.ts                   # MongoDB connection logic and schemas
-│   │   ├── server-fns.ts           # Backend RPC endpoints
-│   │   └── server-helpers.server.ts # Backend caching and rate-limiting
-│   ├── routes/             # TanStack file-based routing
-│   ├── router.tsx          # Router configuration
-│   └── styles.css          # Global Tailwind styles
+│   │   ├── db.ts                   # MongoDB schema and connection logic
+│   │   ├── server-fns.ts           # Primary backend RPC endpoints
+│   │   ├── email.ts                # Brevo integration logic
+│   │   ├── selection.server.ts     # Selection and ranking algorithms
+│   │   └── cron.ts                 # Background jobs
+│   ├── routes/             # TanStack file-based routing definitions
+│   ├── router.tsx          # Router initialization
+│   └── styles.css          # Global Tailwind configurations
 ├── package.json
-├── vite.config.ts
-└── README.md
+└── vite.config.ts
 ```
 
 ---
 
-## Installation & Local Development
+## Installation & Development
 
 ### Prerequisites
-* Node.js v20+ or Bun
-* MongoDB instance (local or Atlas)
-* Git
+- Node.js v22+
+- MongoDB instance (local or Atlas)
 
-### Setup
+### Environment Variables
+Create a `.env` file in the root directory:
+```env
+MONGODB_URI=your_mongodb_connection_string
+MONGODB_DB_NAME=nexus_judgment
+ADMIN_PASSWORD=your_secure_admin_password
+BREVO_API_KEY=your_brevo_api_key
+BREVO_SENDER_EMAIL=noreply@nexuspro.com
+```
 
-1. **Clone the repository:**
-   ```bash
-   git clone <your-repository-url>
-   cd nexus-judgment
-   ```
+### Local Setup
 
-2. **Install dependencies:**
+1. **Install dependencies:**
    ```bash
    npm install
-   # or
-   bun install
    ```
 
-3. **Start the development server:**
+2. **Start the development server:**
    ```bash
    npm run dev
-   # or
-   bun run dev
    ```
 
----
-
-## Environment Variables
-
-Create a `.env` file in the root directory.
-
-| Variable | Purpose | Required |
-| :--- | :--- | :--- |
-| `MONGODB_URI` | MongoDB connection string | **Yes** |
-| `MONGODB_DB_NAME` | Database name (defaults to `nexus_judgment`) | No |
-| `ADMIN_PASSWORD` | Secure password for the admin dashboard | **Yes** |
-| `NODE_ENV` | Set to `production` in live environments | No |
-
-*Note: Never commit your `.env` file to version control.*
-
----
-
-## Database Setup
-
-The application uses **MongoDB**. No manual schema initialization is required; the application will automatically create the necessary collections on first run:
-- `students`
-- `questions` (Puzzle)
-- `mcqQuestions` (MCQ)
-- `securityLogs`
-- `adminSessions`
-- `studentSessions`
-- `systemConfig`
-
----
-
-## API Documentation
-
-The backend utilizes **TanStack Server Functions** instead of traditional REST APIs. These RPC functions are located in `src/lib/server-fns.ts` and are called directly by frontend components.
-
-| RPC Function | Purpose | Auth Required |
-| :--- | :--- | :--- |
-| `adminAuthenticate` | Authenticates an admin and provisions a session | No |
-| `adminCheckSession` | Validates an active admin token | Yes (Admin) |
-| `adminGetDashboardData` | Fetches system state, users, and logs | Yes (Admin) |
-| `adminUpdateQuestion` | CRUD operations for Puzzle questions | Yes (Admin) |
-| `adminUpdateMCQQuestion` | CRUD operations for MCQ questions | Yes (Admin) |
-| `registerOrResumeStudent` | Registers a new candidate or resumes via PIN | No |
-| `submitMCQResults` | Securely validates MCQ answers and updates scores | Yes (Candidate) |
-| `submitGuess` | Processes puzzle guesses, applies penalties, and enforces limits | Yes (Candidate) |
-
----
-
-## Security
-
-The platform implements rigorous security constraints suitable for a competitive assessment environment:
-
-* **Session Management:** UUID-based tokens stored via HttpOnly, SameSite strict cookies.
-* **Rate Limiting:** In-memory tracking prevents brute-force login attempts and spamming of the assessment APIs.
-* **Server-Side Validation:** MCQ options are sent to the client, but the correct answers are strictly kept on the server. Scoring happens blindly on the backend.
-* **Flow Enforcement:** Direct API calls to bypass the MCQ round are blocked. The backend enforces `student.mcqCompleted` before allowing any puzzle progression.
-* **Security Logging:** All suspicious actions, incorrect PIN entries, and timeline eliminations are permanently logged in the `securityLogs` collection.
-
----
-
-## Deployment
-
-The project is optimized for deployment via platforms supporting SSR/Vite builds (e.g., Vercel, Render).
-
-1. Set the required Environment Variables in your deployment provider.
-2. Build the application:
+3. **Build for production:**
    ```bash
    npm run build
    ```
-3. The server runs automatically via the configured adapter (e.g., Nitro for Vercel/Node). Ensure `NODE_ENV=production` is set so secure cookies operate correctly over HTTPS.
-
----
-
-## Testing
-
-Automated test coverage is not currently included. All core flows (routing, assessment states, and backend limits) should be manually verified upon structural changes.
-
----
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## License
-
-License information has not yet been specified.
