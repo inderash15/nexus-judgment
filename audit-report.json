@@ -1,0 +1,213 @@
+{
+  "totalScanned": 28,
+  "assets": [
+    {
+      "path": ".wrangler/deploy/config.json",
+      "size": "0.00 MB",
+      "referenced": true,
+      "refs": 13,
+      "duplicates": false
+    },
+    {
+      "path": "components.json",
+      "size": "0.00 MB",
+      "referenced": true,
+      "refs": 18,
+      "duplicates": false
+    },
+    {
+      "path": "public/admin-bg.png",
+      "size": "0.66 MB",
+      "referenced": false,
+      "refs": 0,
+      "duplicates": false
+    },
+    {
+      "path": "public/favicon.ico",
+      "size": "0.52 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": [
+        "public/favicon.ico",
+        "public/favicon.png"
+      ]
+    },
+    {
+      "path": "public/favicon.png",
+      "size": "0.52 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": [
+        "public/favicon.ico",
+        "public/favicon.png"
+      ]
+    },
+    {
+      "path": "public/videos/Ancient_Gothic_shadow_temple_loop_202607231856.mp4",
+      "size": "2.51 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": [
+        "public/videos/Ancient_Gothic_shadow_temple_loop_202607231856.mp4",
+        "src/assets/Ancient_Gothic_shadow_temple_loop_202607231856.mp4"
+      ]
+    },
+    {
+      "path": "public/videos/Cosmic_guardian_with_green_energy_202607222222.mp4",
+      "size": "2.53 MB",
+      "referenced": false,
+      "refs": 0,
+      "duplicates": false
+    },
+    {
+      "path": "public/videos/Doctor_Doom_introduces_futuristi…_202607271217.mp4",
+      "size": "2.33 MB",
+      "referenced": false,
+      "refs": 0,
+      "duplicates": false
+    },
+    {
+      "path": "public/videos/final blured intro.mp4",
+      "size": "14.67 MB",
+      "referenced": false,
+      "refs": 0,
+      "duplicates": false
+    },
+    {
+      "path": "public/videos/final.mp4",
+      "size": "26.74 MB",
+      "referenced": true,
+      "refs": 17,
+      "duplicates": false
+    },
+    {
+      "path": "public/warrior-bg.jpg",
+      "size": "0.64 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/0724 (1).mp4",
+      "size": "0.38 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/Ancient_Gothic_shadow_temple_loop_202607231856.mp4",
+      "size": "2.51 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": [
+        "public/videos/Ancient_Gothic_shadow_temple_loop_202607231856.mp4",
+        "src/assets/Ancient_Gothic_shadow_temple_loop_202607231856.mp4"
+      ]
+    },
+    {
+      "path": "src/assets/Ancient_Gothic_shadow_temple_loop_202607231856_1_apo8_prob4.mp4",
+      "size": "27.91 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/background.png",
+      "size": "0.47 MB",
+      "referenced": true,
+      "refs": 30,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/candidates-battlefield.png",
+      "size": "0.78 MB",
+      "referenced": false,
+      "refs": 0,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/chamber-bg.jpg",
+      "size": "0.31 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/dean.jpeg",
+      "size": "0.11 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/full logo.png",
+      "size": "0.65 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/guardian-hero.png",
+      "size": "1.69 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/guardian.png",
+      "size": "0.47 MB",
+      "referenced": true,
+      "refs": 7,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/images.png",
+      "size": "0.20 MB",
+      "referenced": true,
+      "refs": 3,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/inderash.jpeg",
+      "size": "0.04 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/jeeththentar.jpeg",
+      "size": "0.08 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/Lavanya.jpg",
+      "size": "0.30 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/manoj.jpeg",
+      "size": "0.22 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/pricipal.jpeg",
+      "size": "0.03 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    },
+    {
+      "path": "src/assets/pughal.jpeg",
+      "size": "0.03 MB",
+      "referenced": true,
+      "refs": 1,
+      "duplicates": false
+    }
+  ]
+}
