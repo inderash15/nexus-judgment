@@ -84,6 +84,16 @@ export async function getSystemConfig(): Promise<SystemConfig> {
     round2PassingScore: 60,
     round1TimeLimit: 300,
     round2TimeLimit: 600,
+    mcqCount: 1,
+    promptCount: 1,
+    fillupCount: 1,
+    mcqMaxScore: 5,
+    promptMaxScore: 15,
+    fillupMaxScore: 5,
+    totalMaxScore: 25,
+    selectionDeadline: new Date(Date.now() + 86400000).toISOString(),
+    eventDate: "TBD",
+    shortlistSize: 125,
   };
 }
 

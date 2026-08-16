@@ -1,4 +1,5 @@
 import { DBStudent } from "@/lib/db";
+import { getCandidateScore } from "@/lib/utils";
 
 type StandingsTabProps = {
   students: DBStudent[];
@@ -28,7 +29,7 @@ export function StandingsTab({ students }: StandingsTabProps) {
                 </tr>
               ) : (
                 students
-                  .sort((a, b) => b.score - a.score)
+                  .sort((a, b) => getCandidateScore(b) - getCandidateScore(a))
                   .map((student, idx) => (
                     <tr key={student.email} className="hover:bg-slate-50/40 transition-colors">
                       <td className="p-4 font-black text-black">#{idx + 1}</td>
@@ -48,7 +49,7 @@ export function StandingsTab({ students }: StandingsTabProps) {
                         %
                       </td>
                       <td className="p-4 text-right text-teal-800 font-black">
-                        {student.score} pts
+                        {getCandidateScore(student)} pts
                       </td>
                     </tr>
                   ))

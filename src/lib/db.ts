@@ -66,19 +66,25 @@ export type DBStudent = {
   round1Qualified?: boolean;
   round1CompletionTime?: string | null;
 
-  // Round 2 (MCQ Assessment)
-  assignedMCQs?: string[]; // Array of exactly 2 assigned MCQ IDs (Q1 and Q3 of the trial)
+  // Round 1 (MCQ Assessment)
+  assignedMCQs?: string[]; // Array of exactly 1 assigned MCQ ID
   mcqCompleted?: boolean;
-  mcqScore?: number;
+  mcqScore?: number; // max 5
   mcqPercentage?: number;
-  mcqAnswers?: Record<string, number | string>; // option index for MCQs, prompt text for Q2
+  mcqAnswers?: Record<string, number | string>; // option index for MCQs
   mcqTimeTaken?: number;
   mcqCompletionTime?: string | null;
 
-  // AI Prompt Strength (Question 2 of the trial) - visible to admin, and to the user on results page
+  // AI Prompt Strength (Prompt Assessment)
   promptTitle?: string;
   promptText?: string;
-  promptStrength?: number;
+  promptScore?: number; // max 15
+
+  // Fill in the Blank Assessment
+  fillupScore?: number; // max 5
+
+  // Total Score (MCQ + Prompt + Fillup = max 25)
+  totalScore?: number;
 
   // Final Results & Selection
   finalScore?: number;
@@ -86,6 +92,30 @@ export type DBStudent = {
   rank?: number;
   workshopSelected?: boolean;
   finalSubmissionTime?: string | null;
+
+  // Top 125 Selection & Email state
+  selectionStatus?: "PENDING" | "SELECTED" | "NOT_SELECTED" | "DISQUALIFIED";
+  ticketId?: string;
+  emailStatus?: "PENDING" | "SENT" | "FAILED";
+  lastEmailAttempt?: string;
+  emailFailureReason?: string;
+  selectionVersion?: string;
+};
+
+export type SelectionSnapshot = {
+  id: string; // unique snapshot ID / version
+  timestamp: string;
+  adminId: string;
+  selectedCount: number;
+  candidates: {
+    email: string;
+    rank: number;
+    score: number;
+    percentage: number;
+    department: string;
+    selectionStatus: string;
+    ticketId: string;
+  }[];
 };
 
 export type SecurityLog = {
@@ -106,6 +136,18 @@ export type SystemConfig = {
   round2PassingScore: number;
   round1TimeLimit: number;
   round2TimeLimit: number;
+  // Assessment Configuration
+  mcqCount: number;
+  promptCount: number;
+  fillupCount: number;
+  mcqMaxScore: number;
+  promptMaxScore: number;
+  fillupMaxScore: number;
+  totalMaxScore: number;
+  // Selection Configuration
+  selectionDeadline: string | null;
+  eventDate: string | null;
+  shortlistSize: number;
 };
 
 const DEFAULT_QUESTIONS: DBQuestion[] = [
@@ -437,6 +479,16 @@ async function initializeDB(client: MongoClient): Promise<Db> {
       round2PassingScore: 60,
       round1TimeLimit: 300,
       round2TimeLimit: 600,
+      mcqCount: 1,
+      promptCount: 1,
+      fillupCount: 1,
+      mcqMaxScore: 5,
+      promptMaxScore: 15,
+      fillupMaxScore: 5,
+      totalMaxScore: 25,
+      selectionDeadline: null,
+      eventDate: null,
+      shortlistSize: 125,
     });
   }
 

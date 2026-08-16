@@ -1,5 +1,6 @@
 import { DBStudent } from "@/lib/db";
 import { Clock, ShieldAlert, Zap, Radio } from "lucide-react";
+import { getCandidateScore } from "@/lib/utils";
 
 type LiveRoomTabProps = {
   students: DBStudent[];
@@ -64,7 +65,7 @@ export function LiveRoomTab({ students, handleToggleLock }: LiveRoomTabProps) {
                       <span className="text-body font-mono text-black">0{s.levelsCompleted + 1}</span>
                     </td>
                     <td className="px-4 py-3 glass-panel-inner border-l-0 text-right transition-colors">
-                      <span className="text-body font-mono text-[#6D5DFB] font-bold">{s.score}</span>
+                      <span className="text-body font-mono text-[#6D5DFB] font-bold">{getCandidateScore(s)}</span>
                     </td>
                     <td className="px-4 py-3 glass-panel-inner border-l-0 transition-colors">
                       <div className="flex flex-col items-start gap-1">

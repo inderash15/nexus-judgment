@@ -9,6 +9,7 @@ import { Award, Target, Rocket, Gift } from "lucide-react";
 
 import principalImg from "@/assets/pricipal.jpeg";
 import deanImg from "@/assets/dean.jpeg";
+import lavanyaImg from "@/assets/Lavanya.jpg";
 import jeeththentarImg from "@/assets/jeeththentar.jpeg";
 
 const RESOURCE_PERSONS: ResourcePerson[] = [
@@ -33,12 +34,18 @@ const RESOURCE_PERSONS: ResourcePerson[] = [
     photoUrl: deanImg,
   },
   {
+    name: "Dr. S.R.Lavanya",
+    designation: "Associate Professor",
+    company: "Department of Artificial Intelligence and Machine Learning",
+    specialization: "",
+    photoUrl: lavanyaImg,
+  },
+  {
     name: "Jeeththenthar LA",
     designation: "AI Engineer",
     company: "KovanLabs",
     specialization: "AI Engineer and SaaS product builder with 3 years of experience, passionate about building practical AI solutions.",
     photoUrl: jeeththentarImg,
-    inlineExpansion: true,
     details: [
       "Creator of AnalyzeDB, LearnVisually & PromptPilot.",
       "Passionate about practical AI solutions.",
@@ -276,7 +283,7 @@ export function MissionDossierScene({
                 {/* Card 5 — Resource Persons */}
                 {revealedCards.includes(4) && (
                   <DossierCard title="Resource Persons">
-                    <div className={RESOURCE_PERSONS.length === 1 ? "flex justify-center" : "grid grid-cols-1 sm:grid-cols-2 gap-3"}>
+                    <div className={RESOURCE_PERSONS.length === 1 ? "flex justify-center" : "grid grid-cols-1 sm:grid-cols-2 gap-3 items-start"}>
                       {RESOURCE_PERSONS.map((p, i) => {
                         const isLastOdd = RESOURCE_PERSONS.length % 2 !== 0 && i === RESOURCE_PERSONS.length - 1;
                         return (

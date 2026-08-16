@@ -1,6 +1,7 @@
 import { DBStudent } from "@/lib/db";
-import { Metrics } from "./types";
+import { Metrics, DataState } from "./types";
 import { useMemo } from "react";
+import { getCandidateScore } from "@/lib/utils";
 import {
   AreaChart,
   Area,
@@ -18,6 +19,7 @@ import { ArrowRight, ChevronRight } from "lucide-react";
 type AnalyticsTabProps = {
   students: DBStudent[];
   metrics: Metrics;
+  data: DataState;
 };
 
 // SVG Circular Progress
@@ -50,7 +52,7 @@ function CircularProgress({ value, label, color }: { value: number; label: strin
   );
 }
 
-export function AnalyticsTab({ students, metrics }: AnalyticsTabProps) {
+export function AnalyticsTab({ students, metrics, data }: AnalyticsTabProps) {
   const funnel = useMemo(() => {
     const total = students.length || 1;
     const started = students.filter(s => s.levelsCompleted > 0 || s.round1Completed).length;
@@ -66,14 +68,59 @@ export function AnalyticsTab({ students, metrics }: AnalyticsTabProps) {
   }, [students]);
 
   const timelineData = useMemo(() => {
-    return [
-      { time: '10:00', score: 45 },
-      { time: '11:00', score: 55 },
-      { time: '12:00', score: 62 },
-      { time: '13:00', score: Math.round((metrics.avgScore || 0) * 0.8) },
-      { time: '14:00', score: metrics.avgScore || 0 },
-    ];
-  }, [metrics.avgScore]);
+    if (students.length === 0) return [];
+    
+    // Sort students by loginTime ascending
+    const sorted = [...students].filter(s => s.loginTime).sort((a, b) => new Date(a.loginTime).getTime() - new Date(b.loginTime).getTime());
+    if (sorted.length === 0) return [];
+    
+    const points = [];
+    const chunks = 5;
+    const chunkSize = Math.max(1, Math.ceil(sorted.length / chunks));
+    
+    let cumulativeScore = 0;
+    let count = 0;
+    
+    for (let i = 0; i < sorted.length; i += chunkSize) {
+      const chunk = sorted.slice(i, i + chunkSize);
+      cumulativeScore += chunk.reduce((sum, s) => sum + getCandidateScore(s), 0);
+      count += chunk.length;
+      
+      const avgScore = cumulativeScore / count;
+      const date = new Date(chunk[chunk.length - 1].loginTime);
+      points.push({
+        time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`,
+        score: Math.round(avgScore)
+      });
+    }
+    
+    // If we have fewer than 2 points, it won't draw an area well, so pad it
+    if (points.length === 1) {
+      points.unshift({ time: "Start", score: 0 });
+    }
+    
+    return points;
+  }, [students]);
+
+  const circularMetrics = useMemo(() => {
+    const total = students.length || 1;
+    const passedR1 = students.filter(s => s.round1Completed).length;
+    const passedR2 = students.filter(s => s.mcqCompleted).length;
+    const qualified = students.filter(s => s.status === "Qualified" || s.status === "Completed").length;
+    
+    // System Health: 100% minus percentage of recent errors/suspicious activities
+    const recentLogs = data.securityLogs.slice(0, 50);
+    const issueLogs = recentLogs.filter(log => log.status === "failed" || log.status === "suspicious").length;
+    const healthDrop = recentLogs.length > 0 ? (issueLogs / recentLogs.length) * 100 : 0;
+    const systemHealth = Math.max(0, Math.round(100 - healthDrop));
+
+    return {
+      r1Completion: Math.round((passedR1 / total) * 100),
+      r2Completion: Math.round((passedR2 / total) * 100),
+      qualificationRate: Math.round((qualified / total) * 100),
+      systemHealth
+    };
+  }, [students, data.securityLogs]);
 
   const distributionData = useMemo(() => {
     const ranges = [
@@ -84,7 +131,7 @@ export function AnalyticsTab({ students, metrics }: AnalyticsTabProps) {
       { name: "81-100", count: 0 },
     ];
     students.forEach(s => {
-      const p = s.score;
+      const p = getCandidateScore(s);
       if (p <= 20) ranges[0].count++;
       else if (p <= 40) ranges[1].count++;
       else if (p <= 60) ranges[2].count++;
@@ -142,17 +189,17 @@ export function AnalyticsTab({ students, metrics }: AnalyticsTabProps) {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="glass-panel rounded-3xl p-6 flex items-center justify-center">
-              <CircularProgress value={78} label="R1 Completion" color="#6D5DFB" />
+            <div className="pastel-yellow rounded-3xl p-6 flex items-center justify-center">
+              <CircularProgress value={circularMetrics.r1Completion} label="R1 Completion" color="#6D5DFB" />
             </div>
-            <div className="glass-panel rounded-3xl p-6 flex items-center justify-center">
-              <CircularProgress value={64} label="R2 Completion" color="#f59e0b" />
+            <div className="pastel-pink rounded-3xl p-6 flex items-center justify-center">
+              <CircularProgress value={circularMetrics.r2Completion} label="R2 Completion" color="#f59e0b" />
             </div>
-            <div className="glass-panel rounded-3xl p-6 flex items-center justify-center">
-              <CircularProgress value={42} label="Qualification Rate" color="#10b981" />
+            <div className="pastel-green rounded-3xl p-6 flex items-center justify-center">
+              <CircularProgress value={circularMetrics.qualificationRate} label="Qualification Rate" color="#10b981" />
             </div>
-            <div className="glass-panel rounded-3xl p-6 flex items-center justify-center">
-              <CircularProgress value={99} label="System Health" color="#94a3b8" />
+            <div className="pastel-blue rounded-3xl p-6 flex items-center justify-center">
+              <CircularProgress value={circularMetrics.systemHealth} label="System Health" color="#94a3b8" />
             </div>
           </div>
         </div>

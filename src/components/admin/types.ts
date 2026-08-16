@@ -1,6 +1,6 @@
 import { DBStudent, DBQuestion, SecurityLog, DBMCQQuestion } from "@/lib/db";
 
-export type Tab = "overview" | "students" | "live" | "questions" | "mcq" | "leaderboard" | "audit" | "settings" | "analytics" | "risk";
+export type Tab = "overview" | "students" | "live" | "questions" | "mcq" | "leaderboard" | "audit" | "settings" | "analytics" | "risk" | "selection";
 
 export type DataState = {
   students: DBStudent[];

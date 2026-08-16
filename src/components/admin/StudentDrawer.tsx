@@ -2,6 +2,7 @@ import { X, Lock, Unlock, ShieldAlert, Activity, Award, User, Target } from "luc
 import { DBStudent } from "@/lib/db";
 import { DataState } from "./types";
 import { useMemo } from "react";
+import { getCandidateScore } from "@/lib/utils";
 
 type StudentDrawerProps = {
   selectedStudent: DBStudent;
@@ -60,23 +61,42 @@ export function StudentDrawer({ selectedStudent, setSelectedStudent, data, handl
             </h3>
             <div className="flex items-center justify-between p-5 rounded-3xl glass-panel-inner">
               <div className="flex flex-col">
-                <span className="text-metric leading-none">{selectedStudent.score}</span>
-                <span className="text-label mt-2">Overall Score</span>
+                <span className="text-metric leading-none">{getCandidateScore(selectedStudent)} <span className="text-2xl text-black/40">/ 25</span></span>
+                <span className="text-label mt-2">Overall Score ({selectedStudent.finalPercentage || 0}%)</span>
               </div>
               <Award className="w-8 h-8 text-[#6D5DFB]/50" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-               <div className="p-4 rounded-2xl glass-panel-inner flex flex-col justify-between h-24 relative overflow-hidden">
-                 <span className="text-[10px] tracking-widest text-black uppercase relative z-10">Round 01</span>
-                 <span className="text-2xl font-mono text-black relative z-10">{selectedStudent.round1Completed ? "Pass" : "—"}</span>
-                 {selectedStudent.round1Completed && <div className="absolute bottom-0 left-0 w-full h-1 bg-emerald-400/20" />}
-               </div>
-               <div className="p-4 rounded-2xl glass-panel-inner flex flex-col justify-between h-24 relative overflow-hidden">
-                 <span className="text-[10px] tracking-widest text-black uppercase relative z-10">Round 02</span>
-                 <span className="text-2xl font-mono text-black relative z-10">{selectedStudent.status === "Completed" || selectedStudent.status === "Qualified" ? "Pass" : "—"}</span>
-                 {(selectedStudent.status === "Completed" || selectedStudent.status === "Qualified") && <div className="absolute bottom-0 left-0 w-full h-1 bg-[#6D5DFB]/20" />}
-               </div>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span>MCQ</span>
+                  <span>{selectedStudent.mcqScore || 0} / 5</span>
+                </div>
+                <div className="h-2 w-full bg-black/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#6D5DFB]" style={{ width: `${((selectedStudent.mcqScore || 0) / 5) * 100}%` }} />
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span>Prompt</span>
+                  <span>{selectedStudent.promptScore || 0} / 15</span>
+                </div>
+                <div className="h-2 w-full bg-black/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#6D5DFB]" style={{ width: `${((selectedStudent.promptScore || 0) / 15) * 100}%` }} />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span>Fill-up</span>
+                  <span>{selectedStudent.fillupScore || 0} / 5</span>
+                </div>
+                <div className="h-2 w-full bg-black/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#6D5DFB]" style={{ width: `${((selectedStudent.fillupScore || 0) / 5) * 100}%` }} />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -87,11 +107,8 @@ export function StudentDrawer({ selectedStudent, setSelectedStudent, data, handl
             </h3>
             <div className="p-5 rounded-3xl glass-panel-inner flex flex-col gap-4 relative">
               <div className="absolute left-[31px] top-[30px] bottom-[30px] w-px bg-slate-200" />
-              {/* Mocking timeline visually for the effect */}
-              <TimelineItem time="14:57" title="MCQ submitted" active />
-              <TimelineItem time="14:42" title="Round 02 started" />
-              <TimelineItem time="14:38" title="Puzzle completed" />
-              <TimelineItem time="14:31" title="Started Round 01" />
+              <TimelineItem time={new Date(selectedStudent.finalSubmissionTime || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} title="Assessment Completed" active />
+              <TimelineItem time={new Date(selectedStudent.loginTime || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} title="Candidate logged in" />
             </div>
           </div>
 

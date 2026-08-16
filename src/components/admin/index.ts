@@ -15,4 +15,5 @@ export { TopNavigation } from "./TopNavigation";
 export { CommandPalette } from "./CommandPalette";
 export { RiskCenterTab } from "./RiskCenterTab";
 export { AnalyticsTab } from "./AnalyticsTab";
+export { SelectionTab } from "./SelectionTab";
 export type { Tab, DataState, Metrics } from "./types";

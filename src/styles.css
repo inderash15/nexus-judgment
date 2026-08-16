@@ -222,14 +222,14 @@
 
 @layer utilities {
   /* Typography System */
-  .text-display { @apply text-4xl md:text-5xl font-semibold tracking-tight text-black leading-none; }
-  .text-h1 { @apply text-3xl font-medium tracking-tight text-black leading-tight; }
-  .text-h2 { @apply text-2xl font-medium tracking-tight text-black; }
-  .text-h3 { @apply text-lg font-medium tracking-tight text-black; }
-  .text-metric { @apply text-4xl font-semibold tracking-tight text-black; }
-  .text-label { @apply text-[11px] font-semibold tracking-wider text-black uppercase; }
-  .text-body { @apply text-[14px] text-black font-normal; }
-  .text-small { @apply text-[12px] text-black font-medium; }
+  .text-display { @apply text-4xl md:text-5xl font-semibold tracking-tight text-slate-900 leading-none; }
+  .text-h1 { @apply text-3xl font-medium tracking-tight text-slate-900 leading-tight; }
+  .text-h2 { @apply text-2xl font-medium tracking-tight text-slate-900; }
+  .text-h3 { @apply text-lg font-medium tracking-tight text-slate-800; }
+  .text-metric { @apply text-4xl font-semibold tracking-tight text-slate-900; }
+  .text-label { @apply text-[11px] font-semibold tracking-wider text-slate-600 uppercase; }
+  .text-body { @apply text-[14px] text-slate-700 font-normal; }
+  .text-small { @apply text-[12px] text-slate-700 font-medium; }
 
   /* Button System */
   .btn-primary { @apply flex items-center justify-center gap-2 bg-[#6D5DFB] hover:bg-[#5b4df2] text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-md; }
@@ -244,16 +244,21 @@
   .status-gray { @apply bg-slate-500/10 text-slate-600 border border-slate-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase; }
 
   .glass-shell {
-    @apply bg-white/[0.28] backdrop-blur-[24px] backdrop-saturate-[1.4] border border-white/[0.28] shadow-[0_30px_100px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.5)];
+    @apply bg-transparent;
   }
   
   .glass-panel {
-    @apply bg-white/[0.20] backdrop-blur-[18px] border border-white/[0.22] shadow-[inset_0_1px_0_rgba(255,255,255,0.3)];
+    @apply bg-white border border-slate-100 shadow-sm rounded-3xl;
   }
 
   .glass-panel-inner {
-    @apply bg-white/[0.16] border border-white/[0.18];
+    @apply bg-slate-50 border border-slate-100 rounded-2xl;
   }
+  
+  .pastel-yellow { @apply bg-[#F4DF77] border-none shadow-sm; }
+  .pastel-pink { @apply bg-[#F1B3D5] border-none shadow-sm; }
+  .pastel-green { @apply bg-[#9FBA76] border-none shadow-sm; }
+  .pastel-blue { @apply bg-[#87A8CC] border-none shadow-sm; }
   
   .spatial-bg {
     background-color: #0A0A0C;

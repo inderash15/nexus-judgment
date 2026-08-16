@@ -1,6 +1,8 @@
 import { DBStudent } from "@/lib/db";
 import { Download, Search, SlidersHorizontal, Lock, Unlock, Clock, ShieldAlert } from "lucide-react";
 import { useMemo } from "react";
+import { getCandidateScore } from "@/lib/utils";
+
 
 type CandidatesTabProps = {
   studentSearch: string;
@@ -113,7 +115,7 @@ export function CandidatesTab({
               <tr className="text-label text-black">
                 <th className="px-5 py-4">Candidate</th>
                 <th className="px-5 py-4">Department</th>
-                <th className="px-5 py-4 text-center">Round</th>
+                <th className="px-5 py-4 text-center">Selection</th>
                 <th className="px-5 py-4 text-right">Score</th>
                 <th className="px-5 py-4">Status</th>
                 <th className="px-5 py-4">Activity</th>
@@ -150,10 +152,18 @@ export function CandidatesTab({
                       <span className="text-black">{s.department || "—"}</span>
                     </td>
                     <td className="px-5 py-3 glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors text-center">
-                      <span className="font-mono text-black">0{s.levelsCompleted + 1}</span>
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+                        ${s.selectionStatus === 'SELECTED' ? 'bg-emerald-100 text-emerald-700' : 
+                          s.selectionStatus === 'NOT_SELECTED' ? 'bg-rose-100 text-rose-700' : 
+                          'bg-amber-100 text-amber-700'}`}>
+                        {s.selectionStatus || 'PENDING'}
+                      </span>
                     </td>
                     <td className="px-5 py-3 glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors text-right">
-                      <span className="font-mono font-bold text-[#6D5DFB]">{s.score}</span>
+                      <div className="flex flex-col items-end">
+                        <span className="font-mono font-bold text-[#6D5DFB]">{getCandidateScore(s)} / 25</span>
+                        <span className="text-[10px] text-slate-400">{s.finalPercentage || 0}%</span>
+                      </div>
                     </td>
                     <td className="px-5 py-3 glass-panel-inner border-l-0 bg-black/[0.02] group-hover:bg-black/[0.04] transition-colors">
                       <StatusBadge status={s.status} locked={s.locked} />

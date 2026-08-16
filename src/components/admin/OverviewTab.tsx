@@ -1,6 +1,7 @@
 import { Activity, Radio, AlertCircle } from "lucide-react";
 import { Metrics, DataState, Tab } from "./types";
 import { useMemo } from "react";
+import { getCandidateScore } from "@/lib/utils";
 
 type OverviewTabProps = {
   metrics: Metrics;
@@ -19,6 +20,18 @@ export function OverviewTab({ metrics, data, setActiveTab }: OverviewTabProps) {
       .filter(s => s.status === "Active" || s.status === "Eliminated" || s.status === "Completed")
       .sort((a, b) => new Date(b.lastActiveTime).getTime() - new Date(a.lastActiveTime).getTime())
       .slice(0, 6);
+  }, [data.students]);
+
+  const distributionBins = useMemo(() => {
+    const bins = Array(10).fill(0);
+    if (data.students.length === 0) return Array(10).fill(0);
+    data.students.forEach(s => {
+      const p = Math.min(100, Math.max(0, getCandidateScore(s)));
+      const binIdx = Math.min(9, Math.floor(p / 10));
+      bins[binIdx]++;
+    });
+    const maxCount = Math.max(...bins, 1);
+    return bins.map(count => (count / maxCount) * 100);
   }, [data.students]);
 
   return (
@@ -46,7 +59,7 @@ export function OverviewTab({ metrics, data, setActiveTab }: OverviewTabProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Analytics Panel */}
-        <div className="lg:col-span-2 glass-panel rounded-3xl p-6 relative overflow-hidden flex flex-col min-h-[400px]">
+        <div className="lg:col-span-2 pastel-blue rounded-[2rem] p-6 relative overflow-hidden flex flex-col min-h-[400px]">
           <div className="flex justify-between items-start mb-8 relative z-10">
             <h3 className="text-sm font-medium tracking-widest text-black uppercase">System Performance</h3>
             <button onClick={() => setActiveTab("analytics")} className="w-8 h-8 rounded-full bg-black/[0.02] flex items-center justify-center hover:bg-black/[0.04] transition-colors">
@@ -54,12 +67,12 @@ export function OverviewTab({ metrics, data, setActiveTab }: OverviewTabProps) {
             </button>
           </div>
           
-          <div className="flex-1 flex items-end justify-between gap-2 relative z-10">
-            {/* Fake Abstract Chart representation for visual design since recharts comes in AnalyticsTab */}
-            {[40, 25, 60, 45, 80, 55, 90, 70, 100, 85].map((h, i) => (
-              <div key={i} className="w-full bg-white/[0.03] rounded-t-sm relative group overflow-hidden" style={{ height: `${h}%` }}>
-                <div className="absolute bottom-0 w-full bg-[#6D5DFB]/20" style={{ height: `${h}%` }} />
-                <div className="absolute top-0 w-full h-px bg-[#6D5DFB]/40" />
+          <div className="flex-1 flex items-end justify-between gap-2 relative z-10 h-full">
+            {distributionBins.map((h, i) => (
+              <div key={i} className="w-full bg-white/[0.03] rounded-t-sm relative group overflow-hidden h-full flex items-end">
+                <div className="w-full bg-[#6D5DFB]/20 transition-all duration-700 ease-out relative" style={{ height: `${Math.max(1, h)}%` }}>
+                  <div className="absolute top-0 w-full h-px bg-[#6D5DFB]/60 shadow-[0_0_8px_rgba(109,93,251,0.8)]" />
+                </div>
               </div>
             ))}
           </div>
@@ -67,7 +80,7 @@ export function OverviewTab({ metrics, data, setActiveTab }: OverviewTabProps) {
         </div>
 
         {/* Live Sessions Panel */}
-        <div className="glass-panel rounded-3xl p-6 flex flex-col min-h-[400px]">
+        <div className="pastel-pink rounded-[2rem] p-6 flex flex-col min-h-[400px]">
           <div className="flex justify-between items-start mb-6">
             <h3 className="text-sm font-medium tracking-widest text-black uppercase">Live Sessions</h3>
             <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-full uppercase tracking-wider">
@@ -88,7 +101,7 @@ export function OverviewTab({ metrics, data, setActiveTab }: OverviewTabProps) {
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="text-sm font-mono text-black">{s.score}</span>
+                  <span className="text-sm font-mono text-black">{getCandidateScore(s)}</span>
                   <span className={`text-[10px] uppercase font-bold tracking-wider flex items-center gap-1 ${s.status === "Active" ? "text-emerald-400" : s.status === "Completed" ? "text-[#6D5DFB]" : "text-amber-400"}`}>
                     <span className={`w-1 h-1 rounded-full ${s.status === "Active" ? "bg-emerald-400" : s.status === "Completed" ? "bg-[#6D5DFB]" : "bg-amber-400"}`}></span>
                     {s.status}
@@ -105,7 +118,7 @@ export function OverviewTab({ metrics, data, setActiveTab }: OverviewTabProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Selection Funnel Snapshot */}
-        <div className="glass-panel rounded-3xl p-6 flex flex-col justify-between">
+        <div className="pastel-green rounded-[2rem] p-6 flex flex-col justify-between">
           <h3 className="text-sm font-medium tracking-widest text-black uppercase mb-4">Selection</h3>
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between text-xs">
@@ -124,20 +137,19 @@ export function OverviewTab({ metrics, data, setActiveTab }: OverviewTabProps) {
         </div>
 
         {/* Security Module */}
-        <div className="glass-panel rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden group hover:border-rose-500/20 transition-colors">
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <h3 className="text-sm font-medium tracking-widest text-black uppercase">Security</h3>
-            <AlertCircle className={`w-4 h-4 ${securityAlerts > 0 ? "text-rose-400" : "text-emerald-400"}`} />
-          </div>
-          
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded-full glass-panel-inner flex items-center justify-center relative">
+        <div className="pastel-yellow rounded-[2rem] p-6 flex flex-col justify-between relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/20 rounded-full blur-xl group-hover:bg-white/30 transition-all duration-500" />
+          <div className="flex items-start justify-between relative z-10">
+            <h3 className="text-label text-slate-700">Total Registered</h3>
+            <div className="w-12 h-12 rounded-full bg-white/40 flex items-center justify-center relative">
               {securityAlerts > 0 ? (
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.8)] animate-pulse" />
               ) : (
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
               )}
             </div>
+          </div>
+          <div className="flex items-center gap-4 relative z-10">
             <div className="flex flex-col">
               <span className={`text-2xl font-mono leading-none ${securityAlerts > 0 ? "text-rose-400" : "text-emerald-400"}`}>{securityAlerts}</span>
               <span className="text-[10px] text-black uppercase tracking-widest mt-1">Active Alerts</span>

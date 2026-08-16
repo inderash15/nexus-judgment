@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getLeaderboardData } from "@/lib/server-fns";
 import { DBStudent } from "@/lib/db";
+import { getCandidateScore } from "@/lib/utils";
 import { Trophy } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -8,7 +9,7 @@ export function InlineLeaderboard({ currentEmail }: { currentEmail: string }) {
   const [leaderboard, setLeaderboard] = useState<DBStudent[]>([]);
 
   useEffect(() => {
-    getLeaderboardData({ data: { page: 1, limit: 10 } })
+    getLeaderboardData({ data: { page: 1, limit: 10, currentUserEmail: currentEmail } })
       .then((res) => {
         if (res.success && res.students) {
           setLeaderboard(res.students);
@@ -86,7 +87,7 @@ export function InlineLeaderboard({ currentEmail }: { currentEmail: string }) {
                     </div>
                   </div>
 
-                  <span className="font-bold text-[11px] text-emerald-300">{s.score} XP</span>
+                  <span className="font-bold text-[11px] text-emerald-300">{getCandidateScore(s)} / 25</span>
                 </div>
               );
             })

@@ -482,37 +482,40 @@ export const submitMCQResults = createServerFn({ method: "POST" }).validator((d:
     if (!student) return { success: false, error: "Student not found" };
 
     if (student.mcqCompleted) {
-      return { success: false, error: "MCQ Assessment already submitted" };
+      return { success: false, error: "Assessment already submitted" };
     }
 
+    const config = await getSystemConfig();
+
     // Backend Scoring Validation
-    let score = 0;
+    let mcqScore = 0;
     const assignedMCQIds = student.assignedMCQs || [];
     const assignedQuestions = await mcqColl.find({ id: { $in: assignedMCQIds } }).toArray();
 
     for (const [qId, optionIdx] of Object.entries(data.answers)) {
-      // Only score questions that were actually assigned to this student
       if (!assignedMCQIds.includes(qId)) continue;
-      
-      const q = assignedQuestions.find(item => item.id === qId);
+      const q = assignedQuestions.find((item) => item.id === qId);
       if (q && q.correctAnswer === optionIdx) {
-        score++;
+        mcqScore += 5; // MCQ is worth exactly 5 points
       }
     }
+    // Strict limit enforcement
+    mcqScore = Math.min(mcqScore, config.mcqMaxScore || 5);
 
     // AI prompt strength question (Question 2 of the 3-question trial).
     // Strength is computed on the server; never trusted from the client.
+    const promptTitle = "AI Prompt Challenge";
     const promptText =
       typeof data.answers?.[PROMPT_QUESTION_ID] === "string"
         ? data.answers[PROMPT_QUESTION_ID].trim()
         : "";
     const promptStrength = computePromptStrength(promptText);
-    const promptTitle = data.promptTitle || "";
+    // Prompt Score (Max 15)
+    let promptScore = Math.round((promptStrength / 100) * (config.promptMaxScore || 15));
+    promptScore = Math.min(promptScore, config.promptMaxScore || 15);
 
-    // Partial credit: a fully strong prompt (100) is worth a full correct answer
-    score += promptStrength / 100;
-
-    // Fill in the blanks question (Question 3 of the trial)
+    // Fill in the blanks question
+    let fillupScore = 0;
     let fillBlankSolved = false;
     for (const fb of FILLBLANK_QUESTIONS) {
       const val =
@@ -520,22 +523,22 @@ export const submitMCQResults = createServerFn({ method: "POST" }).validator((d:
           ? data.answers[fb.id].trim().toLowerCase()
           : "";
       if (val && val === fb.answer.toLowerCase()) {
+        fillupScore += 5; // Fill in the blank is exactly 5 points
         fillBlankSolved = true;
         break;
       }
     }
-    if (fillBlankSolved) score++;
+    // Strict limit enforcement
+    fillupScore = Math.min(fillupScore, config.fillupMaxScore || 5);
 
-    const config = await getSystemConfig();
-
-    // Total trial = 1 assigned MCQ (Q1) + prompt strength (Q2) + fill in the blanks (Q3)
-    const totalQuestions = 3;
+    // Final calculations
+    const totalScore = mcqScore + promptScore + fillupScore;
+    const maxScore = config.totalMaxScore || 25;
+    const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
     
-    // Calculate percentage against TOTAL ASSIGNED QUESTIONS, not just answered ones
-    const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
-    
-    // MCQ is now Round 1
-    const isSelected = percentage >= (config.round1PassingScore || 0);
+    // Status is now Completed since this is the only assessment
+    const isSelected = percentage >= (config.round1PassingScore || 60);
+    const finalStatus = "Completed";
 
     // Save to DB
     await studentsColl.updateOne(
@@ -543,16 +546,23 @@ export const submitMCQResults = createServerFn({ method: "POST" }).validator((d:
       {
         $set: {
           mcqCompleted: true,
-          mcqScore: score,
+          mcqScore,
+          promptScore,
+          fillupScore,
+          totalScore,
+          finalScore: totalScore,
+          finalPercentage: percentage,
           mcqPercentage: percentage,
           mcqAnswers: data.answers,
           mcqTimeTaken: data.timeTaken || 0,
           mcqCompletionTime: new Date().toISOString(),
+          finalSubmissionTime: new Date().toISOString(),
           promptTitle,
           promptText,
           promptStrength,
-          status: "Active",
-          locked: false,
+          status: finalStatus,
+          locked: true,
+          selectionStatus: "PENDING",
         },
       }
     );
@@ -563,14 +573,19 @@ export const submitMCQResults = createServerFn({ method: "POST" }).validator((d:
       email,
       action: "MCQ_SUBMISSION",
       status: "success",
-      details: `Submitted MCQ with score ${score.toFixed(2)}/${totalQuestions} (${percentage.toFixed(1)}%). Prompt strength: ${promptStrength}/100`,
+      details: `Submitted assessment: MCQ=${mcqScore}, Prompt=${promptScore}, Fillup=${fillupScore}. Total=${totalScore}/${maxScore} (${percentage.toFixed(1)}%).`,
     });
 
     return {
       success: true,
-      score,
+      mcqScore,
+      promptScore,
+      fillupScore,
+      totalScore,
       percentage,
-      totalQuestions,
+      maxScore,
+      score: totalScore, // For backwards compatibility
+      totalQuestions: 3, // For backwards compatibility
       promptStrength,
       promptTitle,
       promptText,
@@ -1043,6 +1058,7 @@ export const getLeaderboardData = createServerFn({ method: "GET" }).validator((d
   const page = Math.max(1, parseInt(data.page || "1", 10));
   const limit = Math.max(1, Math.min(100, parseInt(data.limit || "20", 10)));
   const skip = (page - 1) * limit;
+  const currentUserEmail = data.currentUserEmail;
 
   // Rate Limiting: max 60 requests per minute on leaderboard
   const rateLimitKey = `leaderboard_access`;
@@ -1068,7 +1084,13 @@ export const getLeaderboardData = createServerFn({ method: "GET" }).validator((d
         projection: {
           name: 1,
           department: 1,
+          email: 1, // Will be masked
           score: 1,
+          mcqScore: 1,
+          promptScore: 1,
+          fillupScore: 1,
+          totalScore: 1,
+          finalScore: 1,
           completionTime: 1,
           timeTaken: 1,
           status: 1,
@@ -1076,14 +1098,20 @@ export const getLeaderboardData = createServerFn({ method: "GET" }).validator((d
         }
       }
     )
-    .sort({ score: -1, completionTime: 1, lastActiveTime: 1 })
+    .sort({ totalScore: -1, finalScore: -1, score: -1, completionTime: 1, lastActiveTime: 1 })
     .skip(skip)
     .limit(limit)
     .toArray();
 
+    // Mask emails for privacy, except for the requesting user
+    const sanitizedStudents = students.map(s => ({
+      ...s,
+      email: currentUserEmail && s.email === currentUserEmail ? s.email : "HIDDEN"
+    }));
+
     const result = {
       success: true,
-      students: serializeDoc(students),
+      students: serializeDoc(sanitizedStudents),
       total,
       page,
       limit,
@@ -1162,5 +1190,191 @@ export const adminUpdateSystemConfig = createServerFn({ method: "POST" }).valida
   } catch (e: any) {
     console.error("[adminUpdateSystemConfig] Error:", e);
     return { success: false, error: e.message };
+  }
+});
+
+// Finalize Top 125 Selection
+export const finalizeTop125 = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+  const { verifyAdminSession, getSystemConfig } = await import("./server-helpers.server");
+  const auth = await verifyAdminSession();
+  if (!auth) return { success: false, error: "Unauthorized" };
+
+  try {
+    const db = await getDB();
+    const studentsColl = db.collection<any>("students");
+    const config = await getSystemConfig();
+    const shortlistSize = config.shortlistSize || 125;
+
+    // Get all completed students
+    const candidates = await studentsColl.find({ status: "Completed" }).toArray();
+
+    // Sort deterministically:
+    // 1. Total Score (DESC)
+    // 2. Prompt Score (DESC)
+    // 3. MCQ Score (DESC)
+    // 4. Completion Time (ASC)
+    candidates.sort((a, b) => {
+      const scoreDiff = (b.totalScore || 0) - (a.totalScore || 0);
+      if (scoreDiff !== 0) return scoreDiff;
+      
+      const promptDiff = (b.promptScore || 0) - (a.promptScore || 0);
+      if (promptDiff !== 0) return promptDiff;
+
+      const mcqDiff = (b.mcqScore || 0) - (a.mcqScore || 0);
+      if (mcqDiff !== 0) return mcqDiff;
+
+      const timeA = new Date(a.finalSubmissionTime || 0).getTime();
+      const timeB = new Date(b.finalSubmissionTime || 0).getTime();
+      return timeA - timeB;
+    });
+
+    const version = new Date().toISOString().replace(/[:.]/g, "-");
+    const snapshotCandidates: any[] = [];
+    let selectedCount = 0;
+
+    for (let i = 0; i < candidates.length; i++) {
+      const candidate = candidates[i];
+      const rank = i + 1;
+      const isSelected = rank <= shortlistSize;
+      
+      const selectionStatus = isSelected ? "SELECTED" : "NOT_SELECTED";
+      const ticketId = isSelected ? `NXP-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}` : "";
+
+      await studentsColl.updateOne(
+        { email: candidate.email },
+        { 
+          $set: { 
+            rank, 
+            selectionStatus, 
+            ticketId,
+            selectionVersion: version,
+            emailStatus: isSelected ? "PENDING" : undefined
+          } 
+        }
+      );
+
+      if (isSelected) selectedCount++;
+
+      snapshotCandidates.push({
+        email: candidate.email,
+        rank,
+        score: candidate.totalScore || 0,
+        percentage: candidate.finalPercentage || 0,
+        department: candidate.department || "Unknown",
+        selectionStatus,
+        ticketId
+      });
+    }
+
+    const snapshot = {
+      id: version,
+      timestamp: new Date().toISOString(),
+      adminId: "admin",
+      selectedCount,
+      candidates: snapshotCandidates
+    };
+
+    await db.collection("selectionSnapshots").insertOne(snapshot);
+    await db.collection("securityLogs").insertOne({
+      id: Math.random().toString(36).substring(7),
+      timestamp: new Date().toISOString(),
+      email: "system",
+      action: "TOP_125_SELECTION_FINALIZED",
+      status: "success",
+      details: `Admin finalized selection version ${version}. Selected: ${selectedCount}`
+    });
+
+    return { success: true, version, selectedCount };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Trigger Emails for Selection
+export const sendSelectionEmails = createServerFn({ method: "POST" }).handler(async (ctx: any) => {
+  const { verifyAdminSession, getSystemConfig } = await import("./server-helpers.server");
+  const auth = await verifyAdminSession();
+  if (!auth) return { success: false, error: "Unauthorized" };
+
+  try {
+    const db = await getDB();
+    const studentsColl = db.collection<any>("students");
+    const { sendEmail } = await import("./email");
+
+    // Find candidates pending email
+    const pendingCandidates = await studentsColl.find({ 
+      selectionStatus: "SELECTED", 
+      emailStatus: { $in: ["PENDING", "FAILED"] } 
+    }).toArray();
+
+    if (pendingCandidates.length === 0) {
+      return { success: true, message: "No pending emails" };
+    }
+
+    const config = await getSystemConfig();
+    const eventDate = config.eventDate || "TBD";
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const candidate of pendingCandidates) {
+      const emailContent = `
+        <h1>Congratulations ${candidate.name}!</h1>
+        <p>You have been officially selected for NexusPro!</p>
+        <ul>
+          <li><strong>Rank:</strong> ${candidate.rank}</li>
+          <li><strong>Score:</strong> ${candidate.totalScore}/25 (${candidate.finalPercentage}%)</li>
+          <li><strong>Department:</strong> ${candidate.department}</li>
+          <li><strong>Ticket ID:</strong> ${candidate.ticketId}</li>
+          <li><strong>Event Date:</strong> ${eventDate}</li>
+        </ul>
+        <p>Please keep this Ticket ID secure. You will need it for entry.</p>
+      `;
+
+      const result = await sendEmail({
+        to: candidate.email,
+        subject: "NEXUSPRO — YOU'RE SELECTED | EVENT ENTRY TICKET",
+        html: emailContent
+      });
+
+      if (result.success) {
+        successCount++;
+        await studentsColl.updateOne(
+          { email: candidate.email },
+          { 
+            $set: { 
+              emailStatus: "SENT", 
+              lastEmailAttempt: new Date().toISOString(),
+              emailFailureReason: null
+            } 
+          }
+        );
+      } else {
+        failCount++;
+        await studentsColl.updateOne(
+          { email: candidate.email },
+          { 
+            $set: { 
+              emailStatus: "FAILED", 
+              lastEmailAttempt: new Date().toISOString(),
+              emailFailureReason: result.error || "Unknown error"
+            } 
+          }
+        );
+      }
+    }
+
+    await db.collection("securityLogs").insertOne({
+      id: Math.random().toString(36).substring(7),
+      timestamp: new Date().toISOString(),
+      email: "system",
+      action: "EMAILS_DISPATCHED",
+      status: "success",
+      details: `Admin dispatched selection emails. Success: ${successCount}, Failed: ${failCount}`
+    });
+
+    return { success: true, successCount, failCount };
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
 });

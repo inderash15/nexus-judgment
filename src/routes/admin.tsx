@@ -44,8 +44,10 @@ import {
   CommandPalette,
   RiskCenterTab,
   AnalyticsTab,
+  SelectionTab,
 } from "@/components/admin";
 import type { Tab, DataState } from "@/components/admin";
+import { getCandidateScore } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -94,6 +96,7 @@ function AdminDashboard() {
   const [sessionTimeout, setSessionTimeout] = useState(45);
   const [maxWrongAttempts, setMaxWrongAttempts] = useState(4);
   const [systemMode, setSystemMode] = useState<"normal" | "workshop" | "maintenance">("workshop");
+  const [systemConfig, setSystemConfig] = useState<any>(null);
   const [round1PassingScore, setRound1PassingScore] = useState(60);
   const [round2PassingScore, setRound2PassingScore] = useState(60);
   const [round1TimeLimit, setRound1TimeLimit] = useState(300);
@@ -111,6 +114,7 @@ function AdminDashboard() {
       setData(res);
 
       const config = await getSystemConfigData();
+      setSystemConfig(config);
       setSessionTimeout(config.sessionTimeout);
       setMaxWrongAttempts(config.maxWrongAttempts);
       setSystemMode(config.mode);
@@ -195,7 +199,7 @@ function AdminDashboard() {
       (s) => s.status === "Qualified" || s.status === "Completed",
     ).length;
 
-    const scores = students.map((s) => s.score);
+    const scores = students.map((s) => getCandidateScore(s));
     const avgScore = totalReg > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / totalReg) : 0;
     const successRate = totalReg > 0 ? Math.round((qualified / totalReg) * 100) : 0;
     const failureRate = totalReg > 0 ? Math.round((eliminated / totalReg) * 100) : 0;
@@ -207,7 +211,7 @@ function AdminDashboard() {
       return now.getTime() - lastActive.getTime() < 15 * 60 * 1000 && s.status === "Active";
     }).length;
 
-    const topPerformers = [...students].sort((a, b) => b.score - a.score).slice(0, 5);
+    const topPerformers = [...students].sort((a, b) => getCandidateScore(b) - getCandidateScore(a)).slice(0, 5);
 
     return {
       totalReg,
@@ -255,8 +259,8 @@ function AdminDashboard() {
   const sortedStudents = useMemo(() => {
     const sorted = [...filteredStudents];
     sorted.sort((a: DBStudent, b: DBStudent) => {
-      let valA = (a as any)[studentSortField];
-      let valB = (b as any)[studentSortField];
+      let valA = studentSortField === "score" ? getCandidateScore(a) : (a as any)[studentSortField];
+      let valB = studentSortField === "score" ? getCandidateScore(b) : (b as any)[studentSortField];
       if (typeof valA === "string") {
         valA = valA.toLowerCase();
         valB = valB.toLowerCase();
@@ -535,10 +539,9 @@ function AdminDashboard() {
   }
   return (
     <>
-      <div className="fixed inset-0 w-full h-full -z-10 spatial-bg pointer-events-none" />
-      <div className="min-h-[100dvh] w-full text-black font-sans flex flex-col items-center selection:bg-indigo-500/30 p-4 md:p-6 lg:p-8">
-        {/* Floating Workspace Shell */}
-        <div className="w-full max-w-[1600px] rounded-[2rem] glass-shell flex flex-col relative my-auto min-h-[92vh]">
+      <div className="min-h-[100dvh] w-full bg-[#FDFBF7] text-slate-900 font-sans flex flex-col items-center selection:bg-indigo-500/30 p-4 md:p-6 lg:p-8">
+        {/* Main Dashboard Workspace */}
+        <div className="w-full max-w-[1600px] flex flex-col relative min-h-[92vh]">
           <div className="absolute inset-0 bg-gradient-to-b from-black/[0.02] to-transparent pointer-events-none rounded-[2rem]" />
           
           <div className="flex-1 flex flex-col relative z-10 p-4 md:p-6 lg:p-8">
@@ -553,7 +556,7 @@ function AdminDashboard() {
                 setIsAuthenticated(false);
               }
             }}
-          />
+          >
 
           <main className="flex-1 pt-2 pb-8">
 
@@ -616,6 +619,7 @@ function AdminDashboard() {
 
           {activeTab === "audit" && <AuditLogsTab securityLogs={data.securityLogs} />}
 
+          {activeTab === "selection" && <SelectionTab data={data} config={systemConfig} />}
           {activeTab === "risk" && (
             <RiskCenterTab 
               securityLogs={data.securityLogs} 
@@ -625,7 +629,7 @@ function AdminDashboard() {
           )}
 
           {activeTab === "analytics" && (
-            <AnalyticsTab students={data.students} metrics={metrics} />
+            <AnalyticsTab students={data.students} metrics={metrics} data={data} />
           )}
 
           {activeTab === "settings" && (
@@ -648,6 +652,7 @@ function AdminDashboard() {
             />
           )}
           </main>
+          </TopNavigation>
         </div>
       </div>
 
