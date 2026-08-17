@@ -9,8 +9,19 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import manojImg from "@/assets/manoj.jpeg";
 import indrashImg from "@/assets/inderash.jpeg";
 import pughalImg from "@/assets/pughal.jpeg";
+import lavanyaImg from "@/assets/Lavanya.jpg";
 
 const AGENTS: Agent[] = [
+  {
+    name: "Dr. S.R.Lavanya",
+    role: "Associate Professor",
+    department: "Department of Artificial Intelligence and Machine Learning",
+    bio: "Key driver in AI research and shaping the curriculum. A vital member of the Guardian Network.",
+    skills: ["AI Research", "Machine Learning", "Curriculum Design", "Mentorship"],
+    quote: "True intelligence lies in the capacity for continuous learning.",
+    initials: "SL",
+    photoUrl: lavanyaImg,
+  },
   {
     name: "Dr. Manoj M",
     role: "Event Coordinator",

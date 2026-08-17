@@ -33,7 +33,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
         initial={{ opacity: 0, scale: 0.7 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.15, duration: 0.6, type: "spring", stiffness: 120 }}
-        className="relative mb-3 sm:mb-4"
+        className="relative mb-3 sm:mb-4 shrink-0"
       >
         {/* Outer rotating ring */}
         <motion.div

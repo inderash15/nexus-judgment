@@ -38,7 +38,7 @@ export function ResourcePersonCard({ person, index }: { person: ResourcePerson; 
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="relative">
+    <div className={`relative ${expanded ? 'z-[100]' : 'z-10'}`}>
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -99,10 +99,10 @@ export function ResourcePersonCard({ person, index }: { person: ResourcePerson; 
             animate={person.inlineExpansion ? { height: "auto", opacity: 1, marginTop: 8 } : { opacity: 1, y: 0 }}
             exit={person.inlineExpansion ? { height: 0, opacity: 0, marginTop: 0 } : { opacity: 0, y: -5 }}
             transition={{ duration: person.inlineExpansion ? 0.3 : 0.25 }}
-            className={person.inlineExpansion ? "overflow-hidden" : "absolute left-0 right-0 z-20 mt-1 rounded-xl border border-emerald-500/40 bg-black p-4 shadow-[0_0_40px_rgba(0,0,0,0.9)]"}
+            className={person.inlineExpansion ? "overflow-hidden" : "absolute left-0 right-0 z-[100] mt-1 rounded-xl border border-emerald-500/40 bg-emerald-950 p-4 shadow-[0_0_40px_rgba(0,0,0,0.9)]"}
           >
             {person.inlineExpansion ? (
-              <div className="rounded-xl border border-emerald-500/40 bg-black p-4 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)]">
+              <div className="rounded-xl border border-emerald-500/40 bg-emerald-950 p-4 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)]">
                 <ExpandedContent person={person} />
               </div>
             ) : (
