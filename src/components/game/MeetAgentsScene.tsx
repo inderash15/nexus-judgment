@@ -13,16 +13,6 @@ import lavanyaImg from "@/assets/Lavanya.jpg";
 
 const AGENTS: Agent[] = [
   {
-    name: "Dr. S.R.Lavanya",
-    role: "Associate Professor",
-    department: "Department of Artificial Intelligence and Machine Learning",
-    bio: "Key driver in AI research and shaping the curriculum. A vital member of the Guardian Network.",
-    skills: ["AI Research", "Machine Learning", "Curriculum Design", "Mentorship"],
-    quote: "True intelligence lies in the capacity for continuous learning.",
-    initials: "SL",
-    photoUrl: lavanyaImg,
-  },
-  {
     name: "Dr. Manoj M",
     role: "Event Coordinator",
     department: "Department of Computer Science with Data Analytics, KPR College Of Arts Science and Research",
@@ -31,6 +21,16 @@ const AGENTS: Agent[] = [
     quote: "Every great trial succeeds because of flawless organization.",
     initials: "MM",
     photoUrl: manojImg,
+  },
+  {
+    name: "Dr. S.R.Lavanya",
+    role: "Associate Professor",
+    department: "Department of Artificial Intelligence and Machine Learning",
+    bio: "Key driver in AI research and shaping the curriculum. A vital member of the Guardian Network.",
+    skills: ["AI Research", "Machine Learning", "Curriculum Design", "Mentorship"],
+    quote: "True intelligence lies in the capacity for continuous learning.",
+    initials: "SL",
+    photoUrl: lavanyaImg,
   },
   {
     name: "Inderash.M",
