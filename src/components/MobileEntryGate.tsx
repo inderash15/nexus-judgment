@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Smartphone } from "lucide-react";
-import bgImage from "../assets/Background.png";
+import bgImage from "../assets/background.png";
 
 interface MobileEntryGateProps {
   onUnlocked: () => void;
